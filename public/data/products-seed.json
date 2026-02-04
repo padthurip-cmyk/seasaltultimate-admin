@@ -1,0 +1,157 @@
+{
+  "categories": [
+    { "id": "mango", "name": "Mango Pickles", "emoji": "🥭" },
+    { "id": "mixed", "name": "Mixed Pickles", "emoji": "🫙" },
+    { "id": "nonveg", "name": "Non-Veg Pickles", "emoji": "🍗" },
+    { "id": "specialty", "name": "Specialty", "emoji": "⭐" }
+  ],
+  "products": [
+    {
+      "id": "avakaya-mango",
+      "name": "Avakaya Mango Pickle",
+      "description": "Traditional Andhra style mango pickle with mustard and red chili",
+      "category": "mango",
+      "image": "https://images.unsplash.com/photo-1589621316382-008455b857cd?w=400",
+      "badge": "Bestseller",
+      "isFeatured": true,
+      "isActive": true,
+      "variants": [
+        { "weight": "250g", "price": 199 },
+        { "weight": "500g", "price": 349 },
+        { "weight": "1kg", "price": 599 }
+      ]
+    },
+    {
+      "id": "maagaya-mango",
+      "name": "Maagaya Pickle",
+      "description": "Sweet and tangy mango pickle with fenugreek",
+      "category": "mango",
+      "image": "https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=400",
+      "isFeatured": true,
+      "isActive": true,
+      "variants": [
+        { "weight": "250g", "price": 179 },
+        { "weight": "500g", "price": 319 },
+        { "weight": "1kg", "price": 549 }
+      ]
+    },
+    {
+      "id": "gongura-pickle",
+      "name": "Gongura Pickle",
+      "description": "Tangy sorrel leaves pickle, Andhra specialty",
+      "category": "specialty",
+      "image": "https://images.unsplash.com/photo-1625398407796-82650a8c135f?w=400",
+      "badge": "Spicy",
+      "isFeatured": true,
+      "isActive": true,
+      "variants": [
+        { "weight": "250g", "price": 219 },
+        { "weight": "500g", "price": 389 },
+        { "weight": "1kg", "price": 699 }
+      ]
+    },
+    {
+      "id": "mixed-veg-pickle",
+      "name": "Mixed Vegetable Pickle",
+      "description": "Assorted vegetables in aromatic spices",
+      "category": "mixed",
+      "image": "https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f?w=400",
+      "isFeatured": true,
+      "isActive": true,
+      "variants": [
+        { "weight": "250g", "price": 189 },
+        { "weight": "500g", "price": 329 },
+        { "weight": "1kg", "price": 579 }
+      ]
+    },
+    {
+      "id": "chicken-pickle",
+      "name": "Chicken Pickle",
+      "description": "Boneless chicken in traditional spices",
+      "category": "nonveg",
+      "image": "https://images.unsplash.com/photo-1606471191009-63994c53433b?w=400",
+      "badge": "Premium",
+      "isFeatured": true,
+      "isActive": true,
+      "variants": [
+        { "weight": "250g", "price": 349 },
+        { "weight": "500g", "price": 599 },
+        { "weight": "1kg", "price": 999 }
+      ]
+    },
+    {
+      "id": "mutton-pickle",
+      "name": "Mutton Kheema Pickle",
+      "description": "Spicy minced mutton pickle",
+      "category": "nonveg",
+      "image": "https://images.unsplash.com/photo-1545247181-516773cae754?w=400",
+      "badge": "Premium",
+      "isFeatured": true,
+      "isActive": true,
+      "variants": [
+        { "weight": "250g", "price": 449 },
+        { "weight": "500g", "price": 799 },
+        { "weight": "1kg", "price": 1399 }
+      ]
+    },
+    {
+      "id": "prawn-pickle",
+      "name": "Prawn Pickle",
+      "description": "Fresh prawns in coastal spices",
+      "category": "nonveg",
+      "image": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=400",
+      "isActive": true,
+      "variants": [
+        { "weight": "250g", "price": 399 },
+        { "weight": "500g", "price": 699 }
+      ]
+    },
+    {
+      "id": "lemon-pickle",
+      "name": "Lemon Pickle",
+      "description": "Tangy lemon pickle with mild spices",
+      "category": "mixed",
+      "image": "https://images.unsplash.com/photo-1590301157890-4810ed352733?w=400",
+      "isActive": true,
+      "variants": [
+        { "weight": "250g", "price": 149 },
+        { "weight": "500g", "price": 269 },
+        { "weight": "1kg", "price": 479 }
+      ]
+    },
+    {
+      "id": "garlic-pickle",
+      "name": "Garlic Pickle",
+      "description": "Whole garlic cloves in spiced oil",
+      "category": "specialty",
+      "image": "https://images.unsplash.com/photo-1615477550927-6ec8445ad66f?w=400",
+      "isActive": true,
+      "variants": [
+        { "weight": "250g", "price": 199 },
+        { "weight": "500g", "price": 349 }
+      ]
+    },
+    {
+      "id": "tomato-pickle",
+      "name": "Tomato Pickle",
+      "description": "Ripe tomatoes in sweet and spicy blend",
+      "category": "mixed",
+      "image": "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400",
+      "isActive": true,
+      "variants": [
+        { "weight": "250g", "price": 169 },
+        { "weight": "500g", "price": 299 },
+        { "weight": "1kg", "price": 529 }
+      ]
+    }
+  ],
+  "siteConfig": {
+    "siteName": "SeaSalt Pickles",
+    "tagline": "Authentic Andhra Pickles",
+    "phone": "+91-9963971447",
+    "email": "support@seasaltpickles.com",
+    "minOrderValue": 199,
+    "freeDeliveryAbove": 500,
+    "deliveryCharge": 50
+  }
+}
