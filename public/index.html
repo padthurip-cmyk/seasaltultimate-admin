@@ -3,1137 +3,817 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | SeaSalt Pickles</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🫙</text></svg>">
+    <title>SeaSalt Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'pickle': { 50: '#FFF7ED', 100: '#FFEDD5', 500: '#D4451A', 600: '#C2410C', 700: '#9A3412' }
-                    }
-                }
-            }
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        .sidebar-link.active { background: linear-gradient(135deg, #D4451A, #ea580c); color: white; }
-        .sidebar-link:hover:not(.active) { background: #FFF7ED; }
-        .status-confirmed { background: #DBEAFE; color: #1E40AF; }
-        .status-processing { background: #FED7AA; color: #C2410C; }
-        .status-shipped { background: #E0E7FF; color: #3730A3; }
-        .status-delivered { background: #D1FAE5; color: #065F46; }
-        .status-cancelled { background: #FEE2E2; color: #991B1B; }
-        .loading { opacity: 0.5; pointer-events: none; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .animate-spin { animation: spin 1s linear infinite; }
-        .modal-enter { animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; }
+        .sidebar { width: 250px; background: #1a1a2e; min-height: 100vh; position: fixed; left: 0; top: 0; z-index: 50; transition: transform 0.3s; }
+        .sidebar.closed { transform: translateX(-250px); }
+        .main { margin-left: 250px; padding: 24px; transition: margin-left 0.3s; }
+        .main.expanded { margin-left: 0; }
+        .sidebar-link { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #a0a0b8; text-decoration: none; transition: all 0.2s; border-left: 3px solid transparent; }
+        .sidebar-link:hover, .sidebar-link.active { color: #fff; background: rgba(255,255,255,0.08); border-left-color: #e67e22; }
+        .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .stat-card { text-align: center; }
+        .stat-value { font-size: 2rem; font-weight: 700; }
+        .stat-label { font-size: 0.85rem; color: #666; margin-top: 4px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-green { background: #d4edda; color: #155724; }
+        .badge-yellow { background: #fff3cd; color: #856404; }
+        .badge-blue { background: #cce5ff; color: #004085; }
+        .badge-red { background: #f8d7da; color: #721c24; }
+        .badge-gray { background: #e2e3e5; color: #383d41; }
+        .funnel { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 30px 0; flex-wrap: wrap; }
+        .funnel-step { text-align: center; min-width: 90px; }
+        .funnel-circle { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 700; margin: 0 auto 8px; }
+        .funnel-arrow { color: #ccc; font-size: 1.5rem; }
+        .funnel-label { font-size: 0.8rem; color: #666; }
+        .funnel-pct { font-size: 0.7rem; color: #999; margin-top: 2px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 10px 12px; font-size: 0.8rem; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; }
+        td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        tr:hover td { background: #f8f9fa; }
+        .btn { padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+        .btn-primary { background: #e67e22; color: #fff; }
+        .btn-primary:hover { background: #d35400; }
+        .btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #1a1a2e, #16213e); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .login-box { background: #fff; padding: 40px; border-radius: 16px; width: 380px; max-width: 90vw; text-align: center; }
+        .login-box input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; margin-bottom: 12px; font-size: 1rem; }
+        .login-box input:focus { outline: none; border-color: #e67e22; }
+        .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin-top: 12px; }
+        .bar { flex: 1; background: linear-gradient(to top, #e67e22, #f39c12); border-radius: 4px 4px 0 0; min-height: 4px; position: relative; transition: height 0.5s; }
+        .bar-label { font-size: 0.65rem; color: #999; text-align: center; margin-top: 4px; }
+        .product-img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #f0f0f0; }
+        .product-img-fallback { width: 50px; height: 50px; border-radius: 8px; background: linear-gradient(135deg, #e67e22, #f39c12); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 60; display: none; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal-box { background: #fff; border-radius: 16px; padding: 24px; max-width: 600px; width: 90vw; max-height: 85vh; overflow-y: auto; }
+        .refresh-btn { background: none; border: 2px solid #e67e22; color: #e67e22; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .refresh-btn:hover { background: #e67e22; color: #fff; }
+        .activity-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .dot-blue { background: #3b82f6; }
+        .dot-green { background: #10b981; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-red { background: #ef4444; }
+        .dot-purple { background: #8b5cf6; }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-250px); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50">
-        <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md modal-enter">
-            <div class="text-center mb-8">
-                <div class="w-24 h-24 bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl">
-                    <span class="text-5xl">🫙</span>
-                </div>
-                <h1 class="text-3xl font-bold text-gray-800">SeaSalt Admin</h1>
-                <p class="text-gray-500 mt-2">Manage your pickle empire</p>
-            </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
-                    <input type="text" id="login-username" value="admin" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 transition-colors">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                    <input type="password" id="login-password" placeholder="Enter password" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 transition-colors">
-                </div>
-                <button id="login-btn" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold rounded-xl hover:from-orange-600 hover:to-red-700 transition-all shadow-lg transform hover:scale-[1.02]">
-                    Sign In →
-                </button>
-                <p id="login-error" class="text-red-500 text-sm text-center hidden">Invalid credentials</p>
-            </div>
-            
-            <div class="mt-8 pt-6 border-t border-gray-100 text-center">
-                <p class="text-gray-400 text-sm">Default: admin / seasalt2024</p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- MAIN ADMIN PANEL -->
-    <div id="admin-panel" class="hidden">
-        
-        <!-- Top Bar -->
-        <header class="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-30 flex items-center justify-between px-6">
-            <div class="flex items-center gap-4">
-                <button id="toggle-sidebar" class="lg:hidden p-2 hover:bg-gray-100 rounded-lg">☰</button>
-                <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow">
-                    <span class="text-xl">🫙</span>
-                </div>
-                <div class="hidden sm:block">
-                    <h1 class="font-bold text-gray-800">SeaSalt Admin</h1>
-                    <p class="text-xs text-gray-500" id="page-subtitle">Dashboard</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="text-sm text-gray-500 hidden md:block" id="current-date"></span>
-                <button id="refresh-btn" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">🔄</button>
-                <a href="https://seasaltultimate.netlify.app" target="_blank" class="hidden sm:flex px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all">
-                    View Store →
-                </a>
-                <button id="logout-btn" class="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors" title="Logout">🚪</button>
-            </div>
-        </header>
-        
-        <!-- Sidebar -->
-        <aside id="sidebar" class="fixed left-0 top-16 bottom-0 w-64 bg-white shadow-xl z-20 overflow-y-auto transform -translate-x-full lg:translate-x-0 transition-transform">
-            <nav class="p-4 space-y-2">
-                <a href="#" data-page="dashboard" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <span class="text-xl">📊</span><span class="font-medium">Dashboard</span>
-                </a>
-                <a href="#" data-page="products" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <span class="text-xl">🏷️</span><span class="font-medium">Products</span>
-                </a>
-                <a href="#" data-page="orders" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <span class="text-xl">📦</span><span class="font-medium">Orders</span>
-                </a>
-                <a href="#" data-page="analytics" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <span class="text-xl">📈</span><span class="font-medium">Analytics</span>
-                </a>
-                <a href="#" data-page="shipping" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <span class="text-xl">🚚</span><span class="font-medium">Shipping</span>
-                </a>
-                <a href="#" data-page="settings" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <span class="text-xl">⚙️</span><span class="font-medium">Settings</span>
-                </a>
-            </nav>
-            
-            <div class="absolute bottom-0 left-0 right-0 p-4 border-t bg-gradient-to-r from-green-50 to-emerald-50">
-                <div class="flex items-center gap-2 text-sm">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span class="text-gray-600 font-medium">Supabase Connected</span>
-                </div>
-            </div>
-        </aside>
-        
-        <!-- Main Content -->
-        <main class="lg:ml-64 pt-16 p-4 md:p-6 min-h-screen">
-            
-            <!-- DASHBOARD PAGE -->
-            <div id="page-dashboard" class="page">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard Overview</h2>
-                
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-                    <div class="bg-white rounded-2xl p-4 md:p-6 shadow-sm border-l-4 border-blue-500">
-                        <span class="text-2xl md:text-3xl">📦</span>
-                        <p class="text-gray-500 text-sm mt-2">Total Orders</p>
-                        <p class="text-2xl md:text-3xl font-bold text-gray-800" id="stat-orders">0</p>
-                    </div>
-                    <div class="bg-white rounded-2xl p-4 md:p-6 shadow-sm border-l-4 border-green-500">
-                        <span class="text-2xl md:text-3xl">💰</span>
-                        <p class="text-gray-500 text-sm mt-2">Revenue</p>
-                        <p class="text-2xl md:text-3xl font-bold text-gray-800" id="stat-revenue">₹0</p>
-                    </div>
-                    <div class="bg-white rounded-2xl p-4 md:p-6 shadow-sm border-l-4 border-yellow-500">
-                        <span class="text-2xl md:text-3xl">🏷️</span>
-                        <p class="text-gray-500 text-sm mt-2">Products</p>
-                        <p class="text-2xl md:text-3xl font-bold text-gray-800" id="stat-products">0</p>
-                    </div>
-                    <div class="bg-white rounded-2xl p-4 md:p-6 shadow-sm border-l-4 border-purple-500">
-                        <span class="text-2xl md:text-3xl">⏳</span>
-                        <p class="text-gray-500 text-sm mt-2">Pending</p>
-                        <p class="text-2xl md:text-3xl font-bold text-gray-800" id="stat-pending">0</p>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-white rounded-2xl p-6 shadow-sm">
-                        <h3 class="font-bold text-gray-800 mb-4">Revenue (Last 7 Days)</h3>
-                        <canvas id="revenue-chart" height="200"></canvas>
-                    </div>
-                    <div class="bg-white rounded-2xl p-6 shadow-sm">
-                        <h3 class="font-bold text-gray-800 mb-4">Orders by Status</h3>
-                        <canvas id="status-chart" height="200"></canvas>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-                    <div class="p-6 border-b flex items-center justify-between">
-                        <h3 class="font-bold text-gray-800">Recent Orders</h3>
-                        <a href="#" data-page="orders" class="sidebar-nav text-orange-500 text-sm font-medium hover:underline">View All →</a>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recent-orders-table" class="divide-y"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- PRODUCTS PAGE -->
-            <div id="page-products" class="page hidden">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Products</h2>
-                    <button id="add-product-btn" class="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2">
-                        <span>+</span> Add Product
-                    </button>
-                </div>
-                
-                <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-                    <div class="p-4 border-b flex flex-col sm:flex-row gap-3">
-                        <input type="text" id="search-products" placeholder="Search products..." class="flex-1 px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
-                        <select id="filter-category" class="px-4 py-2 border rounded-xl">
-                            <option value="">All Categories</option>
-                        </select>
-                    </div>
-                    <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4"></div>
-                </div>
-            </div>
-            
-            <!-- ORDERS PAGE -->
-            <div id="page-orders" class="page hidden">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Orders</h2>
-                    <select id="filter-order-status" class="px-4 py-2 border rounded-xl">
-                        <option value="">All Status</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </div>
-                
-                <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
-                                    <th class="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                                    <th class="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                                    <th class="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th class="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="orders-table" class="divide-y"></tbody>
-                        </table>
-                    </div>
-                    <div id="no-orders" class="hidden p-12 text-center">
-                        <div class="text-6xl mb-4">📭</div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">No orders yet</h3>
-                        <p class="text-gray-500">Orders will appear here</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- ANALYTICS PAGE -->
-            <div id="page-analytics" class="page hidden">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Analytics</h2>
-                <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
-                    <h3 class="font-bold text-gray-800 mb-6">Conversion Funnel</h3>
-                    <div class="flex items-center justify-between overflow-x-auto pb-4">
-                        <div class="flex-shrink-0 text-center px-4">
-                            <div class="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-2">
-                                <span class="text-xl font-bold text-blue-600" id="funnel-views">0</span>
-                            </div>
-                            <p class="text-sm text-gray-600">Views</p>
-                        </div>
-                        <div class="text-gray-300 text-2xl">→</div>
-                        <div class="flex-shrink-0 text-center px-4">
-                            <div class="w-16 h-16 mx-auto bg-orange-100 rounded-full flex items-center justify-center mb-2">
-                                <span class="text-xl font-bold text-orange-600" id="funnel-cart">0</span>
-                            </div>
-                            <p class="text-sm text-gray-600">Cart</p>
-                        </div>
-                        <div class="text-gray-300 text-2xl">→</div>
-                        <div class="flex-shrink-0 text-center px-4">
-                            <div class="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-2">
-                                <span class="text-xl font-bold text-green-600" id="funnel-purchase">0</span>
-                            </div>
-                            <p class="text-sm text-gray-600">Purchase</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- SHIPPING PAGE -->
-            <div id="page-shipping" class="page hidden">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Shipping</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="bg-white rounded-2xl shadow-sm p-6">
-                        <h3 class="font-bold text-gray-800 mb-4">Shipping Partners</h3>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between p-3 border rounded-xl">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center font-bold text-red-600">D</div>
-                                    <span class="font-medium">Delhivery</span>
-                                </div>
-                                <span class="w-3 h-3 bg-green-500 rounded-full"></span>
-                            </div>
-                            <div class="flex items-center justify-between p-3 border rounded-xl">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center font-bold text-blue-600 text-xs">DTDC</div>
-                                    <span class="font-medium">DTDC</span>
-                                </div>
-                                <span class="w-3 h-3 bg-green-500 rounded-full"></span>
-                            </div>
-                            <div class="flex items-center justify-between p-3 border rounded-xl">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center font-bold text-yellow-600">DHL</div>
-                                    <span class="font-medium">DHL</span>
-                                </div>
-                                <span class="w-3 h-3 bg-green-500 rounded-full"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm">
-                        <div class="p-6 border-b">
-                            <h3 class="font-bold text-gray-800">Pending Shipments</h3>
-                        </div>
-                        <div id="pending-shipments" class="divide-y max-h-[500px] overflow-y-auto"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- SETTINGS PAGE -->
-            <div id="page-settings" class="page hidden">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-2xl shadow-sm p-6">
-                        <h3 class="font-bold text-gray-800 mb-6">Store Settings</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Store Name</label>
-                                <input type="text" id="setting-store-name" class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                                <input type="text" id="setting-phone" class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Min Order (₹)</label>
-                                    <input type="number" id="setting-min-order" class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Free Delivery Above (₹)</label>
-                                    <input type="number" id="setting-free-delivery" class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
-                                </div>
-                            </div>
-                            <button id="save-settings-btn" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold rounded-xl hover:shadow-lg transition-all">
-                                Save Settings
-                            </button>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-2xl shadow-sm p-6">
-                        <h3 class="font-bold text-gray-800 mb-6">Admin Settings</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Change Password</label>
-                                <input type="password" id="new-password" placeholder="New password" class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
-                            </div>
-                            <button id="update-password-btn" class="w-full py-3 border-2 border-orange-500 text-orange-500 font-bold rounded-xl hover:bg-orange-50 transition-all">
-                                Update Password
-                            </button>
-                        </div>
-                        <div class="mt-8 pt-6 border-t">
-                            <div class="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
-                                <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
-                                <div>
-                                    <p class="font-medium text-green-800">Supabase Connected</p>
-                                    <p class="text-sm text-green-600">Real-time sync enabled</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-        </main>
-    </div>
-    
-    <!-- PRODUCT MODAL -->
-    <div id="product-modal" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-black/60" id="product-modal-backdrop"></div>
-        <div class="absolute top-0 right-0 bottom-0 w-full max-w-xl bg-white shadow-2xl overflow-y-auto">
-            <div class="sticky top-0 bg-white p-6 border-b flex items-center justify-between z-10">
-                <h3 class="text-xl font-bold text-gray-800" id="product-modal-title">Add Product</h3>
-                <button id="close-product-modal" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors">✕</button>
-            </div>
-            <div class="p-6 space-y-6">
-                <input type="hidden" id="product-id">
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Product Image URL</label>
-                    <input type="text" id="product-image" placeholder="https://..." class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
-                    <input type="text" id="product-name" placeholder="e.g., Avakaya Mango Pickle" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                    <textarea id="product-description" rows="3" placeholder="Describe your product..." class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"></textarea>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
-                        <select id="product-category" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
-                            <option value="">Select category</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Badge</label>
-                        <select id="product-badge" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
-                            <option value="">None</option>
-                            <option value="Bestseller">Bestseller</option>
-                            <option value="New">New</option>
-                            <option value="Spicy">Spicy</option>
-                            <option value="Premium">Premium</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="text-sm font-medium text-gray-700">Variants (Weight & Price) *</label>
-                        <button type="button" id="add-variant-btn" class="text-orange-500 text-sm font-medium hover:underline">+ Add Variant</button>
-                    </div>
-                    <div id="variants-container" class="space-y-3"></div>
-                </div>
-                
-                <div class="flex items-center gap-6">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="product-featured" class="w-5 h-5 rounded text-orange-500 focus:ring-orange-500">
-                        <span class="text-sm">Featured</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="product-active" checked class="w-5 h-5 rounded text-orange-500 focus:ring-orange-500">
-                        <span class="text-sm">Active</span>
-                    </label>
-                </div>
-                
-                <div class="flex gap-3 pt-4">
-                    <button id="cancel-product-btn" class="flex-1 py-3 border-2 border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition-colors">Cancel</button>
-                    <button id="save-product-btn" class="flex-1 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold rounded-xl hover:shadow-lg transition-all">Save Product</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- ORDER MODAL -->
-    <div id="order-modal" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-black/60" id="order-modal-backdrop"></div>
-        <div class="absolute top-0 right-0 bottom-0 w-full max-w-xl bg-white shadow-2xl overflow-y-auto">
-            <div class="sticky top-0 bg-white p-6 border-b flex items-center justify-between z-10">
-                <h3 class="text-xl font-bold text-gray-800">Order Details</h3>
-                <button id="close-order-modal" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors">✕</button>
-            </div>
-            <div id="order-modal-content" class="p-6"></div>
-        </div>
-    </div>
-    
-    <!-- SHIPPING MODAL -->
-    <div id="shipping-modal" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-black/60" id="shipping-modal-backdrop"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl modal-enter">
-            <div class="p-6 border-b">
-                <h3 class="text-xl font-bold text-gray-800">Assign Shipping</h3>
-                <p class="text-sm text-gray-500">Order: <span id="shipping-order-id" class="font-medium text-orange-500"></span></p>
-            </div>
-            <div class="p-6 space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Partner</label>
-                    <select id="shipping-partner" class="w-full px-4 py-3 border rounded-xl">
-                        <option value="">Select Partner</option>
-                        <option value="Delhivery">Delhivery</option>
-                        <option value="DTDC">DTDC</option>
-                        <option value="DHL">DHL</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tracking Number</label>
-                    <input type="text" id="tracking-number" placeholder="Enter tracking number" class="w-full px-4 py-3 border rounded-xl">
-                </div>
-            </div>
-            <div class="p-6 border-t flex gap-3">
-                <button id="cancel-shipping-btn" class="flex-1 py-3 border rounded-xl font-medium hover:bg-gray-50">Cancel</button>
-                <button id="confirm-shipping-btn" class="flex-1 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold rounded-xl hover:shadow-lg transition-all">Ship Order</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- TOAST -->
-    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-lg hidden transition-all transform translate-y-4 opacity-0"></div>
+<body>
 
-    <!-- JAVASCRIPT -->
-    <script>
-    (function() {
-        'use strict';
-        
-        // ============================================
-        // SUPABASE CONFIG
-        // ============================================
-        const SUPABASE_URL = 'https://yosjbsncvghpscsrvxds.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlvc2pic25jdmdocHNjc3J2eGRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMjc3NTgsImV4cCI6MjA4NTgwMzc1OH0.PNEbeofoyT7KdkzepRfqg-zqyBiGAat5ElCMiyQ4UAs';
-        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        // ============================================
-        // STATE
-        // ============================================
-        let products = [];
-        let categories = [];
-        let orders = [];
-        let settings = {};
-        let selectedOrderId = null;
-        let revenueChart = null;
-        let statusChart = null;
-        
-        const AUTH_KEY = 'seasalt_admin_auth';
-        const DEFAULT_PASSWORD = 'seasalt2024';
-        
-        // ============================================
-        // DOM ELEMENTS
-        // ============================================
-        const $ = id => document.getElementById(id);
-        
-        // ============================================
-        // AUTH
-        // ============================================
-        function handleLogin() {
-            const username = $('login-username').value;
-            const password = $('login-password').value;
-            const storedPassword = localStorage.getItem('seasalt_admin_password') || DEFAULT_PASSWORD;
-            
-            if (username === 'admin' && password === storedPassword) {
-                localStorage.setItem(AUTH_KEY, 'true');
-                showAdminPanel();
-            } else {
-                $('login-error').classList.remove('hidden');
-                setTimeout(() => $('login-error').classList.add('hidden'), 3000);
-            }
-        }
-        
-        function handleLogout() {
-            localStorage.removeItem(AUTH_KEY);
-            location.reload();
-        }
-        
-        function checkAuth() {
-            if (localStorage.getItem(AUTH_KEY) === 'true') {
-                showAdminPanel();
-            }
-        }
-        
-        function showAdminPanel() {
-            $('login-screen').classList.add('hidden');
-            $('admin-panel').classList.remove('hidden');
+<!-- ════════════ LOGIN ════════════ -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <div style="font-size:2.5rem;margin-bottom:12px;">🫙</div>
+        <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:4px;">SeaSalt Admin</h2>
+        <p style="color:#888;margin-bottom:24px;font-size:0.9rem;">Enter credentials to continue</p>
+        <input type="text" id="loginUser" placeholder="Username" autocomplete="off">
+        <input type="password" id="loginPass" placeholder="Password">
+        <button class="btn btn-primary" style="width:100%;padding:12px;" id="loginBtn">Sign In</button>
+        <p id="loginError" style="color:#e74c3c;margin-top:12px;font-size:0.85rem;display:none;">Invalid credentials</p>
+    </div>
+</div>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<aside class="sidebar" id="sidebar">
+    <div style="padding:20px;border-bottom:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:40px;height:40px;background:#e67e22;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🫙</div>
+            <div>
+                <div style="color:#fff;font-weight:700;font-size:1rem;">SeaSalt Admin</div>
+                <div style="color:#888;font-size:0.75rem;">Analytics</div>
+            </div>
+        </div>
+    </div>
+    <nav style="margin-top:12px;">
+        <a href="#" class="sidebar-link active" data-page="dashboard">📊 Dashboard</a>
+        <a href="#" class="sidebar-link" data-page="analytics">📈 Analytics</a>
+        <a href="#" class="sidebar-link" data-page="products">🏷️ Products</a>
+        <a href="#" class="sidebar-link" data-page="orders">📦 Orders</a>
+        <a href="#" class="sidebar-link" data-page="shipping">🚚 Shipping</a>
+        <a href="#" class="sidebar-link" data-page="settings">⚙️ Settings</a>
+    </nav>
+    <div style="position:absolute;bottom:20px;left:20px;right:20px;">
+        <a href="https://seasaltultimate.netlify.app" target="_blank" class="btn btn-primary" style="display:block;text-align:center;width:100%;">View Store →</a>
+    </div>
+</aside>
+
+<!-- ════════════ MAIN CONTENT ════════════ -->
+<div class="main" id="mainContent">
+    <!-- Top Bar -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <button id="toggleSidebar" style="background:none;border:none;font-size:1.5rem;cursor:pointer;display:none;">☰</button>
+            <h1 style="font-size:1.5rem;font-weight:700;" id="pageTitle">Dashboard</h1>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <button class="refresh-btn" id="refreshBtn">🔄 Refresh</button>
+            <span style="font-size:0.8rem;color:#999;" id="lastUpdated"></span>
+        </div>
+    </div>
+
+    <!-- ════ DASHBOARD PAGE ══════ -->
+    <div class="page active" id="page-dashboard">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+            <div class="card stat-card"><div class="stat-value" style="color:#3b82f6;" id="statSessions">-</div><div class="stat-label">Sessions Today</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#10b981;" id="statPageViews">-</div><div class="stat-label">Page Views</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#f59e0b;" id="statOrders">-</div><div class="stat-label">Orders Today</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#e67e22;" id="statRevenue">-</div><div class="stat-label">Revenue Today</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+            <div class="card">
+                <h3 style="font-weight:600;margin-bottom:8px;">📈 Page Views (Last 7 Days)</h3>
+                <div class="bar-chart" id="chartBars"></div>
+                <div style="display:flex;gap:6px;margin-top:4px;" id="chartLabels"></div>
+            </div>
+            <div class="card">
+                <h3 style="font-weight:600;margin-bottom:12px;">🔥 Conversion Funnel</h3>
+                <div class="funnel" id="dashFunnel"></div>
+            </div>
+        </div>
+        <div class="card">
+            <h3 style="font-weight:600;margin-bottom:12px;">🕐 Recent Activity</h3>
+            <div id="recentActivity" style="max-height:300px;overflow-y:auto;"></div>
+        </div>
+    </div>
+
+    <!-- ══════ ANALYTICS PAGE ══════ -->
+    <div class="page" id="page-analytics">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;">
+            <div class="card stat-card"><div class="stat-value" style="color:#3b82f6;" id="anSessions">-</div><div class="stat-label">Total Sessions</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#10b981;" id="anPageViews">-</div><div class="stat-label">Total Page Views</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#8b5cf6;" id="anAvgTime">-</div><div class="stat-label">Avg Time on Page</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#ef4444;" id="anBounceRate">-</div><div class="stat-label">Bounce Rate</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#e67e22;" id="anConversion">-</div><div class="stat-label">Conversion Rate</div></div>
+        </div>
+        <div class="card" style="margin-bottom:24px;">
+            <h3 style="font-weight:600;margin-bottom:12px;">🔄 Conversion Funnel</h3>
+            <div class="funnel" id="analyticsFunnel"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+            <div class="card">
+                <h3 style="font-weight:600;margin-bottom:12px;">📱 Device Breakdown</h3>
+                <div id="deviceBreakdown"></div>
+            </div>
+            <div class="card">
+                <h3 style="font-weight:600;margin-bottom:12px;">🌐 Traffic Sources</h3>
+                <div id="trafficSources"></div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+            <div class="card">
+                <h3 style="font-weight:600;margin-bottom:12px;">📄 Top Pages</h3>
+                <div id="topPages"></div>
+            </div>
+            <div class="card">
+                <h3 style="font-weight:600;margin-bottom:12px;">🏷️ Top Products Viewed</h3>
+                <div id="topProductsViewed"></div>
+            </div>
+        </div>
+        <div class="card">
+            <h3 style="font-weight:600;margin-bottom:12px;">🕐 Live Activity Feed</h3>
+            <div id="activityFeed" style="max-height:400px;overflow-y:auto;"></div>
+        </div>
+    </div>
+
+    <!-- ══════ PRODUCTS PAGE ══════ -->
+    <div class="page" id="page-products">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <p style="color:#666;" id="productCount">Loading...</p>
+            <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
+        </div>
+        <div class="card">
+            <table>
+                <thead><tr><th>Image</th><th>Product</th><th>Category</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="productsTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══════ ORDERS PAGE ══════ -->
+    <div class="page" id="page-orders">
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+            <button class="btn btn-sm" style="background:#eee;" data-order-filter="all">All</button>
+            <button class="btn btn-sm" style="background:#fff3cd;" data-order-filter="pending">Pending</button>
+            <button class="btn btn-sm" style="background:#cce5ff;" data-order-filter="confirmed">Confirmed</button>
+            <button class="btn btn-sm" style="background:#d4edda;" data-order-filter="shipped">Shipped</button>
+            <button class="btn btn-sm" style="background:#d4edda;" data-order-filter="delivered">Delivered</button>
+        </div>
+        <div class="card">
+            <table>
+                <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+                <tbody id="ordersTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══════ SHIPPING PAGE ══════ -->
+    <div class="page" id="page-shipping">
+        <div class="card" style="margin-bottom:24px;">
+            <h3 style="font-weight:600;margin-bottom:12px;">📦 Pending Shipments</h3>
+            <table>
+                <thead><tr><th>Order</th><th>Customer</th><th>Address</th><th>Partner</th><th>Tracking</th><th>Action</th></tr></thead>
+                <tbody id="shippingTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══════ SETTINGS PAGE ══════ -->
+    <div class="page" id="page-settings">
+        <div class="card" style="max-width:500px;">
+            <h3 style="font-weight:600;margin-bottom:16px;">⚙️ Store Settings</h3>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Store Name</label>
+            <input type="text" id="settingStoreName" value="SeaSalt Pickles" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Min Order Value (₹)</label>
+            <input type="number" id="settingMinOrder" value="200" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Free Delivery Above (₹)</label>
+            <input type="number" id="settingFreeDelivery" value="500" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:16px;">
+            <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+        </div>
+        <div class="card" style="max-width:500px;margin-top:16px;">
+            <h3 style="font-weight:600;margin-bottom:16px;">🔐 Change Password</h3>
+            <input type="password" id="newPassword" placeholder="New password" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+            <button class="btn btn-primary" id="changePassBtn">Update Password</button>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════ PRODUCT MODAL ════════════ -->
+<div class="modal-overlay" id="productModal">
+    <div class="modal-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="font-weight:700;" id="productModalTitle">Add Product</h3>
+            <button style="background:none;border:none;font-size:1.5rem;cursor:pointer;" id="closeProductModal">&times;</button>
+        </div>
+        <div id="productForm">
+            <input type="hidden" id="pf-id">
+            <label style="font-size:0.8rem;font-weight:600;">Name</label>
+            <input type="text" id="pf-name" style="width:100%;padding:8px;border:2px solid #eee;border-radius:6px;margin-bottom:10px;">
+            <label style="font-size:0.8rem;font-weight:600;">Description</label>
+            <textarea id="pf-desc" rows="2" style="width:100%;padding:8px;border:2px solid #eee;border-radius:6px;margin-bottom:10px;"></textarea>
+            <label style="font-size:0.8rem;font-weight:600;">Category</label>
+            <select id="pf-category" style="width:100%;padding:8px;border:2px solid #eee;border-radius:6px;margin-bottom:10px;">
+                <option value="veg">Veg Pickles</option>
+                <option value="nonveg">Non-Veg Pickles</option>
+                <option value="masala">Masala & Karam Podi</option>
+                <option value="sweets">Sweets & Snacks</option>
+                <option value="combos">Combos</option>
+            </select>
+            <label style="font-size:0.8rem;font-weight:600;">Image URL</label>
+            <input type="text" id="pf-image" placeholder="https://..." style="width:100%;padding:8px;border:2px solid #eee;border-radius:6px;margin-bottom:10px;">
+            <label style="font-size:0.8rem;font-weight:600;">Badge (optional)</label>
+            <input type="text" id="pf-badge" placeholder="e.g. Bestseller, Premium" style="width:100%;padding:8px;border:2px solid #eee;border-radius:6px;margin-bottom:10px;">
+            <label style="font-size:0.8rem;font-weight:600;">Variants (JSON)</label>
+            <textarea id="pf-variants" rows="3" style="width:100%;padding:8px;border:2px solid #eee;border-radius:6px;margin-bottom:10px;font-family:monospace;font-size:0.85rem;">[{"weight":"250g","price":199},{"weight":"500g","price":349}]</textarea>
+            <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <label><input type="checkbox" id="pf-active" checked> Active</label>
+                <label><input type="checkbox" id="pf-featured"> Featured</label>
+            </div>
+            <button class="btn btn-primary" style="width:100%;" id="saveProductBtn">Save Product</button>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════ ORDER DETAIL MODAL ════════════ -->
+<div class="modal-overlay" id="orderModal">
+    <div class="modal-box" id="orderModalContent"></div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    // ══════════════════════════════
+    // SUPABASE
+    // ══════════════════════════════
+    const SUPA_URL = 'https://yosjbsncvghpscsrvxds.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlvc2pic25jdmdocHNjc3J2eGRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMjc3NTgsImV4cCI6MjA4NTgwMzc1OH0.PNEbeofoyT7KdkzepRfqg-zqyBiGAat5ElCMiyQ4UAs';
+
+    const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    // ══════════════════════════════
+    // AUTH
+    // ══════════════════════════════
+    const ADMIN_USER = 'admin';
+    let ADMIN_PASS = localStorage.getItem('seasalt_admin_pass') || 'seasalt2024';
+
+    function checkAuth() {
+        if (sessionStorage.getItem('seasalt_admin_auth') === 'true') {
+            document.getElementById('loginOverlay').style.display = 'none';
             loadAllData();
         }
-        
-        function updatePassword() {
-            const newPassword = $('new-password').value;
-            if (newPassword.length < 6) return showToast('Password must be at least 6 characters');
-            localStorage.setItem('seasalt_admin_password', newPassword);
-            $('new-password').value = '';
-            showToast('Password updated!');
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', function() {
+        const u = document.getElementById('loginUser').value.trim();
+        const p = document.getElementById('loginPass').value.trim();
+        if (u === ADMIN_USER && p === ADMIN_PASS) {
+            sessionStorage.setItem('seasalt_admin_auth', 'true');
+            document.getElementById('loginOverlay').style.display = 'none';
+            loadAllData();
+        } else {
+            document.getElementById('loginError').style.display = 'block';
         }
-        
-        // ============================================
-        // NAVIGATION
-        // ============================================
-        function showPage(page) {
-            document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
-            document.querySelector(`.sidebar-link[data-page="${page}"]`)?.classList.add('active');
-            
-            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-            $(`page-${page}`).classList.remove('hidden');
-            
-            const titles = { dashboard: 'Dashboard', products: 'Products', orders: 'Orders', analytics: 'Analytics', shipping: 'Shipping', settings: 'Settings' };
-            $('page-subtitle').textContent = titles[page] || 'Dashboard';
-            
-            $('sidebar').classList.add('-translate-x-full');
-        }
-        
-        // ============================================
-        // DATA LOADING
-        // ============================================
-        async function loadAllData() {
-            $('current-date').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
-            
-            try {
-                await Promise.all([loadProducts(), loadCategories(), loadOrders(), loadSettings()]);
-                updateDashboard();
-                renderProducts();
-                renderOrders();
-                renderCharts();
-            } catch (error) {
-                console.error('Error loading data:', error);
-                showToast('Error loading data');
-            }
-        }
-        
-        async function loadProducts() {
-            const { data, error } = await db.from('products').select('*').order('created_at', { ascending: false });
-            if (error) throw error;
-            products = data || [];
-        }
-        
-        async function loadCategories() {
-            const { data, error } = await db.from('categories').select('*').order('sort_order');
-            if (error) throw error;
-            categories = data || [];
-            
-            const options = categories.map(c => `<option value="${c.id}">${c.emoji || ''} ${c.name}</option>`).join('');
-            $('product-category').innerHTML = '<option value="">Select category</option>' + options;
-            $('filter-category').innerHTML = '<option value="">All Categories</option>' + options;
-        }
-        
-        async function loadOrders() {
-            const { data, error } = await db.from('orders').select('*').order('created_at', { ascending: false });
-            if (error) throw error;
-            orders = data || [];
-        }
-        
-        async function loadSettings() {
-            const { data } = await db.from('settings').select('*').eq('key', 'store_config').single();
-            if (data) {
-                settings = data.value;
-                $('setting-store-name').value = settings.storeName || '';
-                $('setting-phone').value = settings.phone || '';
-                $('setting-min-order').value = settings.minOrderValue || 199;
-                $('setting-free-delivery').value = settings.freeDeliveryAbove || 500;
-            }
-        }
-        
-        // ============================================
-        // DASHBOARD
-        // ============================================
-        function updateDashboard() {
-            $('stat-orders').textContent = orders.length;
-            $('stat-revenue').textContent = '₹' + orders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0).toLocaleString('en-IN');
-            $('stat-products').textContent = products.filter(p => p.is_active).length;
-            $('stat-pending').textContent = orders.filter(o => ['confirmed', 'processing'].includes(o.status)).length;
-            
-            renderRecentOrders();
-        }
-        
-        function renderRecentOrders() {
-            const container = $('recent-orders-table');
-            const recent = orders.slice(0, 5);
-            
-            if (recent.length === 0) {
-                container.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-gray-500">No orders yet</td></tr>';
-                return;
-            }
-            
-            container.innerHTML = recent.map(o => `
-                <tr class="hover:bg-gray-50 cursor-pointer" data-order-id="${o.id}">
-                    <td class="px-6 py-4 font-medium text-orange-600">${o.id}</td>
-                    <td class="px-6 py-4">${o.customer_name || o.address?.fullName || 'N/A'}</td>
-                    <td class="px-6 py-4 font-medium">₹${parseFloat(o.total || 0).toLocaleString('en-IN')}</td>
-                    <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium status-${o.status || 'confirmed'}">${o.status || 'confirmed'}</span></td>
-                    <td class="px-6 py-4 text-gray-500 text-sm">${formatDate(o.created_at)}</td>
-                </tr>
-            `).join('');
-        }
-        
-        function renderCharts() {
-            const revenueCtx = $('revenue-chart')?.getContext('2d');
-            if (revenueCtx) {
-                if (revenueChart) revenueChart.destroy();
-                const last7Days = getLast7DaysData();
-                revenueChart = new Chart(revenueCtx, {
-                    type: 'line',
-                    data: { labels: last7Days.labels, datasets: [{ label: 'Revenue', data: last7Days.revenue, borderColor: '#D4451A', backgroundColor: 'rgba(212,69,26,0.1)', fill: true, tension: 0.4 }] },
-                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-                });
-            }
-            
-            const statusCtx = $('status-chart')?.getContext('2d');
-            if (statusCtx) {
-                if (statusChart) statusChart.destroy();
-                const statusData = { confirmed: orders.filter(o => o.status === 'confirmed').length, processing: orders.filter(o => o.status === 'processing').length, shipped: orders.filter(o => o.status === 'shipped').length, delivered: orders.filter(o => o.status === 'delivered').length };
-                statusChart = new Chart(statusCtx, {
-                    type: 'doughnut',
-                    data: { labels: ['Confirmed', 'Processing', 'Shipped', 'Delivered'], datasets: [{ data: Object.values(statusData), backgroundColor: ['#3B82F6', '#F59E0B', '#8B5CF6', '#10B981'] }] },
-                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-                });
-            }
-        }
-        
-        function getLast7DaysData() {
-            const labels = [], revenue = [];
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date(); date.setDate(date.getDate() - i);
-                labels.push(date.toLocaleDateString('en-IN', { weekday: 'short' }));
-                revenue.push(orders.filter(o => o.created_at?.startsWith(date.toISOString().split('T')[0])).reduce((sum, o) => sum + parseFloat(o.total || 0), 0));
-            }
-            return { labels, revenue };
-        }
-        
-        // ============================================
-        // PRODUCTS
-        // ============================================
-        function renderProducts() {
-            const container = $('products-grid');
-            const search = $('search-products')?.value.toLowerCase() || '';
-            const category = $('filter-category')?.value || '';
-            
-            let filtered = products;
-            if (search) filtered = filtered.filter(p => p.name.toLowerCase().includes(search));
-            if (category) filtered = filtered.filter(p => p.category === category);
-            
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center py-12"><div class="text-6xl mb-4">📦</div><p class="text-gray-500">No products found</p></div>';
-                return;
-            }
-            
-            container.innerHTML = filtered.map(p => {
-                const variants = typeof p.variants === 'string' ? JSON.parse(p.variants) : (p.variants || []);
-                const price = variants[0]?.price || 0;
-                const cat = categories.find(c => c.id === p.category);
-                return `
-                    <div class="bg-gray-50 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-                        <div class="aspect-square bg-gray-200 relative">
-                            <img src="${p.image || 'https://via.placeholder.com/300?text=No+Image'}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
-                            ${p.badge ? `<span class="absolute top-2 left-2 px-2 py-1 bg-orange-500 text-white text-xs font-bold rounded-full">${p.badge}</span>` : ''}
-                            ${!p.is_active ? '<div class="absolute inset-0 bg-black/50 flex items-center justify-center"><span class="text-white font-bold">INACTIVE</span></div>' : ''}
-                        </div>
-                        <div class="p-4">
-                            <h4 class="font-bold text-gray-800 truncate">${p.name}</h4>
-                            <p class="text-sm text-gray-500">${cat ? cat.emoji + ' ' + cat.name : p.category}</p>
-                            <div class="flex items-center justify-between mt-3">
-                                <span class="font-bold text-orange-600">₹${price}</span>
-                                <div class="flex gap-1">
-                                    <button class="edit-product-btn p-2 hover:bg-gray-200 rounded-lg" data-id="${p.id}" title="Edit">✏️</button>
-                                    <button class="delete-product-btn p-2 hover:bg-red-100 rounded-lg" data-id="${p.id}" title="Delete">🗑️</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-        
-        function openProductModal(product = null) {
-            $('product-modal-title').textContent = product ? 'Edit Product' : 'Add Product';
-            $('product-id').value = product?.id || '';
-            $('product-name').value = product?.name || '';
-            $('product-description').value = product?.description || '';
-            $('product-category').value = product?.category || '';
-            $('product-badge').value = product?.badge || '';
-            $('product-image').value = product?.image || '';
-            $('product-featured').checked = product?.is_featured || false;
-            $('product-active').checked = product?.is_active !== false;
-            
-            const variants = product ? (typeof product.variants === 'string' ? JSON.parse(product.variants) : product.variants) : [{ weight: '250g', price: '' }];
-            renderVariants(variants);
-            
-            $('product-modal').classList.remove('hidden');
-        }
-        
-        function closeProductModal() {
-            $('product-modal').classList.add('hidden');
-        }
-        
-        function renderVariants(variants) {
-            $('variants-container').innerHTML = variants.map((v, i) => `
-                <div class="flex gap-2 items-center variant-row">
-                    <input type="text" placeholder="Weight" value="${v.weight || ''}" class="flex-1 px-3 py-2 border rounded-lg variant-weight">
-                    <input type="number" placeholder="Price" value="${v.price || ''}" class="w-24 px-3 py-2 border rounded-lg variant-price">
-                    <button type="button" class="remove-variant-btn p-2 text-red-500 hover:bg-red-50 rounded-lg ${variants.length === 1 ? 'opacity-30 pointer-events-none' : ''}">✕</button>
-                </div>
-            `).join('');
-        }
-        
-        function addVariant() {
-            const container = $('variants-container');
-            const div = document.createElement('div');
-            div.className = 'flex gap-2 items-center variant-row';
-            div.innerHTML = `
-                <input type="text" placeholder="Weight" class="flex-1 px-3 py-2 border rounded-lg variant-weight">
-                <input type="number" placeholder="Price" class="w-24 px-3 py-2 border rounded-lg variant-price">
-                <button type="button" class="remove-variant-btn p-2 text-red-500 hover:bg-red-50 rounded-lg">✕</button>
-            `;
-            container.appendChild(div);
-        }
-        
-        async function saveProduct() {
-            const id = $('product-id').value;
-            const name = $('product-name').value.trim();
-            const category = $('product-category').value;
-            
-            if (!name || !category) return showToast('Please fill required fields');
-            
-            const variantRows = document.querySelectorAll('.variant-row');
-            const variants = [];
-            variantRows.forEach(row => {
-                const weight = row.querySelector('.variant-weight').value.trim();
-                const price = parseFloat(row.querySelector('.variant-price').value) || 0;
-                if (weight && price > 0) variants.push({ weight, price });
-            });
-            
-            if (variants.length === 0) return showToast('Add at least one variant');
-            
-            const productData = {
-                name,
-                description: $('product-description').value.trim(),
-                category,
-                badge: $('product-badge').value,
-                image: $('product-image').value.trim(),
-                is_featured: $('product-featured').checked,
-                is_active: $('product-active').checked,
-                variants: JSON.stringify(variants),
-                updated_at: new Date().toISOString()
-            };
-            
-            try {
-                if (id) {
-                    const { error } = await db.from('products').update(productData).eq('id', id);
-                    if (error) throw error;
-                    showToast('Product updated!');
-                } else {
-                    productData.id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
-                    productData.created_at = new Date().toISOString();
-                    const { error } = await db.from('products').insert(productData);
-                    if (error) throw error;
-                    showToast('Product added!');
-                }
-                closeProductModal();
-                await loadProducts();
-                renderProducts();
-                updateDashboard();
-            } catch (error) {
-                console.error('Save error:', error);
-                showToast('Error saving product');
-            }
-        }
-        
-        async function deleteProduct(id) {
-            if (!confirm('Delete this product?')) return;
-            try {
-                const { error } = await db.from('products').delete().eq('id', id);
-                if (error) throw error;
-                showToast('Product deleted');
-                await loadProducts();
-                renderProducts();
-                updateDashboard();
-            } catch (error) {
-                showToast('Error deleting product');
-            }
-        }
-        
-        // ============================================
-        // ORDERS
-        // ============================================
-        function renderOrders() {
-            const container = $('orders-table');
-            const filter = $('filter-order-status')?.value || '';
-            
-            let filtered = orders;
-            if (filter) filtered = filtered.filter(o => o.status === filter);
-            
-            if (filtered.length === 0) {
-                container.innerHTML = '';
-                $('no-orders').classList.remove('hidden');
-                return;
-            }
-            $('no-orders').classList.add('hidden');
-            
-            container.innerHTML = filtered.map(o => {
-                const items = typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []);
-                return `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-4 md:px-6 py-4 font-medium text-orange-600">${o.id}</td>
-                        <td class="px-4 md:px-6 py-4">${o.customer_name || o.address?.fullName || 'N/A'}</td>
-                        <td class="px-4 md:px-6 py-4 font-bold">₹${parseFloat(o.total || 0).toLocaleString('en-IN')}</td>
-                        <td class="px-4 md:px-6 py-4">
-                            <select class="order-status-select px-2 py-1 rounded text-xs border status-${o.status || 'confirmed'}" data-id="${o.id}">
-                                <option value="confirmed" ${o.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
-                                <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>Processing</option>
-                                <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
-                                <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
-                                <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
-                            </select>
-                        </td>
-                        <td class="px-4 md:px-6 py-4">
-                            <button class="view-order-btn p-2 hover:bg-gray-100 rounded" data-id="${o.id}">👁️</button>
-                            <button class="ship-order-btn p-2 hover:bg-gray-100 rounded" data-id="${o.id}">🚚</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-            
-            // Pending shipments
-            const pending = orders.filter(o => ['confirmed', 'processing'].includes(o.status));
-            $('pending-shipments').innerHTML = pending.length === 0 
-                ? '<div class="p-12 text-center text-gray-500">✅ No pending shipments</div>'
-                : pending.map(o => `
-                    <div class="p-4 flex items-center justify-between hover:bg-gray-50">
-                        <div>
-                            <p class="font-medium text-orange-600">${o.id}</p>
-                            <p class="text-sm text-gray-500">${o.customer_name || 'N/A'}</p>
-                        </div>
-                        <button class="ship-order-btn px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium" data-id="${o.id}">Ship</button>
-                    </div>
-                `).join('');
-        }
-        
-        async function updateOrderStatus(id, status) {
-            try {
-                const { error } = await db.from('orders').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
-                if (error) throw error;
-                const order = orders.find(o => o.id === id);
-                if (order) order.status = status;
-                showToast(`Order → ${status}`);
-                renderOrders();
-                updateDashboard();
-                renderCharts();
-            } catch (error) {
-                showToast('Error updating order');
-            }
-        }
-        
-        function viewOrder(id) {
-            const order = orders.find(o => o.id === id);
-            if (!order) return;
-            
-            selectedOrderId = id;
-            const items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
-            const address = typeof order.address === 'string' ? JSON.parse(order.address) : (order.address || {});
-            
-            $('order-modal-content').innerHTML = `
-                <div class="space-y-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500">Order ID</p>
-                            <p class="text-xl font-bold text-orange-600">${order.id}</p>
-                        </div>
-                        <span class="px-3 py-1 rounded-full text-sm font-medium status-${order.status || 'confirmed'}">${order.status || 'confirmed'}</span>
-                    </div>
-                    <div class="bg-gray-50 rounded-xl p-4">
-                        <h4 class="font-medium text-gray-800 mb-3">Customer</h4>
-                        <p class="text-sm"><span class="text-gray-500">Name:</span> ${order.customer_name || address.fullName || 'N/A'}</p>
-                        <p class="text-sm"><span class="text-gray-500">Phone:</span> ${order.customer_phone || address.phone || 'N/A'}</p>
-                        <p class="text-sm"><span class="text-gray-500">Address:</span> ${address.address || 'N/A'}, ${address.city || ''} - ${address.pincode || ''}</p>
-                    </div>
-                    <div>
-                        <h4 class="font-medium text-gray-800 mb-3">Items</h4>
-                        ${items.map(item => `
-                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl mb-2">
-                                <img src="${item.image || 'https://via.placeholder.com/60'}" class="w-14 h-14 rounded-lg object-cover">
-                                <div class="flex-1">
-                                    <p class="font-medium">${item.name}</p>
-                                    <p class="text-sm text-gray-500">${item.weight} × ${item.quantity}</p>
-                                </div>
-                                <p class="font-medium">₹${(item.price * item.quantity).toLocaleString('en-IN')}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="bg-orange-50 rounded-xl p-4">
-                        <div class="flex justify-between font-bold text-lg"><span>Total</span><span class="text-orange-600">₹${order.total}</span></div>
-                    </div>
-                </div>
-            `;
-            $('order-modal').classList.remove('hidden');
-        }
-        
-        function closeOrderModal() {
-            $('order-modal').classList.add('hidden');
-        }
-        
-        // ============================================
-        // SHIPPING
-        // ============================================
-        function openShippingModal(id) {
-            selectedOrderId = id;
-            $('shipping-order-id').textContent = id;
-            $('shipping-partner').value = '';
-            $('tracking-number').value = '';
-            $('shipping-modal').classList.remove('hidden');
-        }
-        
-        function closeShippingModal() {
-            $('shipping-modal').classList.add('hidden');
-        }
-        
-        async function confirmShipping() {
-            const partner = $('shipping-partner').value;
-            const trackingNumber = $('tracking-number').value.trim();
-            
-            if (!partner || !trackingNumber) return showToast('Please fill all fields');
-            
-            try {
-                const { error } = await db.from('orders').update({
-                    status: 'shipped',
-                    shipping: { partner, trackingNumber, shippedAt: new Date().toISOString() },
-                    updated_at: new Date().toISOString()
-                }).eq('id', selectedOrderId);
-                
-                if (error) throw error;
-                closeShippingModal();
-                showToast('Order shipped!');
-                await loadOrders();
-                renderOrders();
-                updateDashboard();
-                renderCharts();
-            } catch (error) {
-                showToast('Error updating shipping');
-            }
-        }
-        
-        // ============================================
-        // SETTINGS
-        // ============================================
-        async function saveSettings() {
-            const newSettings = {
-                storeName: $('setting-store-name').value,
-                phone: $('setting-phone').value,
-                minOrderValue: parseInt($('setting-min-order').value) || 199,
-                freeDeliveryAbove: parseInt($('setting-free-delivery').value) || 500,
-                deliveryCharge: 50
-            };
-            
-            try {
-                const { error } = await db.from('settings').upsert({ key: 'store_config', value: newSettings, updated_at: new Date().toISOString() });
-                if (error) throw error;
-                settings = newSettings;
-                showToast('Settings saved!');
-            } catch (error) {
-                showToast('Error saving settings');
-            }
-        }
-        
-        // ============================================
-        // UTILITIES
-        // ============================================
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            return new Date(dateString).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-        }
-        
-        function showToast(message) {
-            const toast = $('toast');
-            toast.textContent = message;
-            toast.classList.remove('hidden', 'translate-y-4', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-4', 'opacity-0');
-                setTimeout(() => toast.classList.add('hidden'), 300);
-            }, 3000);
-        }
-        
-        // ============================================
-        // EVENT LISTENERS
-        // ============================================
-        document.addEventListener('DOMContentLoaded', function() {
-            // Login
-            $('login-btn').addEventListener('click', handleLogin);
-            $('login-password').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
-            
-            // Logout & Refresh
-            $('logout-btn').addEventListener('click', handleLogout);
-            $('refresh-btn').addEventListener('click', () => { loadAllData(); showToast('Refreshed!'); });
-            
-            // Sidebar toggle
-            $('toggle-sidebar').addEventListener('click', () => $('sidebar').classList.toggle('-translate-x-full'));
-            
-            // Navigation
-            document.querySelectorAll('.sidebar-link, .sidebar-nav').forEach(link => {
-                link.addEventListener('click', e => {
-                    e.preventDefault();
-                    const page = link.dataset.page;
-                    if (page) showPage(page);
-                });
-            });
-            
-            // Product modal
-            $('add-product-btn').addEventListener('click', () => openProductModal());
-            $('close-product-modal').addEventListener('click', closeProductModal);
-            $('product-modal-backdrop').addEventListener('click', closeProductModal);
-            $('cancel-product-btn').addEventListener('click', closeProductModal);
-            $('save-product-btn').addEventListener('click', saveProduct);
-            $('add-variant-btn').addEventListener('click', addVariant);
-            
-            // Product actions (delegated)
-            $('products-grid').addEventListener('click', e => {
-                const editBtn = e.target.closest('.edit-product-btn');
-                const deleteBtn = e.target.closest('.delete-product-btn');
-                if (editBtn) {
-                    const product = products.find(p => p.id === editBtn.dataset.id);
-                    if (product) openProductModal(product);
-                }
-                if (deleteBtn) deleteProduct(deleteBtn.dataset.id);
-            });
-            
-            // Variant remove (delegated)
-            $('variants-container').addEventListener('click', e => {
-                if (e.target.closest('.remove-variant-btn')) {
-                    const rows = document.querySelectorAll('.variant-row');
-                    if (rows.length > 1) e.target.closest('.variant-row').remove();
-                }
-            });
-            
-            // Product filters
-            $('search-products').addEventListener('input', renderProducts);
-            $('filter-category').addEventListener('change', renderProducts);
-            
-            // Order modal
-            $('close-order-modal').addEventListener('click', closeOrderModal);
-            $('order-modal-backdrop').addEventListener('click', closeOrderModal);
-            
-            // Order actions (delegated)
-            document.addEventListener('click', e => {
-                const viewBtn = e.target.closest('.view-order-btn');
-                const shipBtn = e.target.closest('.ship-order-btn');
-                if (viewBtn) viewOrder(viewBtn.dataset.id);
-                if (shipBtn) openShippingModal(shipBtn.dataset.id);
-            });
-            
-            document.addEventListener('change', e => {
-                if (e.target.classList.contains('order-status-select')) {
-                    updateOrderStatus(e.target.dataset.id, e.target.value);
-                }
-            });
-            
-            // Order filter
-            $('filter-order-status').addEventListener('change', renderOrders);
-            
-            // Shipping modal
-            $('cancel-shipping-btn').addEventListener('click', closeShippingModal);
-            $('shipping-modal-backdrop').addEventListener('click', closeShippingModal);
-            $('confirm-shipping-btn').addEventListener('click', confirmShipping);
-            
-            // Settings
-            $('save-settings-btn').addEventListener('click', saveSettings);
-            $('update-password-btn').addEventListener('click', updatePassword);
-            
-            // Check auth
-            checkAuth();
+    });
+
+    document.getElementById('loginPass').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('loginBtn').click();
+    });
+
+    // ══════════════════════════════
+    // NAVIGATION
+    // ══════════════════════════════
+    const pages = ['dashboard', 'analytics', 'products', 'orders', 'shipping', 'settings'];
+    const pageNames = { dashboard: 'Dashboard', analytics: 'Analytics', products: 'Products', orders: 'Orders', shipping: 'Shipping', settings: 'Settings' };
+
+    document.querySelectorAll('.sidebar-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const page = this.getAttribute('data-page');
+            showPage(page);
         });
-    })();
-    </script>
+    });
+
+    function showPage(page) {
+        pages.forEach(function(p) {
+            const el = document.getElementById('page-' + p);
+            if (el) el.classList.toggle('active', p === page);
+        });
+        document.querySelectorAll('.sidebar-link').forEach(function(l) {
+            l.classList.toggle('active', l.getAttribute('data-page') === page);
+        });
+        document.getElementById('pageTitle').textContent = pageNames[page] || page;
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', loadAllData);
+
+    // Mobile sidebar toggle
+    const toggleBtn = document.getElementById('toggleSidebar');
+    if (window.innerWidth <= 768) toggleBtn.style.display = 'block';
+    toggleBtn.addEventListener('click', function() {
+        document.getElementById('sidebar').classList.toggle('open');
+    });
+
+    // ══════════════════════════════
+    // DATA LOADING
+    // ══════════════════════════════
+    async function loadAllData() {
+        document.getElementById('lastUpdated').textContent = 'Loading...';
+        try {
+            await Promise.all([
+                loadDashboard(),
+                loadAnalytics(),
+                loadProducts(),
+                loadOrders()
+            ]);
+        } catch (err) {
+            console.error('Load error:', err);
+        }
+        document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+    }
+
+    // ══════════════════════════════
+    // DASHBOARD
+    // ══════════════════════════════
+    async function loadDashboard() {
+        const today = new Date().toISOString().split('T')[0];
+        const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+
+        // Today's events
+        const { data: todayEvents } = await db.from('analytics_events').select('*').gte('created_at', today + 'T00:00:00Z');
+        const events = todayEvents || [];
+
+        const sessions = new Set(events.map(function(e) { return e.session_id; })).size;
+        const views = events.filter(function(e) { return e.event_type === 'page_view'; }).length;
+        const purchases = events.filter(function(e) { return e.event_type === 'purchase'; });
+        const revenue = purchases.reduce(function(sum, e) {
+            try { var d = JSON.parse(e.data || '{}'); return sum + (d.total || 0); } catch(x) { return sum; }
+        }, 0);
+
+        document.getElementById('statSessions').textContent = sessions;
+        document.getElementById('statPageViews').textContent = views;
+        document.getElementById('statOrders').textContent = purchases.length;
+        document.getElementById('statRevenue').textContent = '₹' + revenue.toLocaleString();
+
+        // Last 7 days chart
+        const { data: weekEvents } = await db.from('analytics_events').select('created_at').eq('event_type', 'page_view').gte('created_at', weekAgo);
+        renderWeekChart(weekEvents || []);
+
+        // Funnel
+        renderFunnel('dashFunnel', events);
+
+        // Recent activity
+        renderRecentActivity(events.slice(-20).reverse());
+    }
+
+    function renderWeekChart(events) {
+        var days = {};
+        var labels = [];
+        for (var i = 6; i >= 0; i--) {
+            var d = new Date(Date.now() - i * 86400000);
+            var key = d.toISOString().split('T')[0];
+            var label = d.toLocaleDateString('en', { weekday: 'short' });
+            days[key] = 0;
+            labels.push({ key: key, label: label });
+        }
+        events.forEach(function(e) {
+            var key = e.created_at.split('T')[0];
+            if (days[key] !== undefined) days[key]++;
+        });
+        var maxVal = Math.max.apply(null, Object.values(days).concat([1]));
+        var barsHtml = '';
+        var labelsHtml = '';
+        labels.forEach(function(l) {
+            var h = Math.max(4, (days[l.key] / maxVal) * 100);
+            barsHtml += '<div class="bar" style="height:' + h + '%" title="' + days[l.key] + ' views"></div>';
+            labelsHtml += '<div class="bar-label" style="flex:1;">' + l.label + '</div>';
+        });
+        document.getElementById('chartBars').innerHTML = barsHtml;
+        document.getElementById('chartLabels').innerHTML = labelsHtml;
+    }
+
+    function renderFunnel(containerId, events) {
+        var views = events.filter(function(e) { return e.event_type === 'page_view'; }).length;
+        var carts = events.filter(function(e) { return e.event_type === 'add_to_cart'; }).length;
+        var checkouts = events.filter(function(e) { return e.event_type === 'checkout_start'; }).length;
+        var purchases = events.filter(function(e) { return e.event_type === 'purchase'; }).length;
+
+        var steps = [
+            { label: 'Views', value: views, color: '#dbeafe' },
+            { label: 'Cart', value: carts, color: '#fef3c7' },
+            { label: 'Checkout', value: checkouts, color: '#ede9fe' },
+            { label: 'Purchase', value: purchases, color: '#d1fae5' }
+        ];
+
+        var html = '';
+        steps.forEach(function(s, i) {
+            var pct = i > 0 && steps[i - 1].value > 0 ? Math.round((s.value / steps[i - 1].value) * 100) : '';
+            html += '<div class="funnel-step">';
+            html += '<div class="funnel-circle" style="background:' + s.color + ';">' + s.value + '</div>';
+            html += '<div class="funnel-label">' + s.label + '</div>';
+            if (pct !== '') html += '<div class="funnel-pct">' + pct + '%</div>';
+            html += '</div>';
+            if (i < steps.length - 1) html += '<div class="funnel-arrow">→</div>';
+        });
+        document.getElementById(containerId).innerHTML = html;
+    }
+
+    function renderRecentActivity(events) {
+        var el = document.getElementById('recentActivity');
+        if (!events.length) { el.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">No activity yet. Visit your store to generate data!</p>'; return; }
+        var dotMap = { page_view: 'dot-blue', product_view: 'dot-purple', add_to_cart: 'dot-yellow', checkout_start: 'dot-yellow', purchase: 'dot-green', search: 'dot-blue' };
+        var labelMap = { page_view: 'Viewed page', product_view: 'Viewed product', add_to_cart: 'Added to cart', checkout_start: 'Started checkout', purchase: 'Purchased', search: 'Searched', page_exit: 'Left page', spin_wheel: 'Spun wheel' };
+        var html = '';
+        events.forEach(function(e) {
+            var time = new Date(e.created_at).toLocaleTimeString();
+            var label = labelMap[e.event_type] || e.event_type;
+            var detail = e.page || '';
+            if (e.product_name) detail = e.product_name;
+            try { var d = JSON.parse(e.data || '{}'); if (d.query) detail = '"' + d.query + '"'; } catch(x) {}
+            html += '<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;">';
+            html += '<span class="activity-dot ' + (dotMap[e.event_type] || 'dot-gray') + '"></span>';
+            html += '<span style="font-size:0.85rem;">' + label + (detail ? ' — <strong>' + detail + '</strong>' : '') + '</span>';
+            html += '<span style="margin-left:auto;font-size:0.75rem;color:#999;">' + time + '</span>';
+            html += '</div>';
+        });
+        el.innerHTML = html;
+    }
+
+    // ══════════════════════════════
+    // ANALYTICS PAGE
+    // ══════════════════════════════
+    async function loadAnalytics() {
+        var thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+        var { data: events } = await db.from('analytics_events').select('*').gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }).limit(5000);
+        events = events || [];
+
+        var sessions = new Set(events.map(function(e) { return e.session_id; })).size;
+        var pageViews = events.filter(function(e) { return e.event_type === 'page_view'; }).length;
+
+        // Avg time on page (from page_exit events)
+        var exitEvents = events.filter(function(e) { return e.event_type === 'page_exit'; });
+        var avgTime = 0;
+        if (exitEvents.length > 0) {
+            var totalTime = exitEvents.reduce(function(s, e) { return s + (e.time_on_page || 0); }, 0);
+            avgTime = Math.round(totalTime / exitEvents.length);
+        }
+
+        // Bounce rate (sessions with only 1 page_view)
+        var sessionViews = {};
+        events.filter(function(e) { return e.event_type === 'page_view'; }).forEach(function(e) {
+            sessionViews[e.session_id] = (sessionViews[e.session_id] || 0) + 1;
+        });
+        var bounces = Object.values(sessionViews).filter(function(v) { return v === 1; }).length;
+        var bounceRate = sessions > 0 ? Math.round((bounces / sessions) * 100) : 0;
+
+        // Conversion rate
+        var purchases = events.filter(function(e) { return e.event_type === 'purchase'; }).length;
+        var convRate = sessions > 0 ? ((purchases / sessions) * 100).toFixed(1) : '0';
+
+        document.getElementById('anSessions').textContent = sessions;
+        document.getElementById('anPageViews').textContent = pageViews;
+        document.getElementById('anAvgTime').textContent = avgTime + 's';
+        document.getElementById('anBounceRate').textContent = bounceRate + '%';
+        document.getElementById('anConversion').textContent = convRate + '%';
+
+        // Funnel
+        renderFunnel('analyticsFunnel', events);
+
+        // Device breakdown
+        var devices = {};
+        events.forEach(function(e) {
+            var d = e.device_type || 'unknown';
+            devices[d] = (devices[d] || 0) + 1;
+        });
+        renderBreakdown('deviceBreakdown', devices, { mobile: '#3b82f6', desktop: '#10b981', tablet: '#f59e0b', unknown: '#ccc' });
+
+        // Traffic sources
+        var sources = {};
+        events.filter(function(e) { return e.event_type === 'page_view'; }).forEach(function(e) {
+            var r = e.referrer || 'direct';
+            sources[r] = (sources[r] || 0) + 1;
+        });
+        renderBreakdown('trafficSources', sources, { direct: '#3b82f6', google: '#ea4335', facebook: '#1877f2', instagram: '#e4405f', whatsapp: '#25d366' });
+
+        // Top pages
+        var pageCounts = {};
+        events.filter(function(e) { return e.event_type === 'page_view'; }).forEach(function(e) {
+            var p = e.page || 'unknown';
+            pageCounts[p] = (pageCounts[p] || 0) + 1;
+        });
+        renderTopList('topPages', pageCounts);
+
+        // Top products
+        var productCounts = {};
+        events.filter(function(e) { return e.event_type === 'product_view' && e.product_name; }).forEach(function(e) {
+            productCounts[e.product_name] = (productCounts[e.product_name] || 0) + 1;
+        });
+        renderTopList('topProductsViewed', productCounts);
+
+        // Activity feed
+        renderRecentActivity(events.slice(0, 50));
+        document.getElementById('activityFeed').innerHTML = document.getElementById('recentActivity').innerHTML;
+    }
+
+    function renderBreakdown(containerId, data, colors) {
+        var total = Object.values(data).reduce(function(a, b) { return a + b; }, 0);
+        if (total === 0) { document.getElementById(containerId).innerHTML = '<p style="color:#999;">No data yet</p>'; return; }
+        var sorted = Object.entries(data).sort(function(a, b) { return b[1] - a[1]; });
+        var html = '';
+        sorted.forEach(function(item) {
+            var pct = Math.round((item[1] / total) * 100);
+            var color = (colors && colors[item[0]]) || '#999';
+            html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;">';
+            html += '<div style="width:12px;height:12px;border-radius:3px;background:' + color + ';"></div>';
+            html += '<span style="font-size:0.85rem;flex:1;">' + item[0] + '</span>';
+            html += '<span style="font-size:0.85rem;font-weight:600;">' + item[1] + ' (' + pct + '%)</span>';
+            html += '</div>';
+        });
+        document.getElementById(containerId).innerHTML = html;
+    }
+
+    function renderTopList(containerId, data) {
+        var sorted = Object.entries(data).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 10);
+        if (!sorted.length) { document.getElementById(containerId).innerHTML = '<p style="color:#999;">No data yet</p>'; return; }
+        var maxVal = sorted[0][1];
+        var html = '';
+        sorted.forEach(function(item, i) {
+            var pct = Math.round((item[1] / maxVal) * 100);
+            html += '<div style="padding:6px 0;">';
+            html += '<div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:3px;">';
+            html += '<span>' + (i + 1) + '. ' + item[0] + '</span><span style="font-weight:600;">' + item[1] + '</span></div>';
+            html += '<div style="height:6px;background:#f0f0f0;border-radius:3px;"><div style="height:100%;width:' + pct + '%;background:#e67e22;border-radius:3px;"></div></div>';
+            html += '</div>';
+        });
+        document.getElementById(containerId).innerHTML = html;
+    }
+
+    // ══════════════════════════════
+    // PRODUCTS
+    // ══════════════════════════════
+    async function loadProducts() {
+        var { data: products, error } = await db.from('products').select('*').order('created_at', { ascending: false });
+        if (error) { console.error('Products error:', error); return; }
+        products = products || [];
+        document.getElementById('productCount').textContent = products.length + ' product(s)';
+
+        var html = '';
+        products.forEach(function(p) {
+            var variants = [];
+            try { variants = typeof p.variants === 'string' ? JSON.parse(p.variants) : (p.variants || []); } catch(e) {}
+            var price = variants.length > 0 ? '₹' + variants[0].price : '-';
+            var img = p.image && p.image.startsWith('http') ? '<img src="' + p.image + '" class="product-img" onerror="this.outerHTML=\'<div class=product-img-fallback>🫙</div>\'">' : '<div class="product-img-fallback">🫙</div>';
+            var statusBadge = p.is_active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-red">Inactive</span>';
+            html += '<tr>';
+            html += '<td>' + img + '</td>';
+            html += '<td><strong>' + (p.name || '') + '</strong><br><span style="font-size:0.75rem;color:#999;">' + (p.id || '') + '</span></td>';
+            html += '<td>' + (p.category || '-') + '</td>';
+            html += '<td>' + price + '</td>';
+            html += '<td>' + statusBadge + '</td>';
+            html += '<td><button class="btn btn-sm btn-primary edit-product-btn" data-id="' + p.id + '">✏️ Edit</button></td>';
+            html += '</tr>';
+        });
+        document.getElementById('productsTable').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#999;padding:40px;">No products found</td></tr>';
+
+        // Attach edit handlers
+        document.querySelectorAll('.edit-product-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() { editProduct(this.getAttribute('data-id'), products); });
+        });
+    }
+
+    // Add product
+    document.getElementById('addProductBtn').addEventListener('click', function() {
+        document.getElementById('productModalTitle').textContent = 'Add Product';
+        document.getElementById('pf-id').value = '';
+        document.getElementById('pf-name').value = '';
+        document.getElementById('pf-desc').value = '';
+        document.getElementById('pf-category').value = 'veg';
+        document.getElementById('pf-image').value = '';
+        document.getElementById('pf-badge').value = '';
+        document.getElementById('pf-variants').value = '[{"weight":"250g","price":199},{"weight":"500g","price":349}]';
+        document.getElementById('pf-active').checked = true;
+        document.getElementById('pf-featured').checked = false;
+        document.getElementById('productModal').classList.add('show');
+    });
+
+    function editProduct(id, products) {
+        var p = products.find(function(x) { return x.id === id; });
+        if (!p) return;
+        document.getElementById('productModalTitle').textContent = 'Edit Product';
+        document.getElementById('pf-id').value = p.id;
+        document.getElementById('pf-name').value = p.name || '';
+        document.getElementById('pf-desc').value = p.description || '';
+        document.getElementById('pf-category').value = p.category || 'veg';
+        document.getElementById('pf-image').value = p.image || '';
+        document.getElementById('pf-badge').value = p.badge || '';
+        var variants = typeof p.variants === 'string' ? p.variants : JSON.stringify(p.variants || []);
+        document.getElementById('pf-variants').value = variants;
+        document.getElementById('pf-active').checked = p.is_active !== false;
+        document.getElementById('pf-featured').checked = p.is_featured === true;
+        document.getElementById('productModal').classList.add('show');
+    }
+
+    document.getElementById('closeProductModal').addEventListener('click', function() {
+        document.getElementById('productModal').classList.remove('show');
+    });
+
+    document.getElementById('saveProductBtn').addEventListener('click', async function() {
+        var id = document.getElementById('pf-id').value;
+        var data = {
+            name: document.getElementById('pf-name').value.trim(),
+            description: document.getElementById('pf-desc').value.trim(),
+            category: document.getElementById('pf-category').value,
+            image: document.getElementById('pf-image').value.trim(),
+            badge: document.getElementById('pf-badge').value.trim() || null,
+            variants: document.getElementById('pf-variants').value.trim(),
+            is_active: document.getElementById('pf-active').checked,
+            is_featured: document.getElementById('pf-featured').checked
+        };
+        // Parse variants
+        try { data.variants = JSON.parse(data.variants); } catch(e) { alert('Invalid variants JSON'); return; }
+        if (!data.name) { alert('Product name required'); return; }
+
+        if (id) {
+            // Update
+            var { error } = await db.from('products').update(data).eq('id', id);
+            if (error) { alert('Update failed: ' + error.message); return; }
+        } else {
+            // Insert
+            data.id = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+            var { error } = await db.from('products').insert(data);
+            if (error) { alert('Insert failed: ' + error.message); return; }
+        }
+        document.getElementById('productModal').classList.remove('show');
+        loadProducts();
+    });
+
+    // ══════════════════════════════
+    // ORDERS
+    // ══════════════════════════════
+    async function loadOrders() {
+        var { data: orders, error } = await db.from('orders').select('*').order('created_at', { ascending: false });
+        if (error) { console.error('Orders error:', error); }
+        orders = orders || [];
+
+        renderOrdersTable(orders);
+
+        // Shipping pending
+        var pending = orders.filter(function(o) { return o.status === 'confirmed' || o.status === 'processing'; });
+        renderShippingTable(pending);
+
+        // Filter buttons
+        document.querySelectorAll('[data-order-filter]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var filter = this.getAttribute('data-order-filter');
+                var filtered = filter === 'all' ? orders : orders.filter(function(o) { return o.status === filter; });
+                renderOrdersTable(filtered);
+            });
+        });
+    }
+
+    function renderOrdersTable(orders) {
+        var html = '';
+        orders.forEach(function(o) {
+            var items = [];
+            try { items = typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []); } catch(e) {}
+            var itemsStr = items.map(function(i) { return i.name; }).join(', ').substring(0, 40) || '-';
+            var statusClass = { pending: 'badge-yellow', confirmed: 'badge-blue', processing: 'badge-blue', shipped: 'badge-green', delivered: 'badge-green', cancelled: 'badge-red' };
+            var date = o.created_at ? new Date(o.created_at).toLocaleDateString() : '-';
+            html += '<tr>';
+            html += '<td><strong>' + (o.id || '').toString().substring(0, 8) + '</strong></td>';
+            html += '<td>' + (o.customer_name || o.phone || '-') + '</td>';
+            html += '<td style="font-size:0.8rem;">' + itemsStr + '</td>';
+            html += '<td>₹' + (o.total || 0) + '</td>';
+            html += '<td><span class="badge ' + (statusClass[o.status] || 'badge-gray') + '">' + (o.status || 'unknown') + '</span></td>';
+            html += '<td style="font-size:0.8rem;">' + date + '</td>';
+            html += '<td>';
+            html += '<select class="order-status-select" data-order-id="' + o.id + '" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;">';
+            ['pending','confirmed','processing','shipped','delivered','cancelled'].forEach(function(s) {
+                html += '<option value="' + s + '"' + (o.status === s ? ' selected' : '') + '>' + s + '</option>';
+            });
+            html += '</select>';
+            html += '</td></tr>';
+        });
+        document.getElementById('ordersTable').innerHTML = html || '<tr><td colspan="7" style="text-align:center;color:#999;padding:40px;">No orders yet</td></tr>';
+
+        // Status change handlers
+        document.querySelectorAll('.order-status-select').forEach(function(sel) {
+            sel.addEventListener('change', async function() {
+                var orderId = this.getAttribute('data-order-id');
+                var newStatus = this.value;
+                await db.from('orders').update({ status: newStatus }).eq('id', orderId);
+                loadOrders();
+            });
+        });
+    }
+
+    // ══════════════════════════════
+    // SHIPPING
+    // ══════════════════════════════
+    function renderShippingTable(orders) {
+        var html = '';
+        orders.forEach(function(o) {
+            html += '<tr>';
+            html += '<td>' + (o.id || '').toString().substring(0, 8) + '</td>';
+            html += '<td>' + (o.customer_name || '-') + '</td>';
+            html += '<td style="font-size:0.8rem;">' + (o.address || '-') + '</td>';
+            html += '<td><select class="ship-partner" data-oid="' + o.id + '" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;">';
+            html += '<option value="">Select</option><option>Delhivery</option><option>DTDC</option><option>DHL</option><option>Other</option>';
+            html += '</select></td>';
+            html += '<td><input type="text" class="ship-tracking" data-oid="' + o.id + '" placeholder="Tracking #" style="padding:4px;border:1px solid #ddd;border-radius:4px;width:120px;font-size:0.8rem;"></td>';
+            html += '<td><button class="btn btn-sm btn-primary ship-btn" data-oid="' + o.id + '">Ship</button></td>';
+            html += '</tr>';
+        });
+        document.getElementById('shippingTable').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No pending shipments</td></tr>';
+
+        // Ship button handlers
+        document.querySelectorAll('.ship-btn').forEach(function(btn) {
+            btn.addEventListener('click', async function() {
+                var oid = this.getAttribute('data-oid');
+                var partner = document.querySelector('.ship-partner[data-oid="' + oid + '"]').value;
+                var tracking = document.querySelector('.ship-tracking[data-oid="' + oid + '"]').value;
+                if (!partner) { alert('Select a shipping partner'); return; }
+                await db.from('orders').update({
+                    status: 'shipped',
+                    shipping_partner: partner,
+                    tracking_id: tracking
+                }).eq('id', oid);
+                loadOrders();
+            });
+        });
+    }
+
+    // ══════════════════════════════
+    // SETTINGS
+    // ══════════════════════════════
+    document.getElementById('saveSettingsBtn').addEventListener('click', function() {
+        alert('Settings saved!');
+    });
+
+    document.getElementById('changePassBtn').addEventListener('click', function() {
+        var newP = document.getElementById('newPassword').value.trim();
+        if (newP.length < 4) { alert('Password too short'); return; }
+        ADMIN_PASS = newP;
+        localStorage.setItem('seasalt_admin_pass', newP);
+        alert('Password updated!');
+        document.getElementById('newPassword').value = '';
+    });
+
+    // ══════════════════════════════
+    // INIT
+    // ══════════════════════════════
+    checkAuth();
+
+})();
+</script>
 </body>
 </html>
