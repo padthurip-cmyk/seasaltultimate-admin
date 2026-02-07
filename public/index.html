@@ -61,6 +61,7 @@
         .dot-yellow { background: #f59e0b; }
         .dot-red { background: #ef4444; }
         .dot-purple { background: #8b5cf6; }
+        .notification-badge { position: absolute; top: 8px; right: 15px; background: #ef4444; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; font-weight: 700; }
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-250px); }
             .sidebar.open { transform: translateX(0); }
@@ -97,6 +98,8 @@
     <nav style="margin-top:12px;">
         <a href="#" class="sidebar-link active" data-page="dashboard">📊 Dashboard</a>
         <a href="#" class="sidebar-link" data-page="analytics">📈 Analytics</a>
+        <a href="#" class="sidebar-link" data-page="users">👥 Users</a>
+        <a href="#" class="sidebar-link" data-page="notifications" style="position:relative;">🔔 Notifications <span class="notification-badge" id="notifBadge" style="display:none;">0</span></a>
         <a href="#" class="sidebar-link" data-page="products">🏷️ Products</a>
         <a href="#" class="sidebar-link" data-page="orders">📦 Orders</a>
         <a href="#" class="sidebar-link" data-page="shipping">🚚 Shipping</a>
@@ -182,6 +185,48 @@
         <div class="card">
             <h3 style="font-weight:600;margin-bottom:12px;">🕐 Live Activity Feed</h3>
             <div id="activityFeed" style="max-height:400px;overflow-y:auto;"></div>
+        </div>
+    </div>
+
+    <!-- ══════ USERS PAGE ══════ -->
+    <div class="page" id="page-users">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
+            <div class="card stat-card"><div class="stat-value" style="color:#3b82f6;" id="usersTotalUsers">-</div><div class="stat-label">Total Users</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#10b981;" id="usersLoggedIn">-</div><div class="stat-label">Logged In Users</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#f59e0b;" id="usersGuests">-</div><div class="stat-label">Guest Sessions</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#8b5cf6;" id="usersActiveToday">-</div><div class="stat-label">Active Today</div></div>
+        </div>
+        <div class="card">
+            <h3 style="font-weight:600;margin-bottom:12px;">📱 Registered Users (Phone Numbers)</h3>
+            <table>
+                <thead><tr><th>Phone</th><th>First Seen</th><th>Last Active</th><th>Page Views</th><th>Cart Adds</th><th>Purchases</th><th>Device</th></tr></thead>
+                <tbody id="usersTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══════ NOTIFICATIONS PAGE ══════ -->
+    <div class="page" id="page-notifications">
+        <div style="display:flex;gap:16px;margin-bottom:24px;">
+            <div class="card" style="flex:1;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h3 style="font-weight:600;">🔔 Admin Alerts</h3>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-sm" style="background:#fef3c7;" id="testNotifBtn">🧪 Test Alert</button>
+                        <button class="btn btn-sm" style="background:#eee;" id="markAllReadBtn">✓ Mark All Read</button>
+                    </div>
+                </div>
+                <div id="notificationsList" style="max-height:500px;overflow-y:auto;"></div>
+            </div>
+        </div>
+        <div class="card" style="max-width:400px;">
+            <h4 style="font-weight:600;margin-bottom:12px;">ℹ️ How Alerts Work</h4>
+            <ul style="font-size:0.9rem;color:#666;line-height:1.8;padding-left:20px;">
+                <li>🔥 <strong>High Activity</strong> — User visits 4+ times in 24 hours without buying</li>
+                <li>🔄 <strong>Repeat Visitor</strong> — User returns multiple times</li>
+                <li>Alerts popup automatically every 30 seconds</li>
+                <li>Click on a user to send them wallet credit!</li>
+            </ul>
         </div>
     </div>
 
@@ -332,8 +377,8 @@
     // ══════════════════════════════
     // NAVIGATION
     // ══════════════════════════════
-    const pages = ['dashboard', 'analytics', 'products', 'orders', 'shipping', 'settings'];
-    const pageNames = { dashboard: 'Dashboard', analytics: 'Analytics', products: 'Products', orders: 'Orders', shipping: 'Shipping', settings: 'Settings' };
+    const pages = ['dashboard', 'analytics', 'users', 'notifications', 'products', 'orders', 'shipping', 'settings'];
+    const pageNames = { dashboard: 'Dashboard', analytics: 'Analytics', users: 'Users', notifications: 'Notifications', products: 'Products', orders: 'Orders', shipping: 'Shipping', settings: 'Settings' };
 
     document.querySelectorAll('.sidebar-link').forEach(function(link) {
         link.addEventListener('click', function(e) {
@@ -372,6 +417,8 @@
             await Promise.all([
                 loadDashboard(),
                 loadAnalytics(),
+                loadUsers(),
+                loadNotifications(),
                 loadProducts(),
                 loadOrders()
             ]);
@@ -479,9 +526,11 @@
             var detail = e.page || '';
             if (e.product_name) detail = e.product_name;
             try { var d = JSON.parse(e.data || '{}'); if (d.query) detail = '"' + d.query + '"'; } catch(x) {}
-            html += '<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;">';
+            var phoneDisplay = e.user_phone ? '<span style="background:#e8f5e9;color:#2e7d32;padding:2px 6px;border-radius:4px;font-size:0.7rem;margin-left:6px;">📱 ' + e.user_phone + '</span>' : '<span style="background:#f5f5f5;color:#999;padding:2px 6px;border-radius:4px;font-size:0.7rem;margin-left:6px;">Guest</span>';
+            html += '<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
             html += '<span class="activity-dot ' + (dotMap[e.event_type] || 'dot-gray') + '"></span>';
             html += '<span style="font-size:0.85rem;">' + label + (detail ? ' — <strong>' + detail + '</strong>' : '') + '</span>';
+            html += phoneDisplay;
             html += '<span style="margin-left:auto;font-size:0.75rem;color:#999;">' + time + '</span>';
             html += '</div>';
         });
@@ -598,6 +647,85 @@
     }
 
     // ══════════════════════════════
+    // USERS
+    // ══════════════════════════════
+    async function loadUsers() {
+        var thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+        var today = new Date().toISOString().split('T')[0];
+        
+        var { data: events } = await db.from('analytics_events').select('*').gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false });
+        events = events || [];
+
+        // Calculate stats
+        var allSessions = new Set(events.map(function(e) { return e.session_id; })).size;
+        var loggedInUsers = new Set(events.filter(function(e) { return e.user_phone; }).map(function(e) { return e.user_phone; })).size;
+        var guestSessions = new Set(events.filter(function(e) { return !e.user_phone; }).map(function(e) { return e.session_id; })).size;
+        
+        var todayEvents = events.filter(function(e) { return e.created_at && e.created_at.startsWith(today); });
+        var activeToday = new Set(todayEvents.map(function(e) { return e.user_phone || e.session_id; })).size;
+
+        document.getElementById('usersTotalUsers').textContent = allSessions;
+        document.getElementById('usersLoggedIn').textContent = loggedInUsers;
+        document.getElementById('usersGuests').textContent = guestSessions;
+        document.getElementById('usersActiveToday').textContent = activeToday;
+
+        // Build users table - group by phone number
+        var userMap = {};
+        events.forEach(function(e) {
+            var key = e.user_phone || null;
+            if (!key) return; // Skip guests for the table
+            
+            if (!userMap[key]) {
+                userMap[key] = {
+                    phone: key,
+                    firstSeen: e.created_at,
+                    lastActive: e.created_at,
+                    pageViews: 0,
+                    cartAdds: 0,
+                    purchases: 0,
+                    device: e.device_type || 'unknown'
+                };
+            }
+            
+            // Update stats
+            if (e.created_at < userMap[key].firstSeen) userMap[key].firstSeen = e.created_at;
+            if (e.created_at > userMap[key].lastActive) userMap[key].lastActive = e.created_at;
+            if (e.event_type === 'page_view') userMap[key].pageViews++;
+            if (e.event_type === 'add_to_cart') userMap[key].cartAdds++;
+            if (e.event_type === 'purchase') userMap[key].purchases++;
+        });
+
+        // Sort by last active (most recent first)
+        var users = Object.values(userMap).sort(function(a, b) {
+            return new Date(b.lastActive) - new Date(a.lastActive);
+        });
+
+        var html = '';
+        if (users.length === 0) {
+            html = '<tr><td colspan="7" style="text-align:center;color:#999;padding:40px;">No logged-in users yet. Users appear here after they enter their phone number in the spin wheel.</td></tr>';
+        } else {
+            users.forEach(function(u) {
+                var firstDate = new Date(u.firstSeen).toLocaleDateString();
+                var lastDate = new Date(u.lastActive).toLocaleDateString();
+                var lastTime = new Date(u.lastActive).toLocaleTimeString();
+                var deviceIcon = u.device === 'mobile' ? '📱' : (u.device === 'desktop' ? '💻' : '📟');
+                var purchaseBadge = u.purchases > 0 ? '<span class="badge badge-green">' + u.purchases + '</span>' : '<span style="color:#999;">0</span>';
+                
+                html += '<tr>';
+                html += '<td><strong style="color:#2e7d32;">📱 ' + u.phone + '</strong></td>';
+                html += '<td style="font-size:0.85rem;">' + firstDate + '</td>';
+                html += '<td style="font-size:0.85rem;">' + lastDate + ' ' + lastTime + '</td>';
+                html += '<td>' + u.pageViews + '</td>';
+                html += '<td>' + u.cartAdds + '</td>';
+                html += '<td>' + purchaseBadge + '</td>';
+                html += '<td>' + deviceIcon + ' ' + u.device + '</td>';
+                html += '</tr>';
+            });
+        }
+        document.getElementById('usersTable').innerHTML = html;
+    }
+
+    // ══════════════════════════════
     // PRODUCTS
     // ══════════════════════════════
     async function loadProducts() {
@@ -694,6 +822,70 @@
         }
         document.getElementById('productModal').classList.remove('show');
         loadProducts();
+    });
+
+    // ══════════════════════════════
+    // NOTIFICATIONS
+    // ══════════════════════════════
+    async function loadNotifications() {
+        var { data: notifs } = await db.from('admin_notifications').select('*').order('created_at', { ascending: false }).limit(50);
+        notifs = notifs || [];
+
+        var unread = notifs.filter(function(n) { return !n.is_read; }).length;
+        var badge = document.getElementById('notifBadge');
+        if (unread > 0) {
+            badge.textContent = unread;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+
+        var html = '';
+        if (notifs.length === 0) {
+            html = '<p style="color:#999;text-align:center;padding:40px;">No notifications yet. Alerts will appear here when users visit your store multiple times.</p>';
+        } else {
+            notifs.forEach(function(n) {
+                var time = new Date(n.created_at).toLocaleString();
+                var bgColor = n.is_read ? '#fff' : '#fef3c7';
+                var icon = n.type === 'high_activity' ? '🔥' : n.type === 'repeat_visitor' ? '🔄' : '🔔';
+                html += '<div style="padding:12px;margin-bottom:8px;border-radius:8px;background:' + bgColor + ';border:1px solid #eee;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">';
+                html += '<div style="flex:1;"><span style="font-size:1.2rem;margin-right:8px;">' + icon + '</span><strong style="color:#333;">' + n.message + '</strong>';
+                html += '<div style="font-size:0.8rem;color:#999;margin-top:4px;">' + time + '</div></div>';
+                html += '</div>';
+                if (n.user_phone) {
+                    html += '<div style="margin-top:10px;display:flex;gap:8px;">';
+                    html += '<button class="btn btn-sm btn-primary" onclick="showUserDetail(\'' + n.user_phone + '\')">👤 View User</button>';
+                    html += '<button class="btn btn-sm btn-green" onclick="openWalletModal(\'' + n.user_phone + '\', 0)">💰 Send Credit</button>';
+                    if (!n.is_read) html += '<button class="btn btn-sm" style="background:#eee;" onclick="markNotifRead(' + n.id + ')">✓ Mark Read</button>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+        }
+        document.getElementById('notificationsList').innerHTML = html;
+    }
+
+    window.markNotifRead = async function(id) {
+        await db.from('admin_notifications').update({ is_read: true }).eq('id', id);
+        loadNotifications();
+    };
+
+    // Mark all read button
+    document.getElementById('markAllReadBtn').addEventListener('click', async function() {
+        await db.from('admin_notifications').update({ is_read: true }).eq('is_read', false);
+        loadNotifications();
+    });
+
+    // Test notification button
+    document.getElementById('testNotifBtn').addEventListener('click', function() {
+        showNotificationPopup({
+            id: 0,
+            type: 'high_activity',
+            user_phone: '+919876543210',
+            message: '🧪 TEST: User +919876543210 has visited 5 times in the last 24 hours without purchasing!',
+            created_at: new Date().toISOString()
+        });
     });
 
     // ══════════════════════════════
@@ -807,6 +999,114 @@
         alert('Password updated!');
         document.getElementById('newPassword').value = '';
     });
+
+    // ══════════════════════════════
+    // REAL-TIME POPUP NOTIFICATIONS
+    // ══════════════════════════════
+    let lastNotifCheck = Date.now();
+
+    async function checkNewNotifications() {
+        try {
+            var { data: notifs } = await db.from('admin_notifications')
+                .select('*')
+                .eq('is_read', false)
+                .order('created_at', { ascending: false })
+                .limit(10);
+            
+            notifs = notifs || [];
+            
+            // Update badge
+            var badge = document.getElementById('notifBadge');
+            if (notifs.length > 0) {
+                badge.textContent = notifs.length;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+
+            // Check for NEW notifications (created after last check)
+            var newNotifs = notifs.filter(function(n) {
+                return new Date(n.created_at).getTime() > lastNotifCheck;
+            });
+
+            // Show popup for each new notification
+            newNotifs.forEach(function(n) {
+                showNotificationPopup(n);
+            });
+
+            lastNotifCheck = Date.now();
+        } catch (err) {
+            console.warn('Notification check failed:', err);
+        }
+    }
+
+    function showNotificationPopup(notif) {
+        // Play sound
+        playNotifSound();
+
+        // Create popup
+        var popup = document.createElement('div');
+        popup.style.cssText = 'position:fixed;top:20px;right:20px;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.25);padding:16px 20px;z-index:9999;max-width:380px;animation:notifSlideIn 0.4s ease;border-left:5px solid #ef4444;';
+        
+        var icon = notif.type === 'high_activity' ? '🔥' : notif.type === 'repeat_visitor' ? '🔄' : '🔔';
+        var title = notif.type === 'high_activity' ? 'High Activity Alert!' : 'New Notification';
+        var bgColor = notif.type === 'high_activity' ? '#fef2f2' : '#fffbeb';
+        popup.style.background = bgColor;
+        
+        popup.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">' +
+            '<div style="flex:1;">' +
+            '<div style="font-weight:700;font-size:1.1rem;margin-bottom:6px;color:#dc2626;">' + icon + ' ' + title + '</div>' +
+            '<div style="font-size:0.9rem;color:#333;margin-bottom:10px;line-height:1.4;">' + notif.message + '</div>' +
+            '<div style="display:flex;gap:8px;">' +
+            (notif.user_phone ? '<button class="btn btn-sm btn-primary" onclick="showUserDetail(\'' + notif.user_phone + '\');this.closest(\'.notif-popup\').remove();">👤 View User</button> ' : '') +
+            '<button class="btn btn-sm btn-green" onclick="markNotifRead(' + notif.id + ');this.closest(\'.notif-popup\').remove();">✓ Got it</button>' +
+            '</div>' +
+            '</div>' +
+            '<button onclick="this.closest(\'.notif-popup\').remove()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#999;padding:0;line-height:1;">&times;</button>' +
+            '</div>';
+        
+        popup.className = 'notif-popup';
+        document.body.appendChild(popup);
+
+        // Auto-remove after 20 seconds
+        setTimeout(function() {
+            if (popup.parentElement) {
+                popup.style.animation = 'notifSlideOut 0.4s ease forwards';
+                setTimeout(function() { if (popup.parentElement) popup.remove(); }, 400);
+            }
+        }, 20000);
+    }
+
+    function playNotifSound() {
+        try {
+            var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            // Play two-tone alert
+            [800, 1000].forEach(function(freq, i) {
+                setTimeout(function() {
+                    var osc = audioCtx.createOscillator();
+                    var gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.value = freq;
+                    osc.type = 'sine';
+                    gain.gain.value = 0.2;
+                    osc.start();
+                    setTimeout(function() { osc.stop(); }, 150);
+                }, i * 200);
+            });
+        } catch (e) {}
+    }
+
+    // Add CSS animations
+    var notifStyles = document.createElement('style');
+    notifStyles.textContent = '@keyframes notifSlideIn{from{transform:translateX(120%);opacity:0;}to{transform:translateX(0);opacity:1;}}@keyframes notifSlideOut{from{transform:translateX(0);opacity:1;}to{transform:translateX(120%);opacity:0;}}';
+    document.head.appendChild(notifStyles);
+
+    // Check for new notifications every 30 seconds
+    setInterval(checkNewNotifications, 30000);
+    
+    // Also check immediately after login
+    setTimeout(checkNewNotifications, 2000);
 
     // ══════════════════════════════
     // INIT
