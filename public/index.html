@@ -199,7 +199,7 @@
         <div class="card">
             <h3 style="font-weight:600;margin-bottom:12px;">📱 Registered Users (Phone Numbers)</h3>
             <table>
-                <thead><tr><th>Phone</th><th>First Seen</th><th>Last Active</th><th>Page Views</th><th>Cart Adds</th><th>Purchases</th><th>Device</th></tr></thead>
+                <thead><tr><th>User</th><th>Country</th><th>Visits</th><th>Cart</th><th>Purchases</th><th>Wallet</th><th>Last Active</th><th>Action</th></tr></thead>
                 <tbody id="usersTable"></tbody>
             </table>
         </div>
@@ -274,21 +274,67 @@
 
     <!-- ══════ SETTINGS PAGE ══════ -->
     <div class="page" id="page-settings">
-        <div class="card" style="max-width:500px;">
-            <h3 style="font-weight:600;margin-bottom:16px;">⚙️ Store Settings</h3>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Store Name</label>
-            <input type="text" id="settingStoreName" value="SeaSalt Pickles" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Min Order Value (₹)</label>
-            <input type="number" id="settingMinOrder" value="200" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Free Delivery Above (₹)</label>
-            <input type="number" id="settingFreeDelivery" value="500" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:16px;">
-            <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+                <div class="card">
+                    <h3 style="font-weight:600;margin-bottom:16px;">⚙️ Store Settings</h3>
+                    <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Store Name</label>
+                    <input type="text" id="settingStoreName" value="SeaSalt Pickles" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+                    <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Default Currency</label>
+                    <select id="settingCurrency" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:16px;">
+                        <option value="INR">₹ INR (Indian Rupee)</option>
+                        <option value="USD">$ USD (US Dollar)</option>
+                        <option value="GBP">£ GBP (British Pound)</option>
+                        <option value="AED">د.إ AED (UAE Dirham)</option>
+                    </select>
+                    <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+                </div>
+                <div class="card" style="margin-top:16px;">
+                    <h3 style="font-weight:600;margin-bottom:16px;">🔐 Change Password</h3>
+                    <input type="password" id="newPassword" placeholder="New password" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+                    <button class="btn btn-primary" id="changePassBtn">Update Password</button>
+                </div>
+            </div>
+            <div>
+                <div class="card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h3 style="font-weight:600;">🚚 Delivery Charges</h3>
+                        <button class="btn btn-sm btn-primary" id="addDeliveryChargeBtn">+ Add</button>
+                    </div>
+                    <table style="font-size:0.85rem;">
+                        <thead><tr><th>Country</th><th>Region</th><th>Free Above</th><th>Flat Fee</th><th>Actions</th></tr></thead>
+                        <tbody id="deliveryChargesTable"></tbody>
+                    </table>
+                </div>
+                <div class="card" style="margin-top:16px;">
+                    <h3 style="font-weight:600;margin-bottom:12px;">🌍 Active Countries</h3>
+                    <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">Countries shown in customer sign-up</p>
+                    <div id="countriesList" style="max-height:200px;overflow-y:auto;"></div>
+                </div>
+            </div>
         </div>
-        <div class="card" style="max-width:500px;margin-top:16px;">
-            <h3 style="font-weight:600;margin-bottom:16px;">🔐 Change Password</h3>
-            <input type="password" id="newPassword" placeholder="New password" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
-            <button class="btn btn-primary" id="changePassBtn">Update Password</button>
+    </div>
+</div>
+
+<!-- ════════════ DELIVERY CHARGE MODAL ════════════ -->
+<div class="modal-overlay" id="deliveryModal">
+    <div class="modal-box" style="max-width:400px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="font-weight:700;" id="deliveryModalTitle">Add Delivery Charge</h3>
+            <button style="background:none;border:none;font-size:1.5rem;cursor:pointer;" onclick="document.getElementById('deliveryModal').classList.remove('show')">&times;</button>
         </div>
+        <input type="hidden" id="dc-id">
+        <label style="font-size:0.8rem;font-weight:600;">Country</label>
+        <select id="dc-country" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;"></select>
+        <label style="font-size:0.8rem;font-weight:600;">Region (optional)</label>
+        <input type="text" id="dc-region" placeholder="e.g., Telangana, California" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+        <label style="font-size:0.8rem;font-weight:600;">Free Delivery Above (₹)</label>
+        <input type="number" id="dc-minFree" value="500" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+        <label style="font-size:0.8rem;font-weight:600;">Flat Delivery Fee (₹)</label>
+        <input type="number" id="dc-flatFee" value="50" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+        <label style="font-size:0.8rem;font-weight:600;">Notes</label>
+        <input type="text" id="dc-notes" placeholder="e.g., Local delivery" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:16px;">
+        <button class="btn btn-primary" style="width:100%;" id="saveDeliveryChargeBtn">Save</button>
     </div>
 </div>
 
@@ -653,12 +699,17 @@
         var thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
         var today = new Date().toISOString().split('T')[0];
         
+        // Fetch from users table (has name, country, wallet)
+        var { data: usersData } = await db.from('users').select('*').order('last_seen', { ascending: false });
+        usersData = usersData || [];
+        
+        // Also fetch events for activity stats
         var { data: events } = await db.from('analytics_events').select('*').gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false });
         events = events || [];
 
         // Calculate stats
         var allSessions = new Set(events.map(function(e) { return e.session_id; })).size;
-        var loggedInUsers = new Set(events.filter(function(e) { return e.user_phone; }).map(function(e) { return e.user_phone; })).size;
+        var loggedInUsers = usersData.length;
         var guestSessions = new Set(events.filter(function(e) { return !e.user_phone; }).map(function(e) { return e.session_id; })).size;
         
         var todayEvents = events.filter(function(e) { return e.created_at && e.created_at.startsWith(today); });
@@ -669,60 +720,59 @@
         document.getElementById('usersGuests').textContent = guestSessions;
         document.getElementById('usersActiveToday').textContent = activeToday;
 
-        // Build users table - group by phone number
-        var userMap = {};
+        // Build activity map from events
+        var activityMap = {};
         events.forEach(function(e) {
-            var key = e.user_phone || null;
-            if (!key) return; // Skip guests for the table
-            
-            if (!userMap[key]) {
-                userMap[key] = {
-                    phone: key,
-                    firstSeen: e.created_at,
-                    lastActive: e.created_at,
-                    pageViews: 0,
-                    cartAdds: 0,
-                    purchases: 0,
-                    device: e.device_type || 'unknown'
-                };
+            if (!e.user_phone) return;
+            if (!activityMap[e.user_phone]) {
+                activityMap[e.user_phone] = { pageViews: 0, cartAdds: 0, purchases: 0 };
             }
-            
-            // Update stats
-            if (e.created_at < userMap[key].firstSeen) userMap[key].firstSeen = e.created_at;
-            if (e.created_at > userMap[key].lastActive) userMap[key].lastActive = e.created_at;
-            if (e.event_type === 'page_view') userMap[key].pageViews++;
-            if (e.event_type === 'add_to_cart') userMap[key].cartAdds++;
-            if (e.event_type === 'purchase') userMap[key].purchases++;
-        });
-
-        // Sort by last active (most recent first)
-        var users = Object.values(userMap).sort(function(a, b) {
-            return new Date(b.lastActive) - new Date(a.lastActive);
+            if (e.event_type === 'page_view') activityMap[e.user_phone].pageViews++;
+            if (e.event_type === 'add_to_cart') activityMap[e.user_phone].cartAdds++;
+            if (e.event_type === 'purchase') activityMap[e.user_phone].purchases++;
         });
 
         var html = '';
-        if (users.length === 0) {
-            html = '<tr><td colspan="7" style="text-align:center;color:#999;padding:40px;">No logged-in users yet. Users appear here after they enter their phone number in the spin wheel.</td></tr>';
+        if (usersData.length === 0) {
+            html = '<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">No registered users yet. Users appear here after they sign up via the spin wheel.</td></tr>';
         } else {
-            users.forEach(function(u) {
-                var firstDate = new Date(u.firstSeen).toLocaleDateString();
-                var lastDate = new Date(u.lastActive).toLocaleDateString();
-                var lastTime = new Date(u.lastActive).toLocaleTimeString();
-                var deviceIcon = u.device === 'mobile' ? '📱' : (u.device === 'desktop' ? '💻' : '📟');
-                var purchaseBadge = u.purchases > 0 ? '<span class="badge badge-green">' + u.purchases + '</span>' : '<span style="color:#999;">0</span>';
+            usersData.forEach(function(u) {
+                var activity = activityMap[u.phone] || { pageViews: 0, cartAdds: 0, purchases: 0 };
+                var lastActive = u.last_seen ? new Date(u.last_seen).toLocaleString() : '-';
+                var walletBadge = u.wallet_balance > 0 ? '<span class="badge badge-green">₹' + u.wallet_balance + '</span>' : '₹0';
+                var countryFlag = getCountryFlag(u.selected_country);
                 
                 html += '<tr>';
-                html += '<td><strong style="color:#2e7d32;">📱 ' + u.phone + '</strong></td>';
-                html += '<td style="font-size:0.85rem;">' + firstDate + '</td>';
-                html += '<td style="font-size:0.85rem;">' + lastDate + ' ' + lastTime + '</td>';
-                html += '<td>' + u.pageViews + '</td>';
-                html += '<td>' + u.cartAdds + '</td>';
-                html += '<td>' + purchaseBadge + '</td>';
-                html += '<td>' + deviceIcon + ' ' + u.device + '</td>';
+                html += '<td>';
+                html += '<div><strong style="color:#333;">' + (u.name || 'Unknown') + '</strong></div>';
+                html += '<div style="font-size:0.8rem;color:#666;">📱 ' + u.phone + '</div>';
+                html += '</td>';
+                html += '<td>' + countryFlag + ' ' + (u.selected_country || u.country || '-') + '</td>';
+                html += '<td>' + (u.total_visits || activity.pageViews || 0) + '</td>';
+                html += '<td>' + activity.cartAdds + '</td>';
+                html += '<td>' + (u.total_purchases || 0) + '</td>';
+                html += '<td>' + walletBadge + '</td>';
+                html += '<td style="font-size:0.8rem;">' + lastActive + '</td>';
+                html += '<td><button class="btn btn-sm btn-green" onclick="openWalletModal(\'' + u.phone + '\', ' + (u.wallet_balance || 0) + ', \'' + (u.name || '') + '\')">💰</button></td>';
                 html += '</tr>';
             });
         }
         document.getElementById('usersTable').innerHTML = html;
+    }
+
+    function getCountryFlag(country) {
+        var flags = {
+            'India': '🇮🇳', 'United States': '🇺🇸', 'United Kingdom': '🇬🇧',
+            'United Arab Emirates': '🇦🇪', 'Singapore': '🇸🇬', 'Australia': '🇦🇺',
+            'Canada': '🇨🇦', 'Germany': '🇩🇪', 'France': '🇫🇷', 'Saudi Arabia': '🇸🇦',
+            'Qatar': '🇶🇦', 'Kuwait': '🇰🇼', 'Oman': '🇴🇲', 'Malaysia': '🇲🇾', 'New Zealand': '🇳🇿'
+        };
+        return flags[country] || '🌍';
+    }
+
+    window.openWalletModal = function(phone, balance, name) {
+        showUserDetail(phone);
+    };
     }
 
     // ══════════════════════════════
@@ -1107,6 +1157,131 @@
     
     // Also check immediately after login
     setTimeout(checkNewNotifications, 2000);
+
+    // ══════════════════════════════
+    // DELIVERY CHARGES
+    // ══════════════════════════════
+    let deliveryCharges = [];
+    let countriesList = [];
+
+    async function loadDeliveryCharges() {
+        // Load delivery charges
+        var { data: charges } = await db.from('delivery_charges').select('*').order('country');
+        deliveryCharges = charges || [];
+        
+        // Load countries
+        var { data: countries } = await db.from('countries').select('*').order('sort_order');
+        countriesList = countries || [];
+        
+        renderDeliveryChargesTable();
+        renderCountriesList();
+        populateCountryDropdown();
+    }
+
+    function renderDeliveryChargesTable() {
+        var html = '';
+        if (deliveryCharges.length === 0) {
+            html = '<tr><td colspan="5" style="text-align:center;color:#999;padding:20px;">No delivery charges configured</td></tr>';
+        } else {
+            deliveryCharges.forEach(function(dc) {
+                html += '<tr>';
+                html += '<td><strong>' + dc.country + '</strong></td>';
+                html += '<td>' + (dc.region || 'All') + '</td>';
+                html += '<td>₹' + (dc.min_order_free || 0) + '</td>';
+                html += '<td>₹' + (dc.flat_charge || 0) + '</td>';
+                html += '<td>';
+                html += '<button class="btn btn-sm" style="background:#eee;margin-right:4px;" onclick="editDeliveryCharge(' + dc.id + ')">✏️</button>';
+                html += '<button class="btn btn-sm" style="background:#fee;color:#c00;" onclick="deleteDeliveryCharge(' + dc.id + ')">🗑️</button>';
+                html += '</td>';
+                html += '</tr>';
+            });
+        }
+        document.getElementById('deliveryChargesTable').innerHTML = html;
+    }
+
+    function renderCountriesList() {
+        var html = '';
+        countriesList.forEach(function(c) {
+            var checked = c.is_active ? 'checked' : '';
+            html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;">';
+            html += '<input type="checkbox" ' + checked + ' onchange="toggleCountry(\'' + c.code + '\', this.checked)">';
+            html += '<span style="font-size:0.9rem;">' + c.name + ' (' + c.currency_symbol + ')</span>';
+            html += '</div>';
+        });
+        document.getElementById('countriesList').innerHTML = html || '<p style="color:#999;">No countries configured</p>';
+    }
+
+    function populateCountryDropdown() {
+        var select = document.getElementById('dc-country');
+        select.innerHTML = '<option value="">Select country</option>';
+        countriesList.forEach(function(c) {
+            select.innerHTML += '<option value="' + c.name + '">' + c.name + '</option>';
+        });
+    }
+
+    window.toggleCountry = async function(code, isActive) {
+        await db.from('countries').update({ is_active: isActive }).eq('code', code);
+        loadDeliveryCharges();
+    };
+
+    document.getElementById('addDeliveryChargeBtn').addEventListener('click', function() {
+        document.getElementById('deliveryModalTitle').textContent = 'Add Delivery Charge';
+        document.getElementById('dc-id').value = '';
+        document.getElementById('dc-country').value = '';
+        document.getElementById('dc-region').value = '';
+        document.getElementById('dc-minFree').value = '500';
+        document.getElementById('dc-flatFee').value = '50';
+        document.getElementById('dc-notes').value = '';
+        document.getElementById('deliveryModal').classList.add('show');
+    });
+
+    window.editDeliveryCharge = function(id) {
+        var dc = deliveryCharges.find(function(d) { return d.id === id; });
+        if (!dc) return;
+        document.getElementById('deliveryModalTitle').textContent = 'Edit Delivery Charge';
+        document.getElementById('dc-id').value = dc.id;
+        document.getElementById('dc-country').value = dc.country;
+        document.getElementById('dc-region').value = dc.region || '';
+        document.getElementById('dc-minFree').value = dc.min_order_free || 0;
+        document.getElementById('dc-flatFee').value = dc.flat_charge || 0;
+        document.getElementById('dc-notes').value = dc.notes || '';
+        document.getElementById('deliveryModal').classList.add('show');
+    };
+
+    window.deleteDeliveryCharge = async function(id) {
+        if (!confirm('Delete this delivery charge?')) return;
+        await db.from('delivery_charges').delete().eq('id', id);
+        loadDeliveryCharges();
+    };
+
+    document.getElementById('saveDeliveryChargeBtn').addEventListener('click', async function() {
+        var id = document.getElementById('dc-id').value;
+        var data = {
+            country: document.getElementById('dc-country').value,
+            region: document.getElementById('dc-region').value || null,
+            min_order_free: parseFloat(document.getElementById('dc-minFree').value) || 0,
+            flat_charge: parseFloat(document.getElementById('dc-flatFee').value) || 0,
+            notes: document.getElementById('dc-notes').value || null
+        };
+        
+        if (!data.country) { alert('Please select a country'); return; }
+        
+        if (id) {
+            await db.from('delivery_charges').update(data).eq('id', id);
+        } else {
+            await db.from('delivery_charges').insert(data);
+        }
+        
+        document.getElementById('deliveryModal').classList.remove('show');
+        loadDeliveryCharges();
+    });
+
+    document.getElementById('deliveryModal').addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('show');
+    });
+
+    // Load delivery charges on init
+    setTimeout(loadDeliveryCharges, 1000);
 
     // ══════════════════════════════
     // INIT
