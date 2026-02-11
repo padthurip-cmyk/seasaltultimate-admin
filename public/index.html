@@ -67,6 +67,11 @@
             .sidebar.open { transform: translateX(0); }
             .main { margin-left: 0; }
         }
+        @keyframes notifSlideIn{from{transform:translateX(120%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+        @keyframes notifSlideOut{from{transform:translateX(0);opacity:1;}to{transform:translateX(120%);opacity:0;}}
+        @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+        .btn-green { background: #10b981; color: #fff; }
+        .btn-green:hover { background: #059669; }
     </style>
 </head>
 <body>
@@ -112,7 +117,6 @@
 
 <!-- ════════════ MAIN CONTENT ════════════ -->
 <div class="main" id="mainContent">
-    <!-- Top Bar -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
         <div style="display:flex;align-items:center;gap:12px;">
             <button id="toggleSidebar" style="background:none;border:none;font-size:1.5rem;cursor:pointer;display:none;">☰</button>
@@ -124,7 +128,7 @@
         </div>
     </div>
 
-    <!-- ════ DASHBOARD PAGE ══════ -->
+    <!-- DASHBOARD PAGE -->
     <div class="page active" id="page-dashboard">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
             <div class="card stat-card"><div class="stat-value" style="color:#3b82f6;" id="statSessions">-</div><div class="stat-label">Sessions Today</div></div>
@@ -132,24 +136,20 @@
             <div class="card stat-card"><div class="stat-value" style="color:#f59e0b;" id="statOrders">-</div><div class="stat-label">Orders Today</div></div>
             <div class="card stat-card"><div class="stat-value" style="color:#e67e22;" id="statRevenue">-</div><div class="stat-label">Revenue Today</div></div>
         </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+            <div class="card stat-card" style="background:#f8fafc;"><div class="stat-value" style="color:#6366f1;font-size:1.5rem;" id="statTotalOrders">-</div><div class="stat-label">Total Orders (All Time)</div></div>
+            <div class="card stat-card" style="background:#f8fafc;"><div class="stat-value" style="color:#6366f1;font-size:1.5rem;" id="statTotalRevenue">-</div><div class="stat-label">Total Revenue (All Time)</div></div>
+            <div class="card stat-card" style="background:#f8fafc;"><div class="stat-value" style="color:#059669;font-size:1.5rem;" id="statPendingOrders">-</div><div class="stat-label">Pending / Processing</div></div>
+            <div class="card stat-card" style="background:#f8fafc;"><div class="stat-value" style="color:#dc2626;font-size:1.5rem;" id="statShippedOrders">-</div><div class="stat-label">Shipped / Delivered</div></div>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
-            <div class="card">
-                <h3 style="font-weight:600;margin-bottom:8px;">📈 Page Views (Last 7 Days)</h3>
-                <div class="bar-chart" id="chartBars"></div>
-                <div style="display:flex;gap:6px;margin-top:4px;" id="chartLabels"></div>
-            </div>
-            <div class="card">
-                <h3 style="font-weight:600;margin-bottom:12px;">🔥 Conversion Funnel</h3>
-                <div class="funnel" id="dashFunnel"></div>
-            </div>
+            <div class="card"><h3 style="font-weight:600;margin-bottom:8px;">📈 Page Views (Last 7 Days)</h3><div class="bar-chart" id="chartBars"></div><div style="display:flex;gap:6px;margin-top:4px;" id="chartLabels"></div></div>
+            <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">🔥 Conversion Funnel</h3><div class="funnel" id="dashFunnel"></div></div>
         </div>
-        <div class="card">
-            <h3 style="font-weight:600;margin-bottom:12px;">🕐 Recent Activity</h3>
-            <div id="recentActivity" style="max-height:300px;overflow-y:auto;"></div>
-        </div>
+        <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">🕐 Recent Activity</h3><div id="recentActivity" style="max-height:300px;overflow-y:auto;"></div></div>
     </div>
 
-    <!-- ══════ ANALYTICS PAGE ══════ -->
+    <!-- ANALYTICS PAGE -->
     <div class="page" id="page-analytics">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;">
             <div class="card stat-card"><div class="stat-value" style="color:#3b82f6;" id="anSessions">-</div><div class="stat-label">Total Sessions</div></div>
@@ -158,37 +158,19 @@
             <div class="card stat-card"><div class="stat-value" style="color:#ef4444;" id="anBounceRate">-</div><div class="stat-label">Bounce Rate</div></div>
             <div class="card stat-card"><div class="stat-value" style="color:#e67e22;" id="anConversion">-</div><div class="stat-label">Conversion Rate</div></div>
         </div>
-        <div class="card" style="margin-bottom:24px;">
-            <h3 style="font-weight:600;margin-bottom:12px;">🔄 Conversion Funnel</h3>
-            <div class="funnel" id="analyticsFunnel"></div>
+        <div class="card" style="margin-bottom:24px;"><h3 style="font-weight:600;margin-bottom:12px;">🔄 Conversion Funnel</h3><div class="funnel" id="analyticsFunnel"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+            <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">📱 Device Breakdown</h3><div id="deviceBreakdown"></div></div>
+            <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">🌐 Traffic Sources</h3><div id="trafficSources"></div></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
-            <div class="card">
-                <h3 style="font-weight:600;margin-bottom:12px;">📱 Device Breakdown</h3>
-                <div id="deviceBreakdown"></div>
-            </div>
-            <div class="card">
-                <h3 style="font-weight:600;margin-bottom:12px;">🌐 Traffic Sources</h3>
-                <div id="trafficSources"></div>
-            </div>
+            <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">📄 Top Pages</h3><div id="topPages"></div></div>
+            <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">🏷️ Top Products Viewed</h3><div id="topProductsViewed"></div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
-            <div class="card">
-                <h3 style="font-weight:600;margin-bottom:12px;">📄 Top Pages</h3>
-                <div id="topPages"></div>
-            </div>
-            <div class="card">
-                <h3 style="font-weight:600;margin-bottom:12px;">🏷️ Top Products Viewed</h3>
-                <div id="topProductsViewed"></div>
-            </div>
-        </div>
-        <div class="card">
-            <h3 style="font-weight:600;margin-bottom:12px;">🕐 Live Activity Feed</h3>
-            <div id="activityFeed" style="max-height:400px;overflow-y:auto;"></div>
-        </div>
+        <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">🕐 Live Activity Feed</h3><div id="activityFeed" style="max-height:400px;overflow-y:auto;"></div></div>
     </div>
 
-    <!-- ══════ USERS PAGE ══════ -->
+    <!-- USERS PAGE -->
     <div class="page" id="page-users">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
             <div class="card stat-card"><div class="stat-value" style="color:#3b82f6;" id="usersTotalUsers">-</div><div class="stat-label">Total Users</div></div>
@@ -196,16 +178,12 @@
             <div class="card stat-card"><div class="stat-value" style="color:#f59e0b;" id="usersGuests">-</div><div class="stat-label">Guest Sessions</div></div>
             <div class="card stat-card"><div class="stat-value" style="color:#8b5cf6;" id="usersActiveToday">-</div><div class="stat-label">Active Today</div></div>
         </div>
-        <div class="card">
-            <h3 style="font-weight:600;margin-bottom:12px;">📱 Registered Users (Phone Numbers)</h3>
-            <table>
-                <thead><tr><th>User</th><th>Country</th><th>Visits</th><th>Cart</th><th>Purchases</th><th>Wallet</th><th>Last Active</th><th>Action</th></tr></thead>
-                <tbody id="usersTable"></tbody>
-            </table>
+        <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">📱 Registered Users</h3>
+            <table><thead><tr><th>User</th><th>Country</th><th>Visits</th><th>Cart</th><th>Purchases</th><th>Wallet</th><th>Last Active</th><th>Action</th></tr></thead><tbody id="usersTable"></tbody></table>
         </div>
     </div>
 
-    <!-- ══════ NOTIFICATIONS PAGE ══════ -->
+    <!-- NOTIFICATIONS PAGE -->
     <div class="page" id="page-notifications">
         <div style="display:flex;gap:16px;margin-bottom:24px;">
             <div class="card" style="flex:1;">
@@ -222,75 +200,70 @@
         <div class="card" style="max-width:400px;">
             <h4 style="font-weight:600;margin-bottom:12px;">ℹ️ How Alerts Work</h4>
             <ul style="font-size:0.9rem;color:#666;line-height:1.8;padding-left:20px;">
-                <li>🔥 <strong>High Activity</strong> — User visits 4+ times in 24 hours without buying</li>
+                <li>🔥 <strong>High Activity</strong> — User visits 4+ times without buying</li>
                 <li>🔄 <strong>Repeat Visitor</strong> — User returns multiple times</li>
                 <li>Alerts popup automatically every 30 seconds</li>
-                <li>Click on a user to send them wallet credit!</li>
             </ul>
         </div>
     </div>
 
-    <!-- ══════ PRODUCTS PAGE ══════ -->
+    <!-- PRODUCTS PAGE -->
     <div class="page" id="page-products">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
             <p style="color:#666;" id="productCount">Loading...</p>
             <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
         </div>
-        <div class="card">
-            <table>
-                <thead><tr><th>Image</th><th>Product</th><th>Category</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody id="productsTable"></tbody>
-            </table>
-        </div>
+        <div class="card"><table><thead><tr><th>Image</th><th>Product</th><th>Category</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody id="productsTable"></tbody></table></div>
     </div>
 
-    <!-- ══════ ORDERS PAGE ══════ -->
+    <!-- ══════ ORDERS PAGE (UPGRADED with Tracking + WhatsApp) ══════ -->
     <div class="page" id="page-orders">
-        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-            <button class="btn btn-sm" style="background:#eee;" data-order-filter="all">All</button>
-            <button class="btn btn-sm" style="background:#fff3cd;" data-order-filter="pending">Pending</button>
-            <button class="btn btn-sm" style="background:#cce5ff;" data-order-filter="confirmed">Confirmed</button>
-            <button class="btn btn-sm" style="background:#d4edda;" data-order-filter="shipped">Shipped</button>
-            <button class="btn btn-sm" style="background:#d4edda;" data-order-filter="delivered">Delivered</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-sm" style="background:#eee;" data-order-filter="all">All</button>
+                <button class="btn btn-sm" style="background:#fff3cd;" data-order-filter="pending">Pending</button>
+                <button class="btn btn-sm" style="background:#cce5ff;" data-order-filter="confirmed">Confirmed</button>
+                <button class="btn btn-sm" style="background:#d4edda;" data-order-filter="shipped">Shipped</button>
+                <button class="btn btn-sm" style="background:#d4edda;" data-order-filter="delivered">Delivered</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <div id="smsStatusIndicator" style="display:flex;align-items:center;gap:4px;font-size:0.75rem;padding:4px 10px;border-radius:8px;background:#f0f0f0;color:#999;">
+                    ⏳ SMS...
+                </div>
+                <div id="waStatusIndicator" style="display:flex;align-items:center;gap:4px;font-size:0.75rem;padding:4px 10px;border-radius:8px;background:#f0f0f0;color:#999;">
+                    ⏳ WA...
+                </div>
+            </div>
         </div>
         <div class="card">
             <table>
-                <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Tracking</th><th>Notified</th><th>Actions</th></tr></thead>
                 <tbody id="ordersTable"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- ══════ SHIPPING PAGE ══════ -->
+    <!-- SHIPPING PAGE -->
     <div class="page" id="page-shipping">
-        <div class="card" style="margin-bottom:24px;">
-            <h3 style="font-weight:600;margin-bottom:12px;">📦 Pending Shipments</h3>
-            <table>
-                <thead><tr><th>Order</th><th>Customer</th><th>Address</th><th>Partner</th><th>Tracking</th><th>Action</th></tr></thead>
-                <tbody id="shippingTable"></tbody>
-            </table>
+        <div class="card" style="margin-bottom:24px;"><h3 style="font-weight:600;margin-bottom:12px;">📦 Pending Shipments</h3>
+            <table><thead><tr><th>Order</th><th>Customer</th><th>Address</th><th>Partner</th><th>Tracking</th><th>Action</th></tr></thead><tbody id="shippingTable"></tbody></table>
         </div>
     </div>
 
-    <!-- ══════ SETTINGS PAGE ══════ -->
+    <!-- SETTINGS PAGE -->
     <div class="page" id="page-settings">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
             <div>
-                <div class="card">
-                    <h3 style="font-weight:600;margin-bottom:16px;">⚙️ Store Settings</h3>
+                <div class="card"><h3 style="font-weight:600;margin-bottom:16px;">⚙️ Store Settings</h3>
                     <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Store Name</label>
                     <input type="text" id="settingStoreName" value="SeaSalt Pickles" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
                     <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Default Currency</label>
                     <select id="settingCurrency" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:16px;">
-                        <option value="INR">₹ INR (Indian Rupee)</option>
-                        <option value="USD">$ USD (US Dollar)</option>
-                        <option value="GBP">£ GBP (British Pound)</option>
-                        <option value="AED">د.إ AED (UAE Dirham)</option>
+                        <option value="INR">₹ INR</option><option value="USD">$ USD</option><option value="GBP">£ GBP</option><option value="AED">د.إ AED</option>
                     </select>
                     <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
                 </div>
-                <div class="card" style="margin-top:16px;">
-                    <h3 style="font-weight:600;margin-bottom:16px;">🔐 Change Password</h3>
+                <div class="card" style="margin-top:16px;"><h3 style="font-weight:600;margin-bottom:16px;">🔐 Change Password</h3>
                     <input type="password" id="newPassword" placeholder="New password" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
                     <button class="btn btn-primary" id="changePassBtn">Update Password</button>
                 </div>
@@ -301,13 +274,9 @@
                         <h3 style="font-weight:600;">🚚 Delivery Charges</h3>
                         <button class="btn btn-sm btn-primary" id="addDeliveryChargeBtn">+ Add</button>
                     </div>
-                    <table style="font-size:0.85rem;">
-                        <thead><tr><th>Country</th><th>Region</th><th>Free Above</th><th>Flat Fee</th><th>Actions</th></tr></thead>
-                        <tbody id="deliveryChargesTable"></tbody>
-                    </table>
+                    <table style="font-size:0.85rem;"><thead><tr><th>Country</th><th>Region</th><th>Free Above</th><th>Flat Fee</th><th>Actions</th></tr></thead><tbody id="deliveryChargesTable"></tbody></table>
                 </div>
-                <div class="card" style="margin-top:16px;">
-                    <h3 style="font-weight:600;margin-bottom:12px;">🌍 Active Countries</h3>
+                <div class="card" style="margin-top:16px;"><h3 style="font-weight:600;margin-bottom:12px;">🌍 Active Countries</h3>
                     <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">Countries shown in customer sign-up</p>
                     <div id="countriesList" style="max-height:200px;overflow-y:auto;"></div>
                 </div>
@@ -316,7 +285,7 @@
     </div>
 </div>
 
-<!-- ════════════ DELIVERY CHARGE MODAL ════════════ -->
+<!-- DELIVERY CHARGE MODAL -->
 <div class="modal-overlay" id="deliveryModal">
     <div class="modal-box" style="max-width:400px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -327,7 +296,7 @@
         <label style="font-size:0.8rem;font-weight:600;">Country</label>
         <select id="dc-country" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;"></select>
         <label style="font-size:0.8rem;font-weight:600;">Region (optional)</label>
-        <input type="text" id="dc-region" placeholder="e.g., Telangana, California" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+        <input type="text" id="dc-region" placeholder="e.g., Telangana" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
         <label style="font-size:0.8rem;font-weight:600;">Free Delivery Above (₹)</label>
         <input type="number" id="dc-minFree" value="500" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
         <label style="font-size:0.8rem;font-weight:600;">Flat Delivery Fee (₹)</label>
@@ -338,7 +307,7 @@
     </div>
 </div>
 
-<!-- ════════════ PRODUCT MODAL ════════════ -->
+<!-- PRODUCT MODAL -->
 <div class="modal-overlay" id="productModal">
     <div class="modal-box">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -353,16 +322,12 @@
             <textarea id="pf-desc" rows="2" style="width:100%;padding:8px;border:2px solid #eee;border-radius:6px;margin-bottom:10px;"></textarea>
             <label style="font-size:0.8rem;font-weight:600;">Category</label>
             <select id="pf-category" style="width:100%;padding:8px;border:2px solid #eee;border-radius:6px;margin-bottom:10px;">
-                <option value="veg">Veg Pickles</option>
-                <option value="nonveg">Non-Veg Pickles</option>
-                <option value="masala">Masala & Karam Podi</option>
-                <option value="sweets">Sweets & Snacks</option>
-                <option value="combos">Combos</option>
+                <option value="veg">Veg Pickles</option><option value="nonveg">Non-Veg Pickles</option><option value="masala">Masala & Karam Podi</option><option value="sweets">Sweets & Snacks</option><option value="combos">Combos</option>
             </select>
             <label style="font-size:0.8rem;font-weight:600;">Image URL</label>
             <input type="text" id="pf-image" placeholder="https://..." style="width:100%;padding:8px;border:2px solid #eee;border-radius:6px;margin-bottom:10px;">
             <label style="font-size:0.8rem;font-weight:600;">Badge (optional)</label>
-            <input type="text" id="pf-badge" placeholder="e.g. Bestseller, Premium" style="width:100%;padding:8px;border:2px solid #eee;border-radius:6px;margin-bottom:10px;">
+            <input type="text" id="pf-badge" placeholder="e.g. Bestseller" style="width:100%;padding:8px;border:2px solid #eee;border-radius:6px;margin-bottom:10px;">
             <label style="font-size:0.8rem;font-weight:600;">Variants (JSON)</label>
             <textarea id="pf-variants" rows="3" style="width:100%;padding:8px;border:2px solid #eee;border-radius:6px;margin-bottom:10px;font-family:monospace;font-size:0.85rem;">[{"weight":"250g","price":199},{"weight":"500g","price":349}]</textarea>
             <div style="display:flex;gap:8px;margin-bottom:10px;">
@@ -374,7 +339,7 @@
     </div>
 </div>
 
-<!-- ════════════ ORDER DETAIL MODAL ════════════ -->
+<!-- ORDER DETAIL MODAL -->
 <div class="modal-overlay" id="orderModal">
     <div class="modal-box" id="orderModalContent"></div>
 </div>
@@ -383,17 +348,11 @@
 (function() {
     'use strict';
 
-    // ══════════════════════════════
-    // SUPABASE
-    // ══════════════════════════════
     const SUPA_URL = 'https://yosjbsncvghpscsrvxds.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlvc2pic25jdmdocHNjc3J2eGRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMjc3NTgsImV4cCI6MjA4NTgwMzc1OH0.PNEbeofoyT7KdkzepRfqg-zqyBiGAat5ElCMiyQ4UAs';
-
     const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // ══════════════════════════════
     // AUTH
-    // ══════════════════════════════
     const ADMIN_USER = 'admin';
     let ADMIN_PASS = localStorage.getItem('seasalt_admin_pass') || 'seasalt2024';
 
@@ -415,881 +374,512 @@
             document.getElementById('loginError').style.display = 'block';
         }
     });
+    document.getElementById('loginPass').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
 
-    document.getElementById('loginPass').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('loginBtn').click();
-    });
-
-    // ══════════════════════════════
     // NAVIGATION
-    // ══════════════════════════════
-    const pages = ['dashboard', 'analytics', 'users', 'notifications', 'products', 'orders', 'shipping', 'settings'];
-    const pageNames = { dashboard: 'Dashboard', analytics: 'Analytics', users: 'Users', notifications: 'Notifications', products: 'Products', orders: 'Orders', shipping: 'Shipping', settings: 'Settings' };
+    const pages = ['dashboard','analytics','users','notifications','products','orders','shipping','settings'];
+    const pageNames = {dashboard:'Dashboard',analytics:'Analytics',users:'Users',notifications:'Notifications',products:'Products',orders:'Orders',shipping:'Shipping',settings:'Settings'};
 
     document.querySelectorAll('.sidebar-link').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const page = this.getAttribute('data-page');
-            showPage(page);
-        });
+        link.addEventListener('click', function(e) { e.preventDefault(); showPage(this.getAttribute('data-page')); });
     });
-
     function showPage(page) {
-        pages.forEach(function(p) {
-            const el = document.getElementById('page-' + p);
-            if (el) el.classList.toggle('active', p === page);
-        });
-        document.querySelectorAll('.sidebar-link').forEach(function(l) {
-            l.classList.toggle('active', l.getAttribute('data-page') === page);
-        });
+        pages.forEach(function(p) { var el = document.getElementById('page-'+p); if(el) el.classList.toggle('active', p===page); });
+        document.querySelectorAll('.sidebar-link').forEach(function(l) { l.classList.toggle('active', l.getAttribute('data-page')===page); });
         document.getElementById('pageTitle').textContent = pageNames[page] || page;
     }
 
     document.getElementById('refreshBtn').addEventListener('click', loadAllData);
-
-    // Mobile sidebar toggle
-    const toggleBtn = document.getElementById('toggleSidebar');
+    var toggleBtn = document.getElementById('toggleSidebar');
     if (window.innerWidth <= 768) toggleBtn.style.display = 'block';
-    toggleBtn.addEventListener('click', function() {
-        document.getElementById('sidebar').classList.toggle('open');
-    });
+    toggleBtn.addEventListener('click', function() { document.getElementById('sidebar').classList.toggle('open'); });
 
-    // ══════════════════════════════
     // DATA LOADING
-    // ══════════════════════════════
     async function loadAllData() {
         document.getElementById('lastUpdated').textContent = 'Loading...';
-        try {
-            await Promise.all([
-                loadDashboard(),
-                loadAnalytics(),
-                loadUsers(),
-                loadNotifications(),
-                loadProducts(),
-                loadOrders()
-            ]);
-        } catch (err) {
-            console.error('Load error:', err);
-        }
+        try { await Promise.all([loadDashboard(), loadAnalytics(), loadUsers(), loadNotifications(), loadProducts(), loadOrders()]); } catch(err) { console.error('Load error:', err); }
         document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
     }
 
-    // ══════════════════════════════
-    // DASHBOARD
-    // ══════════════════════════════
+    // ══════════ DASHBOARD ══════════
     async function loadDashboard() {
-        const today = new Date().toISOString().split('T')[0];
-        const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+        var today = new Date().toISOString().split('T')[0];
+        var weekAgo = new Date(Date.now()-7*86400000).toISOString();
+        var {data:todayEvents} = await db.from('analytics_events').select('*').gte('created_at', today+'T00:00:00Z');
+        var events = todayEvents || [];
+        var sessions = new Set(events.map(function(e){return e.session_id})).size;
+        var views = events.filter(function(e){return e.event_type==='page_view'}).length;
 
-        // Today's events
-        const { data: todayEvents } = await db.from('analytics_events').select('*').gte('created_at', today + 'T00:00:00Z');
-        const events = todayEvents || [];
+        // Count orders + revenue from BOTH analytics_events AND orders table
+        var purchaseEvents = events.filter(function(e){return e.event_type==='purchase'});
+        var analyticsRevenue = purchaseEvents.reduce(function(sum,e){try{var d=JSON.parse(e.data||'{}');return sum+(d.total||0)}catch(x){return sum}},0);
 
-        const sessions = new Set(events.map(function(e) { return e.session_id; })).size;
-        const views = events.filter(function(e) { return e.event_type === 'page_view'; }).length;
-        const purchases = events.filter(function(e) { return e.event_type === 'purchase'; });
-        const revenue = purchases.reduce(function(sum, e) {
-            try { var d = JSON.parse(e.data || '{}'); return sum + (d.total || 0); } catch(x) { return sum; }
-        }, 0);
+        // Also fetch real orders from orders table for today
+        var {data:todayOrders} = await db.from('orders').select('id,total,status,created_at').gte('created_at', today+'T00:00:00Z');
+        todayOrders = todayOrders || [];
+        var realOrderCount = todayOrders.length;
+        var realRevenue = todayOrders.reduce(function(sum,o){return sum + (parseFloat(o.total) || 0)},0);
 
-        document.getElementById('statSessions').textContent = sessions;
-        document.getElementById('statPageViews').textContent = views;
-        document.getElementById('statOrders').textContent = purchases.length;
-        document.getElementById('statRevenue').textContent = '₹' + revenue.toLocaleString();
+        // Use the HIGHER of the two sources (avoids showing 0 when orders exist)
+        var orderCount = Math.max(purchaseEvents.length, realOrderCount);
+        var revenue = Math.max(analyticsRevenue, realRevenue);
 
-        // Last 7 days chart
-        const { data: weekEvents } = await db.from('analytics_events').select('created_at').eq('event_type', 'page_view').gte('created_at', weekAgo);
-        renderWeekChart(weekEvents || []);
+        document.getElementById('statSessions').textContent=sessions;
+        document.getElementById('statPageViews').textContent=views;
+        document.getElementById('statOrders').textContent=orderCount;
+        document.getElementById('statRevenue').textContent='₹'+revenue.toLocaleString();
 
-        // Funnel
-        renderFunnel('dashFunnel', events);
+        // All Time stats from orders table
+        var {data:allTimeOrders} = await db.from('orders').select('id,total,status');
+        allTimeOrders = allTimeOrders || [];
+        var totalRevAll = allTimeOrders.reduce(function(sum,o){return sum + (parseFloat(o.total) || 0)},0);
+        var pendingCount = allTimeOrders.filter(function(o){return o.status==='pending'||o.status==='confirmed'||o.status==='processing'}).length;
+        var shippedCount = allTimeOrders.filter(function(o){return o.status==='shipped'||o.status==='dispatched'||o.status==='delivered'}).length;
+        document.getElementById('statTotalOrders').textContent = allTimeOrders.length;
+        document.getElementById('statTotalRevenue').textContent = '₹' + totalRevAll.toLocaleString();
+        document.getElementById('statPendingOrders').textContent = pendingCount;
+        document.getElementById('statShippedOrders').textContent = shippedCount;
 
-        // Recent activity
+        var {data:weekEvents} = await db.from('analytics_events').select('created_at').eq('event_type','page_view').gte('created_at',weekAgo);
+        renderWeekChart(weekEvents||[]);
+        renderFunnel('dashFunnel',events);
         renderRecentActivity(events.slice(-20).reverse());
     }
 
-    function renderWeekChart(events) {
-        var days = {};
-        var labels = [];
-        for (var i = 6; i >= 0; i--) {
-            var d = new Date(Date.now() - i * 86400000);
-            var key = d.toISOString().split('T')[0];
-            var label = d.toLocaleDateString('en', { weekday: 'short' });
-            days[key] = 0;
-            labels.push({ key: key, label: label });
-        }
-        events.forEach(function(e) {
-            var key = e.created_at.split('T')[0];
-            if (days[key] !== undefined) days[key]++;
-        });
-        var maxVal = Math.max.apply(null, Object.values(days).concat([1]));
-        var barsHtml = '';
-        var labelsHtml = '';
-        labels.forEach(function(l) {
-            var h = Math.max(4, (days[l.key] / maxVal) * 100);
-            barsHtml += '<div class="bar" style="height:' + h + '%" title="' + days[l.key] + ' views"></div>';
-            labelsHtml += '<div class="bar-label" style="flex:1;">' + l.label + '</div>';
-        });
-        document.getElementById('chartBars').innerHTML = barsHtml;
-        document.getElementById('chartLabels').innerHTML = labelsHtml;
-    }
+    function renderWeekChart(events){var days={};var labels=[];for(var i=6;i>=0;i--){var d=new Date(Date.now()-i*86400000);var key=d.toISOString().split('T')[0];days[key]=0;labels.push({key:key,label:d.toLocaleDateString('en',{weekday:'short'})});}events.forEach(function(e){var k=e.created_at.split('T')[0];if(days[k]!==undefined)days[k]++});var mx=Math.max.apply(null,Object.values(days).concat([1]));var bH='',lH='';labels.forEach(function(l){var h=Math.max(4,(days[l.key]/mx)*100);bH+='<div class="bar" style="height:'+h+'%" title="'+days[l.key]+' views"></div>';lH+='<div class="bar-label" style="flex:1;">'+l.label+'</div>';});document.getElementById('chartBars').innerHTML=bH;document.getElementById('chartLabels').innerHTML=lH;}
 
-    function renderFunnel(containerId, events) {
-        var views = events.filter(function(e) { return e.event_type === 'page_view'; }).length;
-        var carts = events.filter(function(e) { return e.event_type === 'add_to_cart'; }).length;
-        var checkouts = events.filter(function(e) { return e.event_type === 'checkout_start'; }).length;
-        var purchases = events.filter(function(e) { return e.event_type === 'purchase'; }).length;
+    function renderFunnel(cid,events){var v=events.filter(function(e){return e.event_type==='page_view'}).length;var c=events.filter(function(e){return e.event_type==='add_to_cart'}).length;var ch=events.filter(function(e){return e.event_type==='checkout_start'}).length;var p=events.filter(function(e){return e.event_type==='purchase'}).length;var steps=[{label:'Views',value:v,color:'#dbeafe'},{label:'Cart',value:c,color:'#fef3c7'},{label:'Checkout',value:ch,color:'#ede9fe'},{label:'Purchase',value:p,color:'#d1fae5'}];var html='';steps.forEach(function(s,i){var pct=i>0&&steps[i-1].value>0?Math.round((s.value/steps[i-1].value)*100):'';html+='<div class="funnel-step"><div class="funnel-circle" style="background:'+s.color+';">'+s.value+'</div><div class="funnel-label">'+s.label+'</div>';if(pct!=='')html+='<div class="funnel-pct">'+pct+'%</div>';html+='</div>';if(i<steps.length-1)html+='<div class="funnel-arrow">→</div>';});document.getElementById(cid).innerHTML=html;}
 
-        var steps = [
-            { label: 'Views', value: views, color: '#dbeafe' },
-            { label: 'Cart', value: carts, color: '#fef3c7' },
-            { label: 'Checkout', value: checkouts, color: '#ede9fe' },
-            { label: 'Purchase', value: purchases, color: '#d1fae5' }
-        ];
+    function renderRecentActivity(events){var el=document.getElementById('recentActivity');if(!events.length){el.innerHTML='<p style="color:#999;text-align:center;padding:20px;">No activity yet.</p>';return;}var dotMap={page_view:'dot-blue',product_view:'dot-purple',add_to_cart:'dot-yellow',checkout_start:'dot-yellow',purchase:'dot-green',search:'dot-blue'};var labelMap={page_view:'Viewed page',product_view:'Viewed product',add_to_cart:'Added to cart',checkout_start:'Started checkout',purchase:'Purchased',search:'Searched',page_exit:'Left page',spin_wheel:'Spun wheel'};var html='';events.forEach(function(e){var time=new Date(e.created_at).toLocaleTimeString();var label=labelMap[e.event_type]||e.event_type;var detail=e.page||'';if(e.product_name)detail=e.product_name;try{var d=JSON.parse(e.data||'{}');if(d.query)detail='"'+d.query+'"'}catch(x){}var ph=e.user_phone?'<span style="background:#e8f5e9;color:#2e7d32;padding:2px 6px;border-radius:4px;font-size:0.7rem;margin-left:6px;">📱 '+e.user_phone+'</span>':'<span style="background:#f5f5f5;color:#999;padding:2px 6px;border-radius:4px;font-size:0.7rem;margin-left:6px;">Guest</span>';html+='<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span class="activity-dot '+(dotMap[e.event_type]||'dot-gray')+'"></span><span style="font-size:0.85rem;">'+label+(detail?' — <strong>'+detail+'</strong>':'')+' </span>'+ph+'<span style="margin-left:auto;font-size:0.75rem;color:#999;">'+time+'</span></div>';});el.innerHTML=html;}
 
-        var html = '';
-        steps.forEach(function(s, i) {
-            var pct = i > 0 && steps[i - 1].value > 0 ? Math.round((s.value / steps[i - 1].value) * 100) : '';
-            html += '<div class="funnel-step">';
-            html += '<div class="funnel-circle" style="background:' + s.color + ';">' + s.value + '</div>';
-            html += '<div class="funnel-label">' + s.label + '</div>';
-            if (pct !== '') html += '<div class="funnel-pct">' + pct + '%</div>';
-            html += '</div>';
-            if (i < steps.length - 1) html += '<div class="funnel-arrow">→</div>';
-        });
-        document.getElementById(containerId).innerHTML = html;
-    }
+    // ══════════ ANALYTICS ══════════
+    async function loadAnalytics(){var ago=new Date(Date.now()-30*86400000).toISOString();var{data:events}=await db.from('analytics_events').select('*').gte('created_at',ago).order('created_at',{ascending:false}).limit(5000);events=events||[];var sessions=new Set(events.map(function(e){return e.session_id})).size;var pv=events.filter(function(e){return e.event_type==='page_view'}).length;var exits=events.filter(function(e){return e.event_type==='page_exit'});var avgT=0;if(exits.length>0){avgT=Math.round(exits.reduce(function(s,e){return s+(e.time_on_page||0)},0)/exits.length)}var sv={};events.filter(function(e){return e.event_type==='page_view'}).forEach(function(e){sv[e.session_id]=(sv[e.session_id]||0)+1});var bounces=Object.values(sv).filter(function(v){return v===1}).length;var br=sessions>0?Math.round((bounces/sessions)*100):0;var purchases=events.filter(function(e){return e.event_type==='purchase'}).length;var cr=sessions>0?((purchases/sessions)*100).toFixed(1):'0';document.getElementById('anSessions').textContent=sessions;document.getElementById('anPageViews').textContent=pv;document.getElementById('anAvgTime').textContent=avgT+'s';document.getElementById('anBounceRate').textContent=br+'%';document.getElementById('anConversion').textContent=cr+'%';renderFunnel('analyticsFunnel',events);var devices={};events.forEach(function(e){var d=e.device_type||'unknown';devices[d]=(devices[d]||0)+1});renderBreakdown('deviceBreakdown',devices,{mobile:'#3b82f6',desktop:'#10b981',tablet:'#f59e0b',unknown:'#ccc'});var sources={};events.filter(function(e){return e.event_type==='page_view'}).forEach(function(e){var r=e.referrer||'direct';sources[r]=(sources[r]||0)+1});renderBreakdown('trafficSources',sources,{direct:'#3b82f6',google:'#ea4335',facebook:'#1877f2',instagram:'#e4405f',whatsapp:'#25d366'});var pc={};events.filter(function(e){return e.event_type==='page_view'}).forEach(function(e){var p=e.page||'unknown';pc[p]=(pc[p]||0)+1});renderTopList('topPages',pc);var prc={};events.filter(function(e){return e.event_type==='product_view'&&e.product_name}).forEach(function(e){prc[e.product_name]=(prc[e.product_name]||0)+1});renderTopList('topProductsViewed',prc);renderRecentActivity(events.slice(0,50));document.getElementById('activityFeed').innerHTML=document.getElementById('recentActivity').innerHTML;}
 
-    function renderRecentActivity(events) {
-        var el = document.getElementById('recentActivity');
-        if (!events.length) { el.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">No activity yet. Visit your store to generate data!</p>'; return; }
-        var dotMap = { page_view: 'dot-blue', product_view: 'dot-purple', add_to_cart: 'dot-yellow', checkout_start: 'dot-yellow', purchase: 'dot-green', search: 'dot-blue' };
-        var labelMap = { page_view: 'Viewed page', product_view: 'Viewed product', add_to_cart: 'Added to cart', checkout_start: 'Started checkout', purchase: 'Purchased', search: 'Searched', page_exit: 'Left page', spin_wheel: 'Spun wheel' };
-        var html = '';
-        events.forEach(function(e) {
-            var time = new Date(e.created_at).toLocaleTimeString();
-            var label = labelMap[e.event_type] || e.event_type;
-            var detail = e.page || '';
-            if (e.product_name) detail = e.product_name;
-            try { var d = JSON.parse(e.data || '{}'); if (d.query) detail = '"' + d.query + '"'; } catch(x) {}
-            var phoneDisplay = e.user_phone ? '<span style="background:#e8f5e9;color:#2e7d32;padding:2px 6px;border-radius:4px;font-size:0.7rem;margin-left:6px;">📱 ' + e.user_phone + '</span>' : '<span style="background:#f5f5f5;color:#999;padding:2px 6px;border-radius:4px;font-size:0.7rem;margin-left:6px;">Guest</span>';
-            html += '<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
-            html += '<span class="activity-dot ' + (dotMap[e.event_type] || 'dot-gray') + '"></span>';
-            html += '<span style="font-size:0.85rem;">' + label + (detail ? ' — <strong>' + detail + '</strong>' : '') + '</span>';
-            html += phoneDisplay;
-            html += '<span style="margin-left:auto;font-size:0.75rem;color:#999;">' + time + '</span>';
-            html += '</div>';
-        });
-        el.innerHTML = html;
-    }
+    function renderBreakdown(cid,data,colors){var total=Object.values(data).reduce(function(a,b){return a+b},0);if(total===0){document.getElementById(cid).innerHTML='<p style="color:#999;">No data yet</p>';return;}var sorted=Object.entries(data).sort(function(a,b){return b[1]-a[1]});var html='';sorted.forEach(function(item){var pct=Math.round((item[1]/total)*100);var color=(colors&&colors[item[0]])||'#999';html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;"><div style="width:12px;height:12px;border-radius:3px;background:'+color+';"></div><span style="font-size:0.85rem;flex:1;">'+item[0]+'</span><span style="font-size:0.85rem;font-weight:600;">'+item[1]+' ('+pct+'%)</span></div>';});document.getElementById(cid).innerHTML=html;}
+    function renderTopList(cid,data){var sorted=Object.entries(data).sort(function(a,b){return b[1]-a[1]}).slice(0,10);if(!sorted.length){document.getElementById(cid).innerHTML='<p style="color:#999;">No data yet</p>';return;}var mx=sorted[0][1];var html='';sorted.forEach(function(item,i){var pct=Math.round((item[1]/mx)*100);html+='<div style="padding:6px 0;"><div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:3px;"><span>'+(i+1)+'. '+item[0]+'</span><span style="font-weight:600;">'+item[1]+'</span></div><div style="height:6px;background:#f0f0f0;border-radius:3px;"><div style="height:100%;width:'+pct+'%;background:#e67e22;border-radius:3px;"></div></div></div>';});document.getElementById(cid).innerHTML=html;}
 
-    // ══════════════════════════════
-    // ANALYTICS PAGE
-    // ══════════════════════════════
-    async function loadAnalytics() {
-        var thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-        var { data: events } = await db.from('analytics_events').select('*').gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }).limit(5000);
-        events = events || [];
+    // ══════════ USERS ══════════
+    async function loadUsers(){var ago=new Date(Date.now()-30*86400000).toISOString();var today=new Date().toISOString().split('T')[0];var{data:usersData}=await db.from('users').select('*').order('last_seen',{ascending:false});usersData=usersData||[];var{data:events}=await db.from('analytics_events').select('*').gte('created_at',ago).order('created_at',{ascending:false});events=events||[];var allSessions=new Set(events.map(function(e){return e.session_id})).size;var loggedInUsers=usersData.length;var guestSessions=new Set(events.filter(function(e){return!e.user_phone}).map(function(e){return e.session_id})).size;var todayEvents=events.filter(function(e){return e.created_at&&e.created_at.startsWith(today)});var activeToday=new Set(todayEvents.map(function(e){return e.user_phone||e.session_id})).size;document.getElementById('usersTotalUsers').textContent=allSessions;document.getElementById('usersLoggedIn').textContent=loggedInUsers;document.getElementById('usersGuests').textContent=guestSessions;document.getElementById('usersActiveToday').textContent=activeToday;var activityMap={};events.forEach(function(e){if(!e.user_phone)return;if(!activityMap[e.user_phone])activityMap[e.user_phone]={pageViews:0,cartAdds:0,purchases:0};if(e.event_type==='page_view')activityMap[e.user_phone].pageViews++;if(e.event_type==='add_to_cart')activityMap[e.user_phone].cartAdds++;if(e.event_type==='purchase')activityMap[e.user_phone].purchases++;});var html='';if(usersData.length===0){html='<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">No registered users yet.</td></tr>';}else{usersData.forEach(function(u){var a=activityMap[u.phone]||{pageViews:0,cartAdds:0,purchases:0};var la=u.last_seen?new Date(u.last_seen).toLocaleString():'-';var wb=u.wallet_balance>0?'<span class="badge badge-green">₹'+u.wallet_balance+'</span>':'₹0';var cf=getCountryFlag(u.selected_country);html+='<tr><td><div><strong>'+( u.name||'Unknown')+'</strong></div><div style="font-size:0.8rem;color:#666;">📱 '+u.phone+'</div></td><td>'+cf+' '+(u.selected_country||'-')+'</td><td>'+(u.total_visits||a.pageViews||0)+'</td><td>'+a.cartAdds+'</td><td>'+(u.total_purchases||0)+'</td><td>'+wb+'</td><td style="font-size:0.8rem;">'+la+'</td><td><button class="btn btn-sm btn-green" onclick="openWalletModal(\''+u.phone+'\','+(u.wallet_balance||0)+',\''+(u.name||'').replace(/'/g,"\\'")+ '\')">💰</button></td></tr>';});}document.getElementById('usersTable').innerHTML=html;}
+    function getCountryFlag(c){var f={'India':'🇮🇳','United States':'🇺🇸','United Kingdom':'🇬🇧','United Arab Emirates':'🇦🇪','Singapore':'🇸🇬','Australia':'🇦🇺','Canada':'🇨🇦','Germany':'🇩🇪','France':'🇫🇷','Saudi Arabia':'🇸🇦','Qatar':'🇶🇦','Kuwait':'🇰🇼','Oman':'🇴🇲','Malaysia':'🇲🇾','New Zealand':'🇳🇿'};return f[c]||'🌍';}
+    window.openWalletModal=function(p,b,n){showUserDetail(p);};
 
-        var sessions = new Set(events.map(function(e) { return e.session_id; })).size;
-        var pageViews = events.filter(function(e) { return e.event_type === 'page_view'; }).length;
+    // ══════════ PRODUCTS ══════════
+    async function loadProducts(){var{data:products,error}=await db.from('products').select('*').order('created_at',{ascending:false});if(error){console.error('Products error:',error);return;}products=products||[];document.getElementById('productCount').textContent=products.length+' product(s)';var html='';products.forEach(function(p){var variants=[];try{variants=typeof p.variants==='string'?JSON.parse(p.variants):(p.variants||[])}catch(e){}var price=variants.length>0?'₹'+variants[0].price:'-';var img=p.image&&p.image.startsWith('http')?'<img src="'+p.image+'" class="product-img" onerror="this.outerHTML=\'<div class=product-img-fallback>🫙</div>\'">':'<div class="product-img-fallback">🫙</div>';var sb=p.is_active?'<span class="badge badge-green">Active</span>':'<span class="badge badge-red">Inactive</span>';html+='<tr><td>'+img+'</td><td><strong>'+(p.name||'')+'</strong><br><span style="font-size:0.75rem;color:#999;">'+(p.id||'')+'</span></td><td>'+(p.category||'-')+'</td><td>'+price+'</td><td>'+sb+'</td><td><button class="btn btn-sm btn-primary edit-product-btn" data-id="'+p.id+'">✏️ Edit</button></td></tr>';});document.getElementById('productsTable').innerHTML=html||'<tr><td colspan="6" style="text-align:center;color:#999;padding:40px;">No products found</td></tr>';document.querySelectorAll('.edit-product-btn').forEach(function(btn){btn.addEventListener('click',function(){editProduct(this.getAttribute('data-id'),products)});});}
+    document.getElementById('addProductBtn').addEventListener('click',function(){document.getElementById('productModalTitle').textContent='Add Product';document.getElementById('pf-id').value='';document.getElementById('pf-name').value='';document.getElementById('pf-desc').value='';document.getElementById('pf-category').value='veg';document.getElementById('pf-image').value='';document.getElementById('pf-badge').value='';document.getElementById('pf-variants').value='[{"weight":"250g","price":199},{"weight":"500g","price":349}]';document.getElementById('pf-active').checked=true;document.getElementById('pf-featured').checked=false;document.getElementById('productModal').classList.add('show');});
+    function editProduct(id,products){var p=products.find(function(x){return x.id===id});if(!p)return;document.getElementById('productModalTitle').textContent='Edit Product';document.getElementById('pf-id').value=p.id;document.getElementById('pf-name').value=p.name||'';document.getElementById('pf-desc').value=p.description||'';document.getElementById('pf-category').value=p.category||'veg';document.getElementById('pf-image').value=p.image||'';document.getElementById('pf-badge').value=p.badge||'';document.getElementById('pf-variants').value=typeof p.variants==='string'?p.variants:JSON.stringify(p.variants||[]);document.getElementById('pf-active').checked=p.is_active!==false;document.getElementById('pf-featured').checked=p.is_featured===true;document.getElementById('productModal').classList.add('show');}
+    document.getElementById('closeProductModal').addEventListener('click',function(){document.getElementById('productModal').classList.remove('show')});
+    document.getElementById('saveProductBtn').addEventListener('click',async function(){var id=document.getElementById('pf-id').value;var data={name:document.getElementById('pf-name').value.trim(),description:document.getElementById('pf-desc').value.trim(),category:document.getElementById('pf-category').value,image:document.getElementById('pf-image').value.trim(),badge:document.getElementById('pf-badge').value.trim()||null,variants:document.getElementById('pf-variants').value.trim(),is_active:document.getElementById('pf-active').checked,is_featured:document.getElementById('pf-featured').checked};try{data.variants=JSON.parse(data.variants)}catch(e){alert('Invalid variants JSON');return;}if(!data.name){alert('Product name required');return;}if(id){await db.from('products').update(data).eq('id',id)}else{data.id=data.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-+$/,'');await db.from('products').insert(data)}document.getElementById('productModal').classList.remove('show');loadProducts()});
 
-        // Avg time on page (from page_exit events)
-        var exitEvents = events.filter(function(e) { return e.event_type === 'page_exit'; });
-        var avgTime = 0;
-        if (exitEvents.length > 0) {
-            var totalTime = exitEvents.reduce(function(s, e) { return s + (e.time_on_page || 0); }, 0);
-            avgTime = Math.round(totalTime / exitEvents.length);
-        }
+    // ══════════ NOTIFICATIONS ══════════
+    async function loadNotifications(){var{data:notifs}=await db.from('admin_notifications').select('*').order('created_at',{ascending:false}).limit(50);notifs=notifs||[];var unread=notifs.filter(function(n){return!n.is_read}).length;var badge=document.getElementById('notifBadge');if(unread>0){badge.textContent=unread;badge.style.display='block'}else{badge.style.display='none'}var html='';if(notifs.length===0){html='<p style="color:#999;text-align:center;padding:40px;">No notifications yet.</p>';}else{notifs.forEach(function(n){var time=new Date(n.created_at).toLocaleString();var bgColor=n.is_read?'#fff':'#fef3c7';var icon=n.type==='high_activity'?'🔥':n.type==='repeat_visitor'?'🔄':'🔔';html+='<div style="padding:12px;margin-bottom:8px;border-radius:8px;background:'+bgColor+';border:1px solid #eee;"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;"><div style="flex:1;"><span style="font-size:1.2rem;margin-right:8px;">'+icon+'</span><strong style="color:#333;">'+n.message+'</strong><div style="font-size:0.8rem;color:#999;margin-top:4px;">'+time+'</div></div></div>';if(n.user_phone){html+='<div style="margin-top:10px;display:flex;gap:8px;"><button class="btn btn-sm btn-primary" onclick="showUserDetail(\''+n.user_phone+'\')">👤 View</button><button class="btn btn-sm btn-green" onclick="openWalletModal(\''+n.user_phone+'\',0)">💰 Credit</button>';if(!n.is_read)html+='<button class="btn btn-sm" style="background:#eee;" onclick="markNotifRead('+n.id+')">✓ Read</button>';html+='</div>';}html+='</div>';});}document.getElementById('notificationsList').innerHTML=html;}
+    window.markNotifRead=async function(id){await db.from('admin_notifications').update({is_read:true}).eq('id',id);loadNotifications()};
+    document.getElementById('markAllReadBtn').addEventListener('click',async function(){await db.from('admin_notifications').update({is_read:true}).eq('is_read',false);loadNotifications()});
+    document.getElementById('testNotifBtn').addEventListener('click',function(){showNotificationPopup({id:0,type:'high_activity',user_phone:'+919876543210',message:'🧪 TEST: User has visited 5 times!',created_at:new Date().toISOString()})});
 
-        // Bounce rate (sessions with only 1 page_view)
-        var sessionViews = {};
-        events.filter(function(e) { return e.event_type === 'page_view'; }).forEach(function(e) {
-            sessionViews[e.session_id] = (sessionViews[e.session_id] || 0) + 1;
-        });
-        var bounces = Object.values(sessionViews).filter(function(v) { return v === 1; }).length;
-        var bounceRate = sessions > 0 ? Math.round((bounces / sessions) * 100) : 0;
+    // ══════════════════════════════════════════
+    // ORDERS — FULLY INTEGRATED WITH TRACKING + WHATSAPP
+    // ══════════════════════════════════════════
+    let allOrders = [];
 
-        // Conversion rate
-        var purchases = events.filter(function(e) { return e.event_type === 'purchase'; }).length;
-        var convRate = sessions > 0 ? ((purchases / sessions) * 100).toFixed(1) : '0';
-
-        document.getElementById('anSessions').textContent = sessions;
-        document.getElementById('anPageViews').textContent = pageViews;
-        document.getElementById('anAvgTime').textContent = avgTime + 's';
-        document.getElementById('anBounceRate').textContent = bounceRate + '%';
-        document.getElementById('anConversion').textContent = convRate + '%';
-
-        // Funnel
-        renderFunnel('analyticsFunnel', events);
-
-        // Device breakdown
-        var devices = {};
-        events.forEach(function(e) {
-            var d = e.device_type || 'unknown';
-            devices[d] = (devices[d] || 0) + 1;
-        });
-        renderBreakdown('deviceBreakdown', devices, { mobile: '#3b82f6', desktop: '#10b981', tablet: '#f59e0b', unknown: '#ccc' });
-
-        // Traffic sources
-        var sources = {};
-        events.filter(function(e) { return e.event_type === 'page_view'; }).forEach(function(e) {
-            var r = e.referrer || 'direct';
-            sources[r] = (sources[r] || 0) + 1;
-        });
-        renderBreakdown('trafficSources', sources, { direct: '#3b82f6', google: '#ea4335', facebook: '#1877f2', instagram: '#e4405f', whatsapp: '#25d366' });
-
-        // Top pages
-        var pageCounts = {};
-        events.filter(function(e) { return e.event_type === 'page_view'; }).forEach(function(e) {
-            var p = e.page || 'unknown';
-            pageCounts[p] = (pageCounts[p] || 0) + 1;
-        });
-        renderTopList('topPages', pageCounts);
-
-        // Top products
-        var productCounts = {};
-        events.filter(function(e) { return e.event_type === 'product_view' && e.product_name; }).forEach(function(e) {
-            productCounts[e.product_name] = (productCounts[e.product_name] || 0) + 1;
-        });
-        renderTopList('topProductsViewed', productCounts);
-
-        // Activity feed
-        renderRecentActivity(events.slice(0, 50));
-        document.getElementById('activityFeed').innerHTML = document.getElementById('recentActivity').innerHTML;
-    }
-
-    function renderBreakdown(containerId, data, colors) {
-        var total = Object.values(data).reduce(function(a, b) { return a + b; }, 0);
-        if (total === 0) { document.getElementById(containerId).innerHTML = '<p style="color:#999;">No data yet</p>'; return; }
-        var sorted = Object.entries(data).sort(function(a, b) { return b[1] - a[1]; });
-        var html = '';
-        sorted.forEach(function(item) {
-            var pct = Math.round((item[1] / total) * 100);
-            var color = (colors && colors[item[0]]) || '#999';
-            html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;">';
-            html += '<div style="width:12px;height:12px;border-radius:3px;background:' + color + ';"></div>';
-            html += '<span style="font-size:0.85rem;flex:1;">' + item[0] + '</span>';
-            html += '<span style="font-size:0.85rem;font-weight:600;">' + item[1] + ' (' + pct + '%)</span>';
-            html += '</div>';
-        });
-        document.getElementById(containerId).innerHTML = html;
-    }
-
-    function renderTopList(containerId, data) {
-        var sorted = Object.entries(data).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 10);
-        if (!sorted.length) { document.getElementById(containerId).innerHTML = '<p style="color:#999;">No data yet</p>'; return; }
-        var maxVal = sorted[0][1];
-        var html = '';
-        sorted.forEach(function(item, i) {
-            var pct = Math.round((item[1] / maxVal) * 100);
-            html += '<div style="padding:6px 0;">';
-            html += '<div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:3px;">';
-            html += '<span>' + (i + 1) + '. ' + item[0] + '</span><span style="font-weight:600;">' + item[1] + '</span></div>';
-            html += '<div style="height:6px;background:#f0f0f0;border-radius:3px;"><div style="height:100%;width:' + pct + '%;background:#e67e22;border-radius:3px;"></div></div>';
-            html += '</div>';
-        });
-        document.getElementById(containerId).innerHTML = html;
-    }
-
-    // ══════════════════════════════
-    // USERS
-    // ══════════════════════════════
-    async function loadUsers() {
-        var thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-        var today = new Date().toISOString().split('T')[0];
-        
-        // Fetch from users table (has name, country, wallet)
-        var { data: usersData } = await db.from('users').select('*').order('last_seen', { ascending: false });
-        usersData = usersData || [];
-        
-        // Also fetch events for activity stats
-        var { data: events } = await db.from('analytics_events').select('*').gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false });
-        events = events || [];
-
-        // Calculate stats
-        var allSessions = new Set(events.map(function(e) { return e.session_id; })).size;
-        var loggedInUsers = usersData.length;
-        var guestSessions = new Set(events.filter(function(e) { return !e.user_phone; }).map(function(e) { return e.session_id; })).size;
-        
-        var todayEvents = events.filter(function(e) { return e.created_at && e.created_at.startsWith(today); });
-        var activeToday = new Set(todayEvents.map(function(e) { return e.user_phone || e.session_id; })).size;
-
-        document.getElementById('usersTotalUsers').textContent = allSessions;
-        document.getElementById('usersLoggedIn').textContent = loggedInUsers;
-        document.getElementById('usersGuests').textContent = guestSessions;
-        document.getElementById('usersActiveToday').textContent = activeToday;
-
-        // Build activity map from events
-        var activityMap = {};
-        events.forEach(function(e) {
-            if (!e.user_phone) return;
-            if (!activityMap[e.user_phone]) {
-                activityMap[e.user_phone] = { pageViews: 0, cartAdds: 0, purchases: 0 };
-            }
-            if (e.event_type === 'page_view') activityMap[e.user_phone].pageViews++;
-            if (e.event_type === 'add_to_cart') activityMap[e.user_phone].cartAdds++;
-            if (e.event_type === 'purchase') activityMap[e.user_phone].purchases++;
-        });
-
-        var html = '';
-        if (usersData.length === 0) {
-            html = '<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">No registered users yet. Users appear here after they sign up via the spin wheel.</td></tr>';
-        } else {
-            usersData.forEach(function(u) {
-                var activity = activityMap[u.phone] || { pageViews: 0, cartAdds: 0, purchases: 0 };
-                var lastActive = u.last_seen ? new Date(u.last_seen).toLocaleString() : '-';
-                var walletBadge = u.wallet_balance > 0 ? '<span class="badge badge-green">₹' + u.wallet_balance + '</span>' : '₹0';
-                var countryFlag = getCountryFlag(u.selected_country);
-                
-                html += '<tr>';
-                html += '<td>';
-                html += '<div><strong style="color:#333;">' + (u.name || 'Unknown') + '</strong></div>';
-                html += '<div style="font-size:0.8rem;color:#666;">📱 ' + u.phone + '</div>';
-                html += '</td>';
-                html += '<td>' + countryFlag + ' ' + (u.selected_country || u.country || '-') + '</td>';
-                html += '<td>' + (u.total_visits || activity.pageViews || 0) + '</td>';
-                html += '<td>' + activity.cartAdds + '</td>';
-                html += '<td>' + (u.total_purchases || 0) + '</td>';
-                html += '<td>' + walletBadge + '</td>';
-                html += '<td style="font-size:0.8rem;">' + lastActive + '</td>';
-                html += '<td><button class="btn btn-sm btn-green" onclick="openWalletModal(\'' + u.phone + '\', ' + (u.wallet_balance || 0) + ', \'' + (u.name || '') + '\')">💰</button></td>';
-                html += '</tr>';
-            });
-        }
-        document.getElementById('usersTable').innerHTML = html;
-    }
-
-    function getCountryFlag(country) {
-        var flags = {
-            'India': '🇮🇳', 'United States': '🇺🇸', 'United Kingdom': '🇬🇧',
-            'United Arab Emirates': '🇦🇪', 'Singapore': '🇸🇬', 'Australia': '🇦🇺',
-            'Canada': '🇨🇦', 'Germany': '🇩🇪', 'France': '🇫🇷', 'Saudi Arabia': '🇸🇦',
-            'Qatar': '🇶🇦', 'Kuwait': '🇰🇼', 'Oman': '🇴🇲', 'Malaysia': '🇲🇾', 'New Zealand': '🇳🇿'
-        };
-        return flags[country] || '🌍';
-    }
-
-    window.openWalletModal = function(phone, balance, name) {
-        showUserDetail(phone);
-    };
-
-    // ══════════════════════════════
-    // PRODUCTS
-    // ══════════════════════════════
-    async function loadProducts() {
-        var { data: products, error } = await db.from('products').select('*').order('created_at', { ascending: false });
-        if (error) { console.error('Products error:', error); return; }
-        products = products || [];
-        document.getElementById('productCount').textContent = products.length + ' product(s)';
-
-        var html = '';
-        products.forEach(function(p) {
-            var variants = [];
-            try { variants = typeof p.variants === 'string' ? JSON.parse(p.variants) : (p.variants || []); } catch(e) {}
-            var price = variants.length > 0 ? '₹' + variants[0].price : '-';
-            var img = p.image && p.image.startsWith('http') ? '<img src="' + p.image + '" class="product-img" onerror="this.outerHTML=\'<div class=product-img-fallback>🫙</div>\'">' : '<div class="product-img-fallback">🫙</div>';
-            var statusBadge = p.is_active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-red">Inactive</span>';
-            html += '<tr>';
-            html += '<td>' + img + '</td>';
-            html += '<td><strong>' + (p.name || '') + '</strong><br><span style="font-size:0.75rem;color:#999;">' + (p.id || '') + '</span></td>';
-            html += '<td>' + (p.category || '-') + '</td>';
-            html += '<td>' + price + '</td>';
-            html += '<td>' + statusBadge + '</td>';
-            html += '<td><button class="btn btn-sm btn-primary edit-product-btn" data-id="' + p.id + '">✏️ Edit</button></td>';
-            html += '</tr>';
-        });
-        document.getElementById('productsTable').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#999;padding:40px;">No products found</td></tr>';
-
-        // Attach edit handlers
-        document.querySelectorAll('.edit-product-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() { editProduct(this.getAttribute('data-id'), products); });
-        });
-    }
-
-    // Add product
-    document.getElementById('addProductBtn').addEventListener('click', function() {
-        document.getElementById('productModalTitle').textContent = 'Add Product';
-        document.getElementById('pf-id').value = '';
-        document.getElementById('pf-name').value = '';
-        document.getElementById('pf-desc').value = '';
-        document.getElementById('pf-category').value = 'veg';
-        document.getElementById('pf-image').value = '';
-        document.getElementById('pf-badge').value = '';
-        document.getElementById('pf-variants').value = '[{"weight":"250g","price":199},{"weight":"500g","price":349}]';
-        document.getElementById('pf-active').checked = true;
-        document.getElementById('pf-featured').checked = false;
-        document.getElementById('productModal').classList.add('show');
-    });
-
-    function editProduct(id, products) {
-        var p = products.find(function(x) { return x.id === id; });
-        if (!p) return;
-        document.getElementById('productModalTitle').textContent = 'Edit Product';
-        document.getElementById('pf-id').value = p.id;
-        document.getElementById('pf-name').value = p.name || '';
-        document.getElementById('pf-desc').value = p.description || '';
-        document.getElementById('pf-category').value = p.category || 'veg';
-        document.getElementById('pf-image').value = p.image || '';
-        document.getElementById('pf-badge').value = p.badge || '';
-        var variants = typeof p.variants === 'string' ? p.variants : JSON.stringify(p.variants || []);
-        document.getElementById('pf-variants').value = variants;
-        document.getElementById('pf-active').checked = p.is_active !== false;
-        document.getElementById('pf-featured').checked = p.is_featured === true;
-        document.getElementById('productModal').classList.add('show');
-    }
-
-    document.getElementById('closeProductModal').addEventListener('click', function() {
-        document.getElementById('productModal').classList.remove('show');
-    });
-
-    document.getElementById('saveProductBtn').addEventListener('click', async function() {
-        var id = document.getElementById('pf-id').value;
-        var data = {
-            name: document.getElementById('pf-name').value.trim(),
-            description: document.getElementById('pf-desc').value.trim(),
-            category: document.getElementById('pf-category').value,
-            image: document.getElementById('pf-image').value.trim(),
-            badge: document.getElementById('pf-badge').value.trim() || null,
-            variants: document.getElementById('pf-variants').value.trim(),
-            is_active: document.getElementById('pf-active').checked,
-            is_featured: document.getElementById('pf-featured').checked
-        };
-        // Parse variants
-        try { data.variants = JSON.parse(data.variants); } catch(e) { alert('Invalid variants JSON'); return; }
-        if (!data.name) { alert('Product name required'); return; }
-
-        if (id) {
-            // Update
-            var { error } = await db.from('products').update(data).eq('id', id);
-            if (error) { alert('Update failed: ' + error.message); return; }
-        } else {
-            // Insert
-            data.id = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
-            var { error } = await db.from('products').insert(data);
-            if (error) { alert('Insert failed: ' + error.message); return; }
-        }
-        document.getElementById('productModal').classList.remove('show');
-        loadProducts();
-    });
-
-    // ══════════════════════════════
-    // NOTIFICATIONS
-    // ══════════════════════════════
-    async function loadNotifications() {
-        var { data: notifs } = await db.from('admin_notifications').select('*').order('created_at', { ascending: false }).limit(50);
-        notifs = notifs || [];
-
-        var unread = notifs.filter(function(n) { return !n.is_read; }).length;
-        var badge = document.getElementById('notifBadge');
-        if (unread > 0) {
-            badge.textContent = unread;
-            badge.style.display = 'block';
-        } else {
-            badge.style.display = 'none';
-        }
-
-        var html = '';
-        if (notifs.length === 0) {
-            html = '<p style="color:#999;text-align:center;padding:40px;">No notifications yet. Alerts will appear here when users visit your store multiple times.</p>';
-        } else {
-            notifs.forEach(function(n) {
-                var time = new Date(n.created_at).toLocaleString();
-                var bgColor = n.is_read ? '#fff' : '#fef3c7';
-                var icon = n.type === 'high_activity' ? '🔥' : n.type === 'repeat_visitor' ? '🔄' : '🔔';
-                html += '<div style="padding:12px;margin-bottom:8px;border-radius:8px;background:' + bgColor + ';border:1px solid #eee;">';
-                html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">';
-                html += '<div style="flex:1;"><span style="font-size:1.2rem;margin-right:8px;">' + icon + '</span><strong style="color:#333;">' + n.message + '</strong>';
-                html += '<div style="font-size:0.8rem;color:#999;margin-top:4px;">' + time + '</div></div>';
-                html += '</div>';
-                if (n.user_phone) {
-                    html += '<div style="margin-top:10px;display:flex;gap:8px;">';
-                    html += '<button class="btn btn-sm btn-primary" onclick="showUserDetail(\'' + n.user_phone + '\')">👤 View User</button>';
-                    html += '<button class="btn btn-sm btn-green" onclick="openWalletModal(\'' + n.user_phone + '\', 0)">💰 Send Credit</button>';
-                    if (!n.is_read) html += '<button class="btn btn-sm" style="background:#eee;" onclick="markNotifRead(' + n.id + ')">✓ Mark Read</button>';
-                    html += '</div>';
-                }
-                html += '</div>';
-            });
-        }
-        document.getElementById('notificationsList').innerHTML = html;
-    }
-
-    window.markNotifRead = async function(id) {
-        await db.from('admin_notifications').update({ is_read: true }).eq('id', id);
-        loadNotifications();
-    };
-
-    // Mark all read button
-    document.getElementById('markAllReadBtn').addEventListener('click', async function() {
-        await db.from('admin_notifications').update({ is_read: true }).eq('is_read', false);
-        loadNotifications();
-    });
-
-    // Test notification button
-    document.getElementById('testNotifBtn').addEventListener('click', function() {
-        showNotificationPopup({
-            id: 0,
-            type: 'high_activity',
-            user_phone: '+919876543210',
-            message: '🧪 TEST: User +919876543210 has visited 5 times in the last 24 hours without purchasing!',
-            created_at: new Date().toISOString()
-        });
-    });
-
-    // ══════════════════════════════
-    // ORDERS
-    // ══════════════════════════════
     async function loadOrders() {
         var { data: orders, error } = await db.from('orders').select('*').order('created_at', { ascending: false });
-        if (error) { console.error('Orders error:', error); }
-        orders = orders || [];
+        if (error) console.error('Orders error:', error);
+        allOrders = orders || [];
+        renderOrdersTable(allOrders);
+        renderShippingTable(allOrders.filter(function(o) { return o.status === 'confirmed' || o.status === 'processing'; }));
 
-        renderOrdersTable(orders);
-
-        // Shipping pending
-        var pending = orders.filter(function(o) { return o.status === 'confirmed' || o.status === 'processing'; });
-        renderShippingTable(pending);
-
-        // Filter buttons
         document.querySelectorAll('[data-order-filter]').forEach(function(btn) {
-            btn.addEventListener('click', function() {
+            // Remove old listeners by cloning
+            var newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', function() {
                 var filter = this.getAttribute('data-order-filter');
-                var filtered = filter === 'all' ? orders : orders.filter(function(o) { return o.status === filter; });
-                renderOrdersTable(filtered);
+                renderOrdersTable(filter === 'all' ? allOrders : allOrders.filter(function(o) { return o.status === filter; }));
             });
         });
     }
 
     function renderOrdersTable(orders) {
         var html = '';
+        if (!orders.length) {
+            html = '<tr><td colspan="9" style="text-align:center;color:#999;padding:40px;">No orders yet</td></tr>';
+            document.getElementById('ordersTable').innerHTML = html;
+            return;
+        }
+
         orders.forEach(function(o) {
             var items = [];
             try { items = typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []); } catch(e) {}
             var itemsStr = items.map(function(i) { return i.name; }).join(', ').substring(0, 40) || '-';
-            var statusClass = { pending: 'badge-yellow', confirmed: 'badge-blue', processing: 'badge-blue', shipped: 'badge-green', delivered: 'badge-green', cancelled: 'badge-red' };
+            var statusClass = { pending:'badge-yellow', confirmed:'badge-blue', processing:'badge-blue', shipped:'badge-green', dispatched:'badge-green', delivered:'badge-green', cancelled:'badge-red' };
             var date = o.created_at ? new Date(o.created_at).toLocaleDateString() : '-';
-            html += '<tr>';
-            html += '<td><strong>' + (o.id || '').toString().substring(0, 8) + '</strong></td>';
+            var fullId = o.id || '';
+            var displayId = fullId.substring(0, 8);
+
+            html += '<tr data-full-order-id="' + fullId + '">';
+            html += '<td><strong title="' + fullId + '" style="cursor:help;">' + displayId + '</strong></td>';
             html += '<td>' + (o.customer_name || o.phone || '-') + '</td>';
             html += '<td style="font-size:0.8rem;">' + itemsStr + '</td>';
             html += '<td>₹' + (o.total || 0) + '</td>';
             html += '<td><span class="badge ' + (statusClass[o.status] || 'badge-gray') + '">' + (o.status || 'unknown') + '</span></td>';
             html += '<td style="font-size:0.8rem;">' + date + '</td>';
+
+            // TRACKING COLUMN
             html += '<td>';
-            html += '<select class="order-status-select" data-order-id="' + o.id + '" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;">';
+            html += '<input type="text" class="order-tracking-input" data-oid="' + fullId + '" placeholder="Tracking #" ';
+            html += 'value="' + (o.tracking_number || '') + '" ';
+            html += 'style="width:110px;padding:4px 6px;font-size:0.75rem;border:1px solid ' + (o.tracking_number ? '#4F46E5' : '#ddd') + ';border-radius:5px;' + (o.tracking_number ? 'font-weight:600;' : '') + '">';
+            html += '</td>';
+
+            // NOTIFICATION STATUS COLUMN
+            var smsIcon = o.sms_sent ? '<span title="SMS sent" style="font-size:0.9rem;">📨</span>' : '';
+            var waIcon = o.whatsapp_sent ? '<span title="WhatsApp sent" style="font-size:0.9rem;">💬</span>' : '';
+            var noneIcon = (!o.sms_sent && !o.whatsapp_sent) ? '<span style="opacity:0.3;font-size:0.8rem;">—</span>' : '';
+            html += '<td style="text-align:center;">' + smsIcon + waIcon + noneIcon + '</td>';
+
+            // ACTIONS COLUMN — status dropdown + save button
+            html += '<td>';
+            html += '<select class="order-status-select" data-oid="' + fullId + '" data-customer="' + (o.customer_name || '').replace(/"/g, '') + '" data-phone="' + (o.customer_phone || '') + '" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;">';
             ['pending','confirmed','processing','shipped','delivered','cancelled'].forEach(function(s) {
                 html += '<option value="' + s + '"' + (o.status === s ? ' selected' : '') + '>' + s + '</option>';
             });
             html += '</select>';
+            html += '<button class="btn btn-sm" style="background:#4F46E5;color:#fff;margin-left:4px;font-size:0.7rem;padding:3px 8px;" data-save-oid="' + fullId + '">💾</button>';
             html += '</td></tr>';
         });
-        document.getElementById('ordersTable').innerHTML = html || '<tr><td colspan="7" style="text-align:center;color:#999;padding:40px;">No orders yet</td></tr>';
 
-        // Status change handlers
+        document.getElementById('ordersTable').innerHTML = html;
+
+        // Attach status change + save handlers
         document.querySelectorAll('.order-status-select').forEach(function(sel) {
-            sel.addEventListener('change', async function() {
-                var orderId = this.getAttribute('data-order-id');
-                var newStatus = this.value;
-                await db.from('orders').update({ status: newStatus }).eq('id', orderId);
-                loadOrders();
-            });
-        });
-    }
-
-    // ══════════════════════════════
-    // SHIPPING
-    // ══════════════════════════════
-    function renderShippingTable(orders) {
-        var html = '';
-        orders.forEach(function(o) {
-            html += '<tr>';
-            html += '<td>' + (o.id || '').toString().substring(0, 8) + '</td>';
-            html += '<td>' + (o.customer_name || '-') + '</td>';
-            html += '<td style="font-size:0.8rem;">' + (o.address || '-') + '</td>';
-            html += '<td><select class="ship-partner" data-oid="' + o.id + '" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;">';
-            html += '<option value="">Select</option><option>Delhivery</option><option>DTDC</option><option>DHL</option><option>Other</option>';
-            html += '</select></td>';
-            html += '<td><input type="text" class="ship-tracking" data-oid="' + o.id + '" placeholder="Tracking #" style="padding:4px;border:1px solid #ddd;border-radius:4px;width:120px;font-size:0.8rem;"></td>';
-            html += '<td><button class="btn btn-sm btn-primary ship-btn" data-oid="' + o.id + '">Ship</button></td>';
-            html += '</tr>';
-        });
-        document.getElementById('shippingTable').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No pending shipments</td></tr>';
-
-        // Ship button handlers
-        document.querySelectorAll('.ship-btn').forEach(function(btn) {
-            btn.addEventListener('click', async function() {
+            sel.addEventListener('change', function() {
                 var oid = this.getAttribute('data-oid');
-                var partner = document.querySelector('.ship-partner[data-oid="' + oid + '"]').value;
-                var tracking = document.querySelector('.ship-tracking[data-oid="' + oid + '"]').value;
-                if (!partner) { alert('Select a shipping partner'); return; }
-                await db.from('orders').update({
-                    status: 'shipped',
-                    shipping_partner: partner,
-                    tracking_id: tracking
-                }).eq('id', oid);
-                loadOrders();
+                var customer = this.getAttribute('data-customer');
+                var phone = this.getAttribute('data-phone');
+                var newStatus = this.value;
+                var trackingInput = document.querySelector('.order-tracking-input[data-oid="' + oid + '"]');
+                var tracking = trackingInput ? trackingInput.value.trim() : '';
+                handleStatusChange(oid, newStatus, tracking, customer, phone);
+            });
+        });
+
+        // Save button (saves tracking without changing status)
+        document.querySelectorAll('[data-save-oid]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var oid = this.getAttribute('data-save-oid');
+                var trackingInput = document.querySelector('.order-tracking-input[data-oid="' + oid + '"]');
+                var tracking = trackingInput ? trackingInput.value.trim() : '';
+                if (!tracking) { showToast('Enter a tracking number first', 'error'); return; }
+                var row = this.closest('tr');
+                var sel = row.querySelector('.order-status-select');
+                var customer = sel ? sel.getAttribute('data-customer') : '';
+                var phone = sel ? sel.getAttribute('data-phone') : '';
+                saveTrackingOnly(oid, tracking, customer, phone);
             });
         });
     }
 
-    // ══════════════════════════════
-    // SETTINGS
-    // ══════════════════════════════
-    document.getElementById('saveSettingsBtn').addEventListener('click', function() {
-        alert('Settings saved!');
-    });
+    // ══════════════════════════════════════════
+    // DUAL NOTIFICATION SYSTEM — SMS (Fast2SMS) + WhatsApp (Meta Cloud API)
+    // ══════════════════════════════════════════
+    let notifConfig = null; // Unified notification config
 
-    document.getElementById('changePassBtn').addEventListener('click', function() {
-        var newP = document.getElementById('newPassword').value.trim();
-        if (newP.length < 4) { alert('Password too short'); return; }
-        ADMIN_PASS = newP;
-        localStorage.setItem('seasalt_admin_pass', newP);
-        alert('Password updated!');
-        document.getElementById('newPassword').value = '';
-    });
-
-    // ══════════════════════════════
-    // REAL-TIME POPUP NOTIFICATIONS
-    // ══════════════════════════════
-    let lastNotifCheck = Date.now();
-
-    async function checkNewNotifications() {
+    async function loadNotificationConfig() {
+        var smsInd = document.getElementById('smsStatusIndicator');
+        var waInd = document.getElementById('waStatusIndicator');
         try {
-            var { data: notifs } = await db.from('admin_notifications')
-                .select('*')
-                .eq('is_read', false)
-                .order('created_at', { ascending: false })
-                .limit(10);
-            
-            notifs = notifs || [];
-            
-            // Update badge
-            var badge = document.getElementById('notifBadge');
-            if (notifs.length > 0) {
-                badge.textContent = notifs.length;
-                badge.style.display = 'block';
+            var { data } = await db.from('notification_config').select('*').eq('id', 1).single();
+            if (data) {
+                notifConfig = data;
+                // SMS status
+                if (data.sms_is_active && data.sms_api_key && data.sms_api_key.length > 10) {
+                    if (smsInd) { smsInd.style.background='#d1fae5'; smsInd.style.color='#065f46'; smsInd.innerHTML = data.sms_route === 'dlt' ? '🟢 SMS DLT Active' : '🟢 SMS Quick Active'; }
+                    console.log('[SMS] Fast2SMS config loaded ✅ Route:', data.sms_route);
+                } else {
+                    if (smsInd) { smsInd.style.background='#fef3c7'; smsInd.style.color='#92400e'; smsInd.innerHTML = '🟡 SMS Off — <a href="https://www.fast2sms.com" target="_blank" style="color:#92400e;text-decoration:underline;">Setup</a>'; }
+                }
+                // WhatsApp status
+                if (data.wa_is_active && data.wa_access_token && data.wa_access_token.length > 10) {
+                    if (waInd) { waInd.style.background='#d1fae5'; waInd.style.color='#065f46'; waInd.innerHTML = '🟢 WhatsApp ON'; }
+                    console.log('[WhatsApp] Meta API config loaded ✅');
+                } else {
+                    if (waInd) { waInd.style.background='#f0f0f0'; waInd.style.color='#999'; waInd.innerHTML = '⚪ WhatsApp Off'; }
+                }
+            }
+        } catch(e) {
+            console.log('[Notifications] Config table not found. Run notification-setup.sql');
+            if (smsInd) { smsInd.style.background='#fee2e2'; smsInd.style.color='#991b1b'; smsInd.innerHTML = '🔴 Run SQL setup'; }
+            if (waInd) { waInd.style.background='#fee2e2'; waInd.style.color='#991b1b'; waInd.innerHTML = '🔴 Run SQL setup'; }
+        }
+    }
+    setTimeout(loadNotificationConfig, 500);
+
+    // ── SMS STATUS → MESSAGE TEXT MAP ──
+    var SMS_MESSAGES = {
+        confirmed: function(n, id) { return 'Dear ' + n + ', your order #' + id + ' has been confirmed! We are preparing it. Track at seasaltpickles.com - SeaSalt Pickles'; },
+        processing: function(n, id) { return 'Dear ' + n + ', your order #' + id + ' is being prepared! Our team is packing your authentic pickles. Thank you! - SeaSalt Pickles'; },
+        preparing: function(n, id) { return 'Dear ' + n + ', your order #' + id + ' is being prepared! Our team is packing your authentic pickles. Thank you! - SeaSalt Pickles'; },
+        shipped: function(n, id, t) { return 'Dear ' + n + ', your order #' + id + ' has been dispatched!' + (t ? ' Tracking: ' + t + '. Track at indiapost.gov.in' : '') + ' - SeaSalt Pickles'; },
+        dispatched: function(n, id, t) { return 'Dear ' + n + ', your order #' + id + ' has been dispatched!' + (t ? ' Tracking: ' + t + '. Track at indiapost.gov.in' : '') + ' - SeaSalt Pickles'; },
+        delivered: function(n, id) { return 'Dear ' + n + ', your order #' + id + ' has been delivered! Enjoy your pickles. Thank you! - SeaSalt Pickles'; },
+        cancelled: function(n, id) { return 'Dear ' + n + ', your order #' + id + ' has been cancelled. Contact us for queries. - SeaSalt Pickles'; }
+    };
+
+    // ── SEND SMS VIA FAST2SMS ──
+    async function sendSMS(phone, orderId, status, tracking, customerName) {
+        if (!notifConfig || !notifConfig.sms_is_active || !notifConfig.sms_api_key) {
+            return { success: false, reason: 'sms_not_configured' };
+        }
+
+        var cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (cleanPhone.startsWith('91') && cleanPhone.length === 12) cleanPhone = cleanPhone.substring(2);
+        if (cleanPhone.length !== 10) return { success: false, reason: 'invalid_phone_' + cleanPhone };
+
+        var shortId = orderId.substring(0, 8);
+        var name = customerName || 'Customer';
+        var route = notifConfig.sms_route || 'q';
+
+        try {
+            var apiUrl = 'https://www.fast2sms.com/dev/bulkV2';
+            var params = { route: route, numbers: cleanPhone };
+
+            if (route === 'dlt') {
+                // DLT Route — use template message IDs
+                var templates = notifConfig.sms_templates || {};
+                var msgId = templates[status] || templates.confirmed;
+                if (!msgId) return { success: false, reason: 'no_dlt_template_for_' + status };
+
+                params.sender_id = notifConfig.sms_sender_id || 'SEASLT';
+                params.message = msgId;
+                // Build variable values: name|orderId|tracking (pipe separated)
+                var vars = name + '|' + shortId;
+                if ((status === 'shipped' || status === 'dispatched') && tracking) vars += '|' + tracking;
+                params.variables_values = vars;
             } else {
-                badge.style.display = 'none';
+                // Quick SMS Route — send plain text message
+                var msgFn = SMS_MESSAGES[status];
+                params.message = msgFn ? msgFn(name, shortId, tracking) : ('Order #' + shortId + ' status: ' + status + ' - SeaSalt Pickles');
+                params.language = 'english';
             }
 
-            // Check for NEW notifications (created after last check)
-            var newNotifs = notifs.filter(function(n) {
-                return new Date(n.created_at).getTime() > lastNotifCheck;
+            var res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'authorization': notifConfig.sms_api_key,
+                    'Content-Type': 'application/json',
+                    'accept': '*/*',
+                    'cache-control': 'no-cache'
+                },
+                body: JSON.stringify(params)
             });
 
-            // Show popup for each new notification
-            newNotifs.forEach(function(n) {
-                showNotificationPopup(n);
-            });
+            var result = await res.json();
 
-            lastNotifCheck = Date.now();
-        } catch (err) {
-            console.warn('Notification check failed:', err);
+            // Log
+            try {
+                await db.from('notification_log').insert({
+                    order_id: orderId, customer_phone: cleanPhone, channel: 'sms',
+                    template_name: status, message_text: params.message,
+                    status: result.return === true ? 'sent' : 'failed',
+                    provider_message_id: result.request_id || null,
+                    error_message: result.return === true ? null : JSON.stringify(result.message || result)
+                });
+            } catch(logErr) { console.warn('[SMS] Log failed:', logErr); }
+
+            if (result.return === true) {
+                console.log('[SMS] ✅ Sent to', cleanPhone, '| Request ID:', result.request_id);
+                return { success: true, requestId: result.request_id };
+            } else {
+                console.error('[SMS] ❌ Error:', result);
+                return { success: false, error: result.message || 'SMS failed' };
+            }
+        } catch(e) {
+            console.error('[SMS] ❌ Network error:', e);
+            try { await db.from('notification_log').insert({ order_id: orderId, customer_phone: cleanPhone, channel: 'sms', template_name: status, status: 'error', error_message: e.message }); } catch(x) {}
+            return { success: false, error: e.message };
         }
     }
 
-    function showNotificationPopup(notif) {
-        // Play sound
-        playNotifSound();
+    // ── SEND WHATSAPP VIA META CLOUD API ──
+    var WA_TEMPLATE_MAP = { confirmed:'order_confirmed', processing:'order_preparing', preparing:'order_preparing', shipped:'order_shipped', dispatched:'order_shipped', delivered:'order_delivered', cancelled:'order_cancelled' };
 
-        // Create popup
-        var popup = document.createElement('div');
-        popup.style.cssText = 'position:fixed;top:20px;right:20px;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.25);padding:16px 20px;z-index:9999;max-width:380px;animation:notifSlideIn 0.4s ease;border-left:5px solid #ef4444;';
-        
-        var icon = notif.type === 'high_activity' ? '🔥' : notif.type === 'repeat_visitor' ? '🔄' : '🔔';
-        var title = notif.type === 'high_activity' ? 'High Activity Alert!' : 'New Notification';
-        var bgColor = notif.type === 'high_activity' ? '#fef2f2' : '#fffbeb';
-        popup.style.background = bgColor;
-        
-        popup.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">' +
-            '<div style="flex:1;">' +
-            '<div style="font-weight:700;font-size:1.1rem;margin-bottom:6px;color:#dc2626;">' + icon + ' ' + title + '</div>' +
-            '<div style="font-size:0.9rem;color:#333;margin-bottom:10px;line-height:1.4;">' + notif.message + '</div>' +
-            '<div style="display:flex;gap:8px;">' +
-            (notif.user_phone ? '<button class="btn btn-sm btn-primary" onclick="showUserDetail(\'' + notif.user_phone + '\');this.closest(\'.notif-popup\').remove();">👤 View User</button> ' : '') +
-            '<button class="btn btn-sm btn-green" onclick="markNotifRead(' + notif.id + ');this.closest(\'.notif-popup\').remove();">✓ Got it</button>' +
-            '</div>' +
-            '</div>' +
-            '<button onclick="this.closest(\'.notif-popup\').remove()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#999;padding:0;line-height:1;">&times;</button>' +
-            '</div>';
-        
-        popup.className = 'notif-popup';
-        document.body.appendChild(popup);
+    async function sendWhatsAppAPI(phone, orderId, status, tracking, customerName) {
+        if (!notifConfig || !notifConfig.wa_is_active || !notifConfig.wa_access_token || notifConfig.wa_access_token.length < 10) {
+            return { success: false, reason: 'wa_not_configured' };
+        }
 
-        // Auto-remove after 20 seconds
-        setTimeout(function() {
-            if (popup.parentElement) {
-                popup.style.animation = 'notifSlideOut 0.4s ease forwards';
-                setTimeout(function() { if (popup.parentElement) popup.remove(); }, 400);
-            }
-        }, 20000);
-    }
+        var cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
 
-    function playNotifSound() {
+        var templateName = WA_TEMPLATE_MAP[status];
+        if (!templateName) return { success: false, reason: 'no_wa_template' };
+
+        var shortId = orderId.substring(0, 8);
+        var name = customerName || 'Customer';
+        var params = [{ type:'text', text:name }, { type:'text', text:shortId }];
+        if ((status === 'shipped' || status === 'dispatched') && tracking) params.push({ type:'text', text:tracking });
+
         try {
-            var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            // Play two-tone alert
-            [800, 1000].forEach(function(freq, i) {
-                setTimeout(function() {
-                    var osc = audioCtx.createOscillator();
-                    var gain = audioCtx.createGain();
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.frequency.value = freq;
-                    osc.type = 'sine';
-                    gain.gain.value = 0.2;
-                    osc.start();
-                    setTimeout(function() { osc.stop(); }, 150);
-                }, i * 200);
+            var res = await fetch('https://graph.facebook.com/v21.0/' + notifConfig.wa_phone_number_id + '/messages', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + notifConfig.wa_access_token, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messaging_product: 'whatsapp', to: cleanPhone, type: 'template',
+                    template: { name: templateName, language: { code: 'en' }, components: [{ type: 'body', parameters: params }] }
+                })
             });
-        } catch (e) {}
-    }
+            var result = await res.json();
 
-    // Add CSS animations
-    var notifStyles = document.createElement('style');
-    notifStyles.textContent = '@keyframes notifSlideIn{from{transform:translateX(120%);opacity:0;}to{transform:translateX(0);opacity:1;}}@keyframes notifSlideOut{from{transform:translateX(0);opacity:1;}to{transform:translateX(120%);opacity:0;}}';
-    document.head.appendChild(notifStyles);
+            try {
+                await db.from('notification_log').insert({
+                    order_id: orderId, customer_phone: cleanPhone, channel: 'whatsapp',
+                    template_name: templateName,
+                    status: res.ok && result.messages ? 'sent' : 'failed',
+                    provider_message_id: result.messages ? result.messages[0].id : null,
+                    error_message: res.ok ? null : JSON.stringify(result.error || result)
+                });
+            } catch(logErr) {}
 
-    // Check for new notifications every 30 seconds
-    setInterval(checkNewNotifications, 30000);
-    
-    // Also check immediately after login
-    setTimeout(checkNewNotifications, 2000);
-
-    // ══════════════════════════════
-    // DELIVERY CHARGES
-    // ══════════════════════════════
-    let deliveryCharges = [];
-    let countriesList = [];
-
-    async function loadDeliveryCharges() {
-        // Load delivery charges
-        var { data: charges } = await db.from('delivery_charges').select('*').order('country');
-        deliveryCharges = charges || [];
-        
-        // Load countries
-        var { data: countries } = await db.from('countries').select('*').order('sort_order');
-        countriesList = countries || [];
-        
-        renderDeliveryChargesTable();
-        renderCountriesList();
-        populateCountryDropdown();
-    }
-
-    function renderDeliveryChargesTable() {
-        var html = '';
-        if (deliveryCharges.length === 0) {
-            html = '<tr><td colspan="5" style="text-align:center;color:#999;padding:20px;">No delivery charges configured</td></tr>';
-        } else {
-            deliveryCharges.forEach(function(dc) {
-                html += '<tr>';
-                html += '<td><strong>' + dc.country + '</strong></td>';
-                html += '<td>' + (dc.region || 'All') + '</td>';
-                html += '<td>₹' + (dc.min_order_free || 0) + '</td>';
-                html += '<td>₹' + (dc.flat_charge || 0) + '</td>';
-                html += '<td>';
-                html += '<button class="btn btn-sm" style="background:#eee;margin-right:4px;" onclick="editDeliveryCharge(' + dc.id + ')">✏️</button>';
-                html += '<button class="btn btn-sm" style="background:#fee;color:#c00;" onclick="deleteDeliveryCharge(' + dc.id + ')">🗑️</button>';
-                html += '</td>';
-                html += '</tr>';
-            });
+            if (res.ok && result.messages) {
+                console.log('[WhatsApp] ✅ Sent to', cleanPhone);
+                return { success: true, messageId: result.messages[0].id };
+            } else {
+                console.error('[WhatsApp] ❌', result);
+                return { success: false, error: result.error ? result.error.message : 'WA failed' };
+            }
+        } catch(e) {
+            console.error('[WhatsApp] ❌ Network:', e);
+            try { await db.from('notification_log').insert({ order_id: orderId, customer_phone: cleanPhone, channel: 'whatsapp', template_name: templateName, status: 'error', error_message: e.message }); } catch(x) {}
+            return { success: false, error: e.message };
         }
-        document.getElementById('deliveryChargesTable').innerHTML = html;
     }
 
-    function renderCountriesList() {
-        var html = '';
-        countriesList.forEach(function(c) {
-            var checked = c.is_active ? 'checked' : '';
-            html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;">';
-            html += '<input type="checkbox" ' + checked + ' onchange="toggleCountry(\'' + c.code + '\', this.checked)">';
-            html += '<span style="font-size:0.9rem;">' + c.name + ' (' + c.currency_symbol + ')</span>';
-            html += '</div>';
-        });
-        document.getElementById('countriesList').innerHTML = html || '<p style="color:#999;">No countries configured</p>';
-    }
-
-    function populateCountryDropdown() {
-        var select = document.getElementById('dc-country');
-        select.innerHTML = '<option value="">Select country</option>';
-        countriesList.forEach(function(c) {
-            select.innerHTML += '<option value="' + c.name + '">' + c.name + '</option>';
-        });
-    }
-
-    window.toggleCountry = async function(code, isActive) {
-        await db.from('countries').update({ is_active: isActive }).eq('code', code);
-        loadDeliveryCharges();
-    };
-
-    document.getElementById('addDeliveryChargeBtn').addEventListener('click', function() {
-        document.getElementById('deliveryModalTitle').textContent = 'Add Delivery Charge';
-        document.getElementById('dc-id').value = '';
-        document.getElementById('dc-country').value = '';
-        document.getElementById('dc-region').value = '';
-        document.getElementById('dc-minFree').value = '500';
-        document.getElementById('dc-flatFee').value = '50';
-        document.getElementById('dc-notes').value = '';
-        document.getElementById('deliveryModal').classList.add('show');
-    });
-
-    window.editDeliveryCharge = function(id) {
-        var dc = deliveryCharges.find(function(d) { return d.id === id; });
-        if (!dc) return;
-        document.getElementById('deliveryModalTitle').textContent = 'Edit Delivery Charge';
-        document.getElementById('dc-id').value = dc.id;
-        document.getElementById('dc-country').value = dc.country;
-        document.getElementById('dc-region').value = dc.region || '';
-        document.getElementById('dc-minFree').value = dc.min_order_free || 0;
-        document.getElementById('dc-flatFee').value = dc.flat_charge || 0;
-        document.getElementById('dc-notes').value = dc.notes || '';
-        document.getElementById('deliveryModal').classList.add('show');
-    };
-
-    window.deleteDeliveryCharge = async function(id) {
-        if (!confirm('Delete this delivery charge?')) return;
-        await db.from('delivery_charges').delete().eq('id', id);
-        loadDeliveryCharges();
-    };
-
-    document.getElementById('saveDeliveryChargeBtn').addEventListener('click', async function() {
-        var id = document.getElementById('dc-id').value;
-        var data = {
-            country: document.getElementById('dc-country').value,
-            region: document.getElementById('dc-region').value || null,
-            min_order_free: parseFloat(document.getElementById('dc-minFree').value) || 0,
-            flat_charge: parseFloat(document.getElementById('dc-flatFee').value) || 0,
-            notes: document.getElementById('dc-notes').value || null
-        };
-        
-        if (!data.country) { alert('Please select a country'); return; }
-        
-        if (id) {
-            await db.from('delivery_charges').update(data).eq('id', id);
-        } else {
-            await db.from('delivery_charges').insert(data);
+    // ── MANUAL FALLBACK (wa.me link) ──
+    function sendManualFallback(phone, orderId, status, tracking, name) {
+        var cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+        if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+        if (!cleanPhone) return;
+        var n = name || 'Customer'; var shortId = orderId.substring(0, 8); var msg = '';
+        switch(status) {
+            case 'confirmed': msg='Hi '+n+'! Your order #'+shortId+' confirmed! - SeaSalt Pickles'; break;
+            case 'processing': case 'preparing': msg='Hi '+n+'! Order #'+shortId+' being prepared! - SeaSalt Pickles'; break;
+            case 'shipped': case 'dispatched': msg='Hi '+n+'! Order #'+shortId+' dispatched!'; if(tracking)msg+=' Tracking: '+tracking; break;
+            case 'delivered': msg='Hi '+n+'! Order #'+shortId+' delivered! Enjoy!'; break;
+            case 'cancelled': msg='Hi '+n+', Order #'+shortId+' cancelled.'; break;
+            default: msg='Hi '+n+'! Order #'+shortId+': '+status;
         }
-        
-        document.getElementById('deliveryModal').classList.remove('show');
-        loadDeliveryCharges();
-    });
+        var waUrl = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent(msg);
+        var popup = document.createElement('div');
+        popup.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:#25D366;color:white;padding:12px 16px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.2);display:flex;align-items:center;gap:10px;max-width:380px;animation:slideUp 0.3s ease;font-family:sans-serif;';
+        popup.innerHTML = '<div style="font-size:22px;">📱</div><div style="flex:1;"><p style="font-weight:700;font-size:12px;margin:0;">Manual: Send to '+n+'</p><p style="font-size:10px;margin:2px 0 0;opacity:0.9;">#'+shortId+' → '+status+'</p></div><a href="'+waUrl+'" target="_blank" rel="noopener" style="background:white;color:#25D366;padding:6px 14px;border-radius:8px;font-weight:700;font-size:11px;text-decoration:none;">Send ↗</a><button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;font-size:16px;cursor:pointer;">✕</button>';
+        document.body.appendChild(popup);
+        setTimeout(function() { if (popup.parentElement) popup.remove(); }, 15000);
+    }
 
-    document.getElementById('deliveryModal').addEventListener('click', function(e) {
-        if (e.target === this) this.classList.remove('show');
-    });
+    // ── MASTER NOTIFICATION HANDLER — Sends BOTH SMS + WhatsApp ──
+    async function sendNotifications(phone, orderId, status, tracking, customerName) {
+        if (!phone) { showToast('⚠️ No phone number for this order', 'error'); return; }
 
-    // Load delivery charges on init
-    setTimeout(loadDeliveryCharges, 1000);
+        var smsOk = false, waOk = false;
 
-    // ══════════════════════════════
-    // INIT
-    // ══════════════════════════════
+        // 1. Send SMS
+        if (notifConfig && notifConfig.sms_is_active) {
+            showToast('📨 Sending SMS...', 'info');
+            var smsResult = await sendSMS(phone, orderId, status, tracking, customerName);
+            smsOk = smsResult.success;
+            if (smsOk) {
+                showToast('✅ SMS sent to ' + (customerName || phone), 'success');
+                await db.from('orders').update({ sms_sent: true }).eq('id', orderId);
+            } else {
+                showToast('⚠️ SMS failed: ' + (smsResult.error || smsResult.reason), 'error');
+            }
+        }
+
+        // 2. Send WhatsApp
+        if (notifConfig && notifConfig.wa_is_active) {
+            var waResult = await sendWhatsAppAPI(phone, orderId, status, tracking, customerName);
+            waOk = waResult.success;
+            if (waOk) {
+                showToast('✅ WhatsApp sent to ' + (customerName || phone), 'success');
+                await db.from('orders').update({ whatsapp_sent: true }).eq('id', orderId);
+            } else {
+                console.warn('[WhatsApp] Failed:', waResult.error);
+            }
+        }
+
+        // 3. Fallback — if BOTH failed, show manual link
+        if (!smsOk && !waOk) {
+            sendManualFallback(phone, orderId, status, tracking, customerName);
+        }
+    }
+
+    // ── Status Change → Supabase + Notifications ──
+    async function handleStatusChange(orderId, newStatus, tracking, customerName, customerPhone) {
+        var payload = { status: newStatus, updated_at: new Date().toISOString() };
+        if (tracking) payload.tracking_number = tracking;
+
+        var { error } = await db.from('orders').update(payload).eq('id', orderId);
+        if (error) { showToast('❌ Failed: ' + error.message, 'error'); return; }
+
+        showToast('✅ ' + orderId.substring(0,8) + ' → ' + newStatus, 'success');
+        await sendNotifications(customerPhone, orderId, newStatus, tracking, customerName);
+    }
+
+    // ── Save Tracking Only ──
+    async function saveTrackingOnly(orderId, tracking, customerName, customerPhone) {
+        var { error } = await db.from('orders').update({ tracking_number: tracking, updated_at: new Date().toISOString() }).eq('id', orderId);
+        if (error) { showToast('❌ Failed to save tracking', 'error'); return; }
+        showToast('📦 Tracking saved: ' + tracking, 'success');
+
+        var { data } = await db.from('orders').select('status,customer_phone,customer_name').eq('id', orderId).single();
+        if (data && (data.status === 'shipped' || data.status === 'dispatched')) {
+            await sendNotifications(data.customer_phone || customerPhone, orderId, data.status, tracking, data.customer_name || customerName);
+        }
+    }
+
+    // ── Toast ──
+    function showToast(msg, type) {
+        var toast = document.createElement('div');
+        var bg = type === 'success' ? '#059669' : type === 'error' ? '#DC2626' : '#3B82F6';
+        toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;background:' + bg + ';color:white;padding:10px 18px;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.15);font-size:13px;font-weight:600;animation:slideUp 0.3s ease;';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.remove(); }, 4000);
+    }
+
+    // ══════════ SHIPPING ══════════
+    function renderShippingTable(orders){var html='';orders.forEach(function(o){html+='<tr><td>'+(o.id||'').toString().substring(0,8)+'</td><td>'+(o.customer_name||'-')+'</td><td style="font-size:0.8rem;">'+(o.customer_address||o.address||'-')+'</td><td><select class="ship-partner" data-oid="'+o.id+'" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;"><option value="">Select</option><option>India Post</option><option>Delhivery</option><option>DTDC</option><option>DHL</option><option>Other</option></select></td><td><input type="text" class="ship-tracking" data-oid="'+o.id+'" placeholder="Tracking #" value="'+(o.tracking_number||'')+'" style="padding:4px;border:1px solid #ddd;border-radius:4px;width:120px;font-size:0.8rem;"></td><td><button class="btn btn-sm btn-primary ship-btn" data-oid="'+o.id+'">Ship</button></td></tr>';});document.getElementById('shippingTable').innerHTML=html||'<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No pending shipments</td></tr>';document.querySelectorAll('.ship-btn').forEach(function(btn){btn.addEventListener('click',async function(){var oid=this.getAttribute('data-oid');var partner=document.querySelector('.ship-partner[data-oid="'+oid+'"]').value;var tracking=document.querySelector('.ship-tracking[data-oid="'+oid+'"]').value;if(!partner){alert('Select a shipping partner');return;}await db.from('orders').update({status:'shipped',shipping_partner:partner,tracking_number:tracking,updated_at:new Date().toISOString()}).eq('id',oid);showToast('🚚 Order shipped!','success');var order=allOrders.find(function(o){return o.id===oid});if(order)sendNotifications(order.customer_phone,oid,'shipped',tracking,order.customer_name);loadOrders();});});}
+
+    // ══════════ SETTINGS ══════════
+    document.getElementById('saveSettingsBtn').addEventListener('click',function(){alert('Settings saved!')});
+    document.getElementById('changePassBtn').addEventListener('click',function(){var np=document.getElementById('newPassword').value.trim();if(np.length<4){alert('Password too short');return;}ADMIN_PASS=np;localStorage.setItem('seasalt_admin_pass',np);alert('Password updated!');document.getElementById('newPassword').value='';});
+
+    // ══════════ REAL-TIME NOTIFICATIONS ══════════
+    let lastNotifCheck=Date.now();
+    async function checkNewNotifications(){try{var{data:notifs}=await db.from('admin_notifications').select('*').eq('is_read',false).order('created_at',{ascending:false}).limit(10);notifs=notifs||[];var badge=document.getElementById('notifBadge');if(notifs.length>0){badge.textContent=notifs.length;badge.style.display='block'}else{badge.style.display='none'}notifs.filter(function(n){return new Date(n.created_at).getTime()>lastNotifCheck}).forEach(function(n){showNotificationPopup(n)});lastNotifCheck=Date.now();}catch(err){}}
+    function showNotificationPopup(notif){playNotifSound();var popup=document.createElement('div');popup.className='notif-popup';popup.style.cssText='position:fixed;top:20px;right:20px;background:'+(notif.type==='high_activity'?'#fef2f2':'#fffbeb')+';border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.25);padding:16px 20px;z-index:9999;max-width:380px;animation:notifSlideIn 0.4s ease;border-left:5px solid #ef4444;';var icon=notif.type==='high_activity'?'🔥':'🔔';popup.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;"><div style="flex:1;"><div style="font-weight:700;font-size:1.1rem;margin-bottom:6px;color:#dc2626;">'+icon+' Alert!</div><div style="font-size:0.9rem;color:#333;margin-bottom:10px;line-height:1.4;">'+notif.message+'</div><div style="display:flex;gap:8px;">'+(notif.user_phone?'<button class="btn btn-sm btn-primary" onclick="showUserDetail(\''+notif.user_phone+'\');this.closest(\'.notif-popup\').remove();">👤 View</button>':'')+'<button class="btn btn-sm btn-green" onclick="markNotifRead('+notif.id+');this.closest(\'.notif-popup\').remove();">✓ Got it</button></div></div><button onclick="this.closest(\'.notif-popup\').remove()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#999;">&times;</button></div>';document.body.appendChild(popup);setTimeout(function(){if(popup.parentElement){popup.style.animation='notifSlideOut 0.4s ease forwards';setTimeout(function(){if(popup.parentElement)popup.remove()},400)}},20000);}
+    function playNotifSound(){try{var ctx=new(window.AudioContext||window.webkitAudioContext)();[800,1000].forEach(function(f,i){setTimeout(function(){var o=ctx.createOscillator();var g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;o.type='sine';g.gain.value=0.2;o.start();setTimeout(function(){o.stop()},150)},i*200)})}catch(e){}}
+    setInterval(checkNewNotifications,30000);
+    setTimeout(checkNewNotifications,2000);
+
+    // ══════════ DELIVERY CHARGES ══════════
+    let deliveryCharges=[];let countriesList=[];
+    async function loadDeliveryCharges(){var{data:charges}=await db.from('delivery_charges').select('*').order('country');deliveryCharges=charges||[];var{data:countries}=await db.from('countries').select('*').order('sort_order');countriesList=countries||[];renderDeliveryChargesTable();renderCountriesList();populateCountryDropdown();}
+    function renderDeliveryChargesTable(){var html='';if(deliveryCharges.length===0){html='<tr><td colspan="5" style="text-align:center;color:#999;padding:20px;">No delivery charges</td></tr>';}else{deliveryCharges.forEach(function(dc){html+='<tr><td><strong>'+dc.country+'</strong></td><td>'+(dc.region||'All')+'</td><td>₹'+(dc.min_order_free||0)+'</td><td>₹'+(dc.flat_charge||0)+'</td><td><button class="btn btn-sm" style="background:#eee;margin-right:4px;" onclick="editDeliveryCharge('+dc.id+')">✏️</button><button class="btn btn-sm" style="background:#fee;color:#c00;" onclick="deleteDeliveryCharge('+dc.id+')">🗑️</button></td></tr>';});}document.getElementById('deliveryChargesTable').innerHTML=html;}
+    function renderCountriesList(){var html='';countriesList.forEach(function(c){html+='<div style="display:flex;align-items:center;gap:8px;padding:4px 0;"><input type="checkbox" '+(c.is_active?'checked':'')+' onchange="toggleCountry(\''+c.code+'\',this.checked)"><span style="font-size:0.9rem;">'+c.name+' ('+c.currency_symbol+')</span></div>';});document.getElementById('countriesList').innerHTML=html||'<p style="color:#999;">No countries configured</p>';}
+    function populateCountryDropdown(){var s=document.getElementById('dc-country');s.innerHTML='<option value="">Select country</option>';countriesList.forEach(function(c){s.innerHTML+='<option value="'+c.name+'">'+c.name+'</option>'});}
+    window.toggleCountry=async function(code,active){await db.from('countries').update({is_active:active}).eq('code',code);loadDeliveryCharges();};
+    document.getElementById('addDeliveryChargeBtn').addEventListener('click',function(){document.getElementById('deliveryModalTitle').textContent='Add Delivery Charge';document.getElementById('dc-id').value='';document.getElementById('dc-country').value='';document.getElementById('dc-region').value='';document.getElementById('dc-minFree').value='500';document.getElementById('dc-flatFee').value='50';document.getElementById('dc-notes').value='';document.getElementById('deliveryModal').classList.add('show');});
+    window.editDeliveryCharge=function(id){var dc=deliveryCharges.find(function(d){return d.id===id});if(!dc)return;document.getElementById('deliveryModalTitle').textContent='Edit Delivery Charge';document.getElementById('dc-id').value=dc.id;document.getElementById('dc-country').value=dc.country;document.getElementById('dc-region').value=dc.region||'';document.getElementById('dc-minFree').value=dc.min_order_free||0;document.getElementById('dc-flatFee').value=dc.flat_charge||0;document.getElementById('dc-notes').value=dc.notes||'';document.getElementById('deliveryModal').classList.add('show');};
+    window.deleteDeliveryCharge=async function(id){if(!confirm('Delete this delivery charge?'))return;await db.from('delivery_charges').delete().eq('id',id);loadDeliveryCharges();};
+    document.getElementById('saveDeliveryChargeBtn').addEventListener('click',async function(){var id=document.getElementById('dc-id').value;var data={country:document.getElementById('dc-country').value,region:document.getElementById('dc-region').value||null,min_order_free:parseFloat(document.getElementById('dc-minFree').value)||0,flat_charge:parseFloat(document.getElementById('dc-flatFee').value)||0,notes:document.getElementById('dc-notes').value||null};if(!data.country){alert('Please select a country');return;}if(id){await db.from('delivery_charges').update(data).eq('id',id)}else{await db.from('delivery_charges').insert(data)}document.getElementById('deliveryModal').classList.remove('show');loadDeliveryCharges();});
+    document.getElementById('deliveryModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show')});
+    setTimeout(loadDeliveryCharges,1000);
+
+    // ══════════ INIT ══════════
     checkAuth();
-
 })();
 </script>
-    <script src="admin-fix.js"></script>
-    <script src="js/admin-orders-upgrade.js"></script>
+<script src="admin-fix.js"></script>
 </body>
 </html>
