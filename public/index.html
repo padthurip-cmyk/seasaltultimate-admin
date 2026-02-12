@@ -703,6 +703,17 @@
     // ── SEND WHATSAPP VIA META CLOUD API ──
     var WA_TEMPLATE_MAP = { confirmed:'order_confirmed', processing:'order_preparing', preparing:'order_preparing', shipped:'order_shipped', dispatched:'order_shipped', delivered:'order_delivered', cancelled:'order_cancelled' };
 
+    // Direct text messages for each status (used when templates aren't approved yet)
+    var WA_TEXT_MESSAGES = {
+        confirmed: function(n, id) { return 'Hi ' + n + '! ✅\n\nYour order *#' + id + '* has been *confirmed*!\n\nWe\'re getting it ready for you.\n\nThank you! — SeaSalt Pickles 🌶️'; },
+        processing: function(n, id) { return 'Hi ' + n + '! 👨‍🍳\n\nYour order *#' + id + '* is now being *prepared*!\n\nOur team is carefully packing your pickles & masalas.\n\nThank you! 🥒'; },
+        preparing: function(n, id) { return 'Hi ' + n + '! 👨‍🍳\n\nYour order *#' + id + '* is now being *prepared*!\n\nOur team is carefully packing your pickles & masalas.\n\nThank you! 🥒'; },
+        shipped: function(n, id, t) { return 'Hi ' + n + '! 🚚\n\nYour order *#' + id + '* has been *dispatched*!' + (t ? '\n\n📦 *Tracking:* ' + t + '\nTrack here: https://www.indiapost.gov.in/_layouts/15/dop.portal.tracking/trackconsignment.aspx' : '') + '\n\nOn its way! 🎉'; },
+        dispatched: function(n, id, t) { return 'Hi ' + n + '! 🚚\n\nYour order *#' + id + '* has been *dispatched*!' + (t ? '\n\n📦 *Tracking:* ' + t + '\nTrack here: https://www.indiapost.gov.in/_layouts/15/dop.portal.tracking/trackconsignment.aspx' : '') + '\n\nOn its way! 🎉'; },
+        delivered: function(n, id) { return 'Hi ' + n + '! 🎉\n\nYour order *#' + id + '* has been *delivered*!\n\nEnjoy your authentic Andhra pickles!\n\nThank you! ❤️ — SeaSalt Pickles'; },
+        cancelled: function(n, id) { return 'Hi ' + n + ',\n\nYour order *#' + id + '* has been *cancelled*.\n\nPlease reach out if you need help.\n\n— SeaSalt Pickles 🙏'; }
+    };
+
     async function sendWhatsAppAPI(phone, orderId, status, tracking, customerName) {
         if (!notifConfig || !notifConfig.wa_is_active || !notifConfig.wa_access_token || notifConfig.wa_access_token.length < 10) {
             return { success: false, reason: 'wa_not_configured' };
@@ -711,29 +722,58 @@
         var cleanPhone = phone.replace(/[^0-9]/g, '');
         if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
 
-        var templateName = WA_TEMPLATE_MAP[status];
-        if (!templateName) return { success: false, reason: 'no_wa_template' };
-
         var shortId = orderId.substring(0, 8);
         var name = customerName || 'Customer';
-        var params = [{ type:'text', text:name }, { type:'text', text:shortId }];
-        if ((status === 'shipped' || status === 'dispatched') && tracking) params.push({ type:'text', text:tracking });
+        var apiUrl = 'https://graph.facebook.com/v21.0/' + notifConfig.wa_phone_number_id + '/messages';
+        var headers = { 'Authorization': 'Bearer ' + notifConfig.wa_access_token, 'Content-Type': 'application/json' };
+
+        // Strategy: Try TEMPLATE first → if fails, send DIRECT TEXT
+        var templateName = WA_TEMPLATE_MAP[status];
+        var usedMethod = 'template';
 
         try {
-            var res = await fetch('https://graph.facebook.com/v21.0/' + notifConfig.wa_phone_number_id + '/messages', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + notifConfig.wa_access_token, 'Content-Type': 'application/json' },
+            var res, result;
+
+            // ── Attempt 1: Template message ──
+            if (templateName) {
+                var params = [{ type:'text', text:name }, { type:'text', text:shortId }];
+                if ((status === 'shipped' || status === 'dispatched') && tracking) params.push({ type:'text', text:tracking });
+
+                res = await fetch(apiUrl, {
+                    method: 'POST', headers: headers,
+                    body: JSON.stringify({
+                        messaging_product: 'whatsapp', to: cleanPhone, type: 'template',
+                        template: { name: templateName, language: { code: 'en' }, components: [{ type: 'body', parameters: params }] }
+                    })
+                });
+                result = await res.json();
+
+                if (res.ok && result.messages) {
+                    console.log('[WhatsApp] ✅ Template sent to', cleanPhone);
+                    try { await db.from('notification_log').insert({ order_id: orderId, customer_phone: cleanPhone, channel: 'whatsapp', template_name: templateName, status: 'sent', provider_message_id: result.messages[0].id }); } catch(e) {}
+                    return { success: true, messageId: result.messages[0].id, method: 'template' };
+                }
+                console.warn('[WhatsApp] Template failed, trying direct text...', result.error ? result.error.message : '');
+            }
+
+            // ── Attempt 2: Direct text message (no template needed) ──
+            usedMethod = 'text';
+            var msgFn = WA_TEXT_MESSAGES[status];
+            var textBody = msgFn ? msgFn(name, shortId, tracking) : ('Hi ' + name + '! Your order #' + shortId + ' status: ' + status + ' — SeaSalt Pickles');
+
+            res = await fetch(apiUrl, {
+                method: 'POST', headers: headers,
                 body: JSON.stringify({
-                    messaging_product: 'whatsapp', to: cleanPhone, type: 'template',
-                    template: { name: templateName, language: { code: 'en' }, components: [{ type: 'body', parameters: params }] }
+                    messaging_product: 'whatsapp', to: cleanPhone, type: 'text',
+                    text: { preview_url: true, body: textBody }
                 })
             });
-            var result = await res.json();
+            result = await res.json();
 
             try {
                 await db.from('notification_log').insert({
                     order_id: orderId, customer_phone: cleanPhone, channel: 'whatsapp',
-                    template_name: templateName,
+                    template_name: usedMethod === 'text' ? 'direct_text_' + status : templateName,
                     status: res.ok && result.messages ? 'sent' : 'failed',
                     provider_message_id: result.messages ? result.messages[0].id : null,
                     error_message: res.ok ? null : JSON.stringify(result.error || result)
@@ -741,15 +781,15 @@
             } catch(logErr) {}
 
             if (res.ok && result.messages) {
-                console.log('[WhatsApp] ✅ Sent to', cleanPhone);
-                return { success: true, messageId: result.messages[0].id };
+                console.log('[WhatsApp] ✅ Text message sent to', cleanPhone);
+                return { success: true, messageId: result.messages[0].id, method: 'text' };
             } else {
-                console.error('[WhatsApp] ❌', result);
+                console.error('[WhatsApp] ❌ Both template and text failed:', result);
                 return { success: false, error: result.error ? result.error.message : 'WA failed' };
             }
         } catch(e) {
             console.error('[WhatsApp] ❌ Network:', e);
-            try { await db.from('notification_log').insert({ order_id: orderId, customer_phone: cleanPhone, channel: 'whatsapp', template_name: templateName, status: 'error', error_message: e.message }); } catch(x) {}
+            try { await db.from('notification_log').insert({ order_id: orderId, customer_phone: cleanPhone, channel: 'whatsapp', template_name: usedMethod + '_' + status, status: 'error', error_message: e.message }); } catch(x) {}
             return { success: false, error: e.message };
         }
     }
