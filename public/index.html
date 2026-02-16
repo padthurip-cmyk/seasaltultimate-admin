@@ -81,7 +81,7 @@ const SEASALT={avakaya:349,chicken:499,gongura:299,lemon:249,garlic:279};
 const PRODUCTS=["Avakaya Mango Pickle","Gongura Red Chilli Pickle","Chicken Pickle with Bone","Boneless Chicken Pickle","Mutton Pickle","Prawn Pickle","Garlic Pachadi","Tomato Thokku","Lemon Spice Pickle","Mixed Vegetable Pickle","Summer Combo Pack","Family Pack"];
 const PLATFORMS=[{id:"ig_post",l:"Instagram Post",i:"📸"},{id:"ig_reel",l:"Reel Script",i:"🎬"},{id:"fb_post",l:"Facebook Post",i:"📘"},{id:"g_post",l:"Google Business",i:"📍"},{id:"wa_msg",l:"WhatsApp Broadcast",i:"💬"},{id:"yt_short",l:"YouTube Short",i:"▶️"}];
 
-let page='intel',drill=null,comps=[],revs=[],sPlat='ig_post',sProd=PRODUCTS[0];
+let page='intel',drill=null,comps=[],revs=[],ads=[],sPlat='ig_post',sProd=PRODUCTS[0];
 
 // ═══════════════════════════════════
 // SUPABASE HELPERS
@@ -95,13 +95,53 @@ async function loadData(){
   try{
     comps=await sbGet('competitors','select=*&order=google_reviews_count.desc');
     revs=await sbGet('competitor_reviews','select=*&order=publish_time.desc&limit=50');
+    ads=await sbGet('competitor_ads','select=*&order=detected_at.desc&limit=50');
+    // Update ad counts on competitors
+    comps.forEach(c=>{
+      const compAds=ads.filter(a=>a.competitor_name===c.name&&a.ad_status==='active');
+      c.active_ads_count=compAds.length;
+    });
     if(comps.length>0){
       const last=comps[0].last_synced;
       document.getElementById('sb-sync').textContent=last?timeAgo(new Date(last)):'never';
     }
-  }catch(e){console.error('Load error:',e);comps=[];revs=[];}
+  }catch(e){console.error('Load error:',e);comps=[];revs=[];ads=[];}
   render();
 }
+
+async function sbInsert(table,data){
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/'+table,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'},body:JSON.stringify(data)});
+    return r.ok;
+  }catch(e){return false;}
+}
+
+async function logAd(compName){
+  const text=document.getElementById('ad-text-input').value;
+  const platform=document.getElementById('ad-platform-input').value;
+  const region=document.getElementById('ad-region-input').value;
+  if(!text){alert('Enter ad text');return;}
+  const ok=await sbInsert('competitor_ads',{
+    competitor_name:compName,
+    ad_text:text,
+    platform:platform,
+    region:region,
+    ad_status:'active',
+    started_date:new Date().toISOString().slice(0,10),
+    detected_at:new Date().toISOString()
+  });
+  if(ok){alert('Ad logged!');document.getElementById('ad-text-input').value='';await loadData();}
+  else alert('Failed to save');
+}
+
+async function removeAd(adId){
+  try{
+    await fetch(SB_URL+'/rest/v1/competitor_ads?id=eq.'+adId,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},body:JSON.stringify({ad_status:'ended'})});
+    await loadData();
+  }catch(e){}
+}
+
+function metaAdUrl(name){return 'https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=IN&q='+encodeURIComponent(name);}
 
 function timeAgo(d){const s=Math.floor((Date.now()-d)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 
@@ -209,6 +249,9 @@ function render(){
       </tbody></table></div>
     </div>
 
+    ${ads.filter(a=>a.ad_status==='active').length?`<div class="cd mt-5"><div class="ch"><h3>📢 Active Competitor Ads</h3><span class="bg bg-l">TRACKED</span></div>
+      <div class="p-5 space-y-3">${ads.filter(a=>a.ad_status==='active').slice(0,6).map(a=>'<div class="pb-3 border-b border-gray-800/40 flex gap-3"><div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style="background:#1A1F2B">📢</div><div class="flex-1"><div class="text-xs font-semibold" style="color:#FF4D2D">'+a.competitor_name+'</div><div class="text-sm mb-1">'+a.ad_text+'</div><div class="text-xs text-gray-500" style="font-family:monospace">'+a.platform+' · '+(a.started_date||'')+' · '+(a.region||'')+'</div></div></div>').join('')}</div></div>`:''}
+
     ${revs.length?`<div class="cd mt-5"><div class="ch"><h3>⭐ Latest Competitor Reviews</h3><span class="bg bg-l">LIVE FROM GOOGLE</span></div>
       <div class="p-5 space-y-3">${revs.slice(0,8).map(r=>`<div class="pb-3 border-b border-gray-800/40 last:border-0">
         <div class="flex justify-between items-center mb-1"><span class="text-xs font-semibold" style="color:#3B82F6">${r.competitor_name}</span><span class="text-yellow-400 text-xs">${stars(r.rating)}</span></div>
@@ -253,7 +296,8 @@ function render(){
           <div class="flex justify-between border-b border-gray-800/40 pb-2"><span class="text-gray-400 text-sm">Total Reviews</span><span class="font-semibold">${(c.google_reviews_count||0).toLocaleString()}</span></div>
           <div class="flex justify-between border-b border-gray-800/40 pb-2"><span class="text-gray-400 text-sm">Active Ads</span><span class="font-semibold">${c.active_ads_count||0}</span></div>
           <div class="flex justify-between border-b border-gray-800/40 pb-2"><span class="text-gray-400 text-sm">Business Status</span><span class="font-semibold">${c.business_status||'UNKNOWN'}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400 text-sm">Website</span><span class="font-semibold text-blue-400">${c.website_url||c.url||'—'}</span></div>
+          <div class="flex justify-between border-b border-gray-800/40 pb-2"><span class="text-gray-400 text-sm">Website</span><span class="font-semibold text-blue-400">${c.website_url||c.url||'—'}</span></div>
+          <div class="mt-3"><a href="${metaAdUrl(c.name)}" target="_blank" class="btn bp bs w-full text-center block" style="text-decoration:none">🔍 Check Meta Ad Library →</a></div>
         </div>
       </div>
       <div class="cd p-5">
@@ -264,6 +308,27 @@ function render(){
             <div class="text-sm text-gray-400 italic">"${(r.text||'').substring(0,200)}"</div>
             <div class="text-xs text-gray-600 mt-1" style="font-family:monospace">${r.author_name||'Anon'}</div>
           </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Ad Campaigns Section -->
+    <div class="grid grid-cols-2 gap-4 mt-5">
+      <div class="cd">
+        <div class="ch"><h3>📢 Tracked Ad Campaigns</h3><a href="${metaAdUrl(c.name)}" target="_blank" class="bg bg-l" style="text-decoration:none;cursor:pointer">Check Meta Ad Library →</a></div>
+        <div class="p-5">
+          ${(()=>{const compAds=ads.filter(a=>a.competitor_name===c.name);return compAds.length===0?'<div class="text-sm text-gray-600">No ads tracked yet. Check Meta Ad Library or log ads manually below.</div>':compAds.map(a=>'<div class="pb-3 mb-3 border-b border-gray-800/40"><div class="text-sm mb-1">'+a.ad_text+'</div><div class="flex justify-between items-center"><div class="text-xs text-gray-500" style="font-family:monospace">'+a.platform+' · '+(a.started_date||'')+' · '+(a.region||'India')+'</div>'+(a.ad_status==='active'?'<button onclick="removeAd('+a.id+')" class="text-xs text-gray-600 hover:text-orange-400 cursor-pointer" style="background:none;border:none">Mark ended</button>':'<span class="text-xs text-gray-600">Ended</span>')+'</div></div>').join('');})()}
+        </div>
+      </div>
+      <div class="cd">
+        <div class="ch"><h3>➕ Log New Ad</h3><span class="bg bg-c">MANUAL ENTRY</span></div>
+        <div class="p-5">
+          <div class="mb-3"><label class="text-xs text-gray-500 block mb-1">Ad Text / Description</label><textarea id="ad-text-input" rows="3" class="w-full px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 text-sm focus:outline-none focus:border-orange-500" placeholder="Paste the ad copy or describe the campaign..."></textarea></div>
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div><label class="text-xs text-gray-500 block mb-1">Platform</label><select id="ad-platform-input" class="w-full px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 text-sm"><option>Facebook</option><option>Instagram</option><option>FB + IG</option><option>IG Reels</option><option>YouTube</option><option>Google Ads</option></select></div>
+            <div><label class="text-xs text-gray-500 block mb-1">Region</label><select id="ad-region-input" class="w-full px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 text-sm"><option>Hyderabad</option><option>Telangana</option><option>AP + TS</option><option>South India</option><option>Pan India</option></select></div>
+          </div>
+          <button onclick="logAd('${c.name.replace(/'/g,"\\'")}')" class="btn bp w-full">📢 Log This Ad</button>
+        </div>
       </div>
     </div>`;
   }
