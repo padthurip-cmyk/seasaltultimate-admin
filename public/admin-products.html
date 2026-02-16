@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SeaSalt Admin — Product Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F7F6F3;
+  --card: #FFFFFF;
+  --border: #E8E5DF;
+  --border-focus: #D4451A;
+  --text: #1C1917;
+  --text2: #78716C;
+  --text3: #A8A29E;
+  --accent: #D4451A;
+  --accent2: #B93A15;
+  --accent-soft: rgba(212,69,26,.06);
+  --green: #16A34A;
+  --green-soft: rgba(22,163,74,.08);
+  --yellow: #CA8A04;
+  --yellow-soft: rgba(202,138,4,.08);
+  --blue: #2563EB;
+  --blue-soft: rgba(37,99,235,.08);
+  --red: #DC2626;
+  --red-soft: rgba(220,38,38,.08);
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.03);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,.08);
+  --mono: 'Space Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --serif: 'Instrument Serif', serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); font-size:13px; line-height:1.5; }
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-thumb { background:#D1D5DB; border-radius:3px; }
+::selection { background:rgba(212,69,26,.15); }
+
+/* ═══ LAYOUT ═══ */
+.shell { display:flex; min-height:100vh; }
+.sidebar { width:220px; background:var(--card); border-right:1px solid var(--border); padding:16px 12px; position:fixed; height:100vh; overflow-y:auto; z-index:10; display:flex; flex-direction:column; }
+.main { flex:1; margin-left:220px; min-height:100vh; }
+.topbar { position:sticky; top:0; z-index:9; background:var(--bg); border-bottom:1px solid var(--border); padding:14px 24px; display:flex; align-items:center; justify-content:space-between; }
+.content { padding:20px 24px; }
+
+/* ═══ SIDEBAR ═══ */
+.logo { display:flex; align-items:center; gap:8px; padding:4px 8px; margin-bottom:16px; }
+.logo-icon { width:34px; height:34px; background:linear-gradient(135deg,#D4451A,#E8723A); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1rem; color:#fff; }
+.logo-text { font-weight:700; font-size:.85rem; }
+.logo-sub { font-size:.46rem; color:var(--text3); font-family:var(--mono); letter-spacing:.05em; }
+.nav-label { font-size:.44rem; color:var(--text3); text-transform:uppercase; letter-spacing:.1em; font-family:var(--mono); padding:0 10px 4px; margin-top:12px; }
+.nav-item { display:flex; align-items:center; gap:8px; padding:7px 12px; border-radius:8px; font-size:.76rem; font-weight:500; color:var(--text2); cursor:pointer; transition:.12s; border:1px solid transparent; }
+.nav-item:hover { background:rgba(0,0,0,.03); color:var(--text); }
+.nav-item.active { background:var(--accent-soft); color:var(--accent); font-weight:600; border-color:rgba(212,69,26,.1); }
+.nav-item .badge { margin-left:auto; background:var(--accent); color:#fff; font-size:.48rem; padding:1px 6px; border-radius:8px; font-family:var(--mono); }
+.sidebar-footer { margin-top:auto; padding:10px; border-top:1px solid var(--border); }
+.sidebar-footer .status { display:flex; align-items:center; gap:5px; font-size:.5rem; color:var(--text3); font-family:var(--mono); }
+.dot-live { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 6px rgba(22,163,74,.5); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ═══ CARDS & COMPONENTS ═══ */
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+.card-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border); }
+.card-header h3 { font-size:.78rem; font-weight:600; display:flex; align-items:center; gap:6px; }
+.card-body { padding:16px; }
+.tag { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:5px; font-size:.56rem; font-weight:600; font-family:var(--mono); }
+.tag-green { background:var(--green-soft); color:var(--green); }
+.tag-yellow { background:var(--yellow-soft); color:var(--yellow); }
+.tag-red { background:var(--red-soft); color:var(--red); }
+.tag-blue { background:var(--blue-soft); color:var(--blue); }
+.tag-accent { background:var(--accent-soft); color:var(--accent); }
+
+/* ═══ BUTTONS ═══ */
+.btn { padding:7px 14px; border-radius:7px; border:none; font-family:var(--sans); font-weight:600; font-size:.72rem; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:.15s; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:var(--accent2); }
+.btn-ghost { background:transparent; color:var(--text2); border:1px solid var(--border); }
+.btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+.btn-green { background:var(--green); color:#fff; }
+.btn-green:hover { background:#15803d; }
+.btn-sm { padding:4px 10px; font-size:.64rem; border-radius:5px; }
+.btn-icon { width:28px; height:28px; border-radius:6px; border:1px solid var(--border); background:var(--card); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; font-size:.7rem; transition:.12s; }
+.btn-icon:hover { border-color:var(--accent); background:var(--accent-soft); }
+
+/* ═══ INPUTS ═══ */
+.form-group { margin-bottom:12px; }
+.form-label { display:block; font-size:.56rem; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; font-family:var(--mono); }
+.form-input { width:100%; padding:8px 12px; border-radius:7px; border:1.5px solid var(--border); background:var(--bg); color:var(--text); font-family:var(--sans); font-size:.78rem; transition:.15s; }
+.form-input:focus { outline:none; border-color:var(--accent); background:var(--card); box-shadow:0 0 0 3px rgba(212,69,26,.08); }
+.form-input::placeholder { color:var(--text3); }
+textarea.form-input { resize:vertical; min-height:60px; line-height:1.5; }
+select.form-input { cursor:pointer; }
+.form-row { display:grid; gap:12px; }
+.form-row-2 { grid-template-columns:1fr 1fr; }
+.form-row-3 { grid-template-columns:1fr 1fr 1fr; }
+.form-row-4 { grid-template-columns:1fr 1fr 1fr 1fr; }
+.form-hint { font-size:.54rem; color:var(--text3); margin-top:2px; }
+
+/* ═══ TOGGLE ═══ */
+.toggle { position:relative; width:36px; height:20px; }
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; inset:0; background:#D1D5DB; border-radius:20px; cursor:pointer; transition:.2s; }
+.toggle-slider:before { content:''; position:absolute; height:16px; width:16px; left:2px; bottom:2px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 2px rgba(0,0,0,.1); }
+.toggle input:checked + .toggle-slider { background:var(--green); }
+.toggle input:checked + .toggle-slider:before { transform:translateX(16px); }
+
+/* ═══ TABLE ═══ */
+.tbl { width:100%; border-collapse:collapse; }
+.tbl th { text-align:left; padding:8px 12px; font-size:.5rem; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; font-family:var(--mono); border-bottom:1px solid var(--border); background:#FAFAF8; font-weight:400; }
+.tbl td { padding:10px 12px; border-bottom:1px solid rgba(232,229,223,.5); font-size:.76rem; vertical-align:middle; }
+.tbl tr:last-child td { border-bottom:none; }
+.tbl tr.clickable { cursor:pointer; transition:.1s; }
+.tbl tr.clickable:hover { background:rgba(212,69,26,.03); }
+
+/* ═══ PRODUCT CARD (Grid view) ═══ */
+.product-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:14px; }
+.product-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:.2s; position:relative; }
+.product-card:hover { box-shadow:var(--shadow-lg); transform:translateY(-2px); border-color:rgba(212,69,26,.2); }
+.product-card .img-wrap { width:100%; height:160px; background:#F5F4F1; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+.product-card .img-wrap img { width:100%; height:100%; object-fit:cover; }
+.product-card .img-placeholder { font-size:2.5rem; opacity:.25; }
+.product-card .card-info { padding:12px; }
+.product-card .card-name { font-weight:600; font-size:.82rem; color:var(--text); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.product-card .card-cat { font-size:.58rem; color:var(--text3); font-family:var(--mono); text-transform:uppercase; letter-spacing:.04em; }
+.product-card .card-bottom { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+.product-card .card-price { font-weight:700; color:var(--accent); font-size:.88rem; }
+.product-card .card-variants { font-size:.54rem; color:var(--text3); font-family:var(--mono); }
+.product-card .card-badge { position:absolute; top:8px; right:8px; }
+.product-card .inactive-overlay { position:absolute; inset:0; background:rgba(255,255,255,.7); display:flex; align-items:center; justify-content:center; }
+.product-card .inactive-overlay span { background:var(--red-soft); color:var(--red); padding:4px 12px; border-radius:6px; font-size:.64rem; font-weight:600; }
+
+/* ═══ STAT CARDS ═══ */
+.stats-row { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:16px; }
+.stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); }
+.stat-label { font-size:.48rem; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; font-family:var(--mono); margin-bottom:4px; }
+.stat-value { font-size:1.4rem; font-weight:700; color:var(--text); }
+.stat-sub { font-size:.54rem; color:var(--text3); margin-top:2px; }
+
+/* ═══ MODAL / EDITOR ═══ */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:100; display:none; align-items:flex-start; justify-content:center; padding:30px 20px; overflow-y:auto; }
+.modal-overlay.show { display:flex; }
+.modal-box { background:var(--card); border:1px solid var(--border); border-radius:14px; width:860px; max-width:98vw; box-shadow:0 25px 60px rgba(0,0,0,.15); animation:modalIn .2s ease; }
+@keyframes modalIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
+.modal-header h2 { font-size:.92rem; font-weight:700; display:flex; align-items:center; gap:8px; }
+.modal-body { padding:20px; max-height:75vh; overflow-y:auto; }
+.modal-footer { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-top:1px solid var(--border); background:#FAFAF8; border-radius:0 0 14px 14px; }
+
+/* ═══ IMAGE MANAGER ═══ */
+.img-manager { display:flex; gap:10px; flex-wrap:wrap; }
+.img-slot { width:100px; height:100px; border:2px dashed var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; overflow:hidden; transition:.15s; background:var(--bg); }
+.img-slot:hover { border-color:var(--accent); background:var(--accent-soft); }
+.img-slot img { width:100%; height:100%; object-fit:cover; }
+.img-slot .remove-img { position:absolute; top:2px; right:2px; width:18px; height:18px; background:var(--red); color:#fff; border-radius:50%; font-size:.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transition:.15s; border:none; }
+.img-slot:hover .remove-img { opacity:1; }
+.img-slot .add-icon { font-size:1.2rem; color:var(--text3); }
+.img-slot.primary { border-color:var(--accent); border-style:solid; }
+.img-slot.primary::after { content:'PRIMARY'; position:absolute; bottom:0; left:0; right:0; background:var(--accent); color:#fff; font-size:.4rem; text-align:center; padding:1px; font-family:var(--mono); letter-spacing:.05em; }
+
+/* ═══ VARIANT MANAGER ═══ */
+.variant-row { display:grid; grid-template-columns:2fr 1.2fr 1fr 1fr 1fr .6fr .4fr; gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid rgba(232,229,223,.4); }
+.variant-row:last-child { border-bottom:none; }
+.variant-header { font-size:.48rem; color:var(--text3); text-transform:uppercase; font-family:var(--mono); letter-spacing:.06em; font-weight:400; padding-bottom:6px; border-bottom:1px solid var(--border); }
+.variant-input { width:100%; padding:6px 8px; border-radius:5px; border:1px solid var(--border); background:var(--bg); font-size:.72rem; font-family:var(--sans); }
+.variant-input:focus { outline:none; border-color:var(--accent); background:var(--card); }
+
+/* ═══ SECTION TABS ═══ */
+.editor-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:16px; }
+.editor-tab { padding:8px 16px; font-size:.72rem; font-weight:500; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:.12s; }
+.editor-tab:hover { color:var(--text); }
+.editor-tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; animation:fadeIn .2s ease; }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+/* ═══ INGREDIENTS ═══ */
+.ingredient-tag { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; background:var(--bg); border:1px solid var(--border); border-radius:20px; font-size:.68rem; margin:2px; }
+.ingredient-tag .remove { cursor:pointer; color:var(--text3); font-size:.6rem; }
+.ingredient-tag .remove:hover { color:var(--red); }
+
+/* ═══ SEARCH BAR ═══ */
+.search-bar { position:relative; }
+.search-bar input { width:260px; padding:7px 12px 7px 32px; border-radius:8px; border:1px solid var(--border); background:var(--card); font-size:.74rem; font-family:var(--sans); }
+.search-bar input:focus { outline:none; border-color:var(--accent); }
+.search-bar .search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:.7rem; color:var(--text3); }
+
+/* ═══ VIEW TOGGLE ═══ */
+.view-toggle { display:flex; border:1px solid var(--border); border-radius:7px; overflow:hidden; }
+.view-toggle button { padding:5px 12px; border:none; background:var(--card); font-size:.64rem; cursor:pointer; font-family:var(--sans); color:var(--text2); transition:.12s; }
+.view-toggle button.active { background:var(--accent); color:#fff; }
+
+/* ═══ SPINNER ═══ */
+@keyframes spin { to { transform:rotate(360deg); } }
+.spinner { width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .6s linear infinite; }
+
+/* ═══ EMPTY STATE ═══ */
+.empty-state { text-align:center; padding:60px 20px; }
+.empty-state .icon { font-size:3rem; margin-bottom:12px; opacity:.3; }
+.empty-state h3 { font-size:1rem; font-weight:600; margin-bottom:6px; }
+.empty-state p { color:var(--text3); font-size:.78rem; }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width:900px) {
+  .sidebar { width:60px; padding:10px 6px; }
+  .sidebar .logo-text, .sidebar .logo-sub, .sidebar .nav-label, .sidebar .nav-item span:not(.badge), .sidebar-footer { display:none; }
+  .main { margin-left:60px; }
+  .stats-row { grid-template-columns:repeat(3,1fr); }
+  .product-grid { grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); }
+  .modal-box { width:98vw; }
+  .variant-row { grid-template-columns:1fr 1fr; }
+}
+
+/* ═══ CATEGORY PILLS ═══ */
+.cat-pills { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.cat-pill { padding:5px 14px; border-radius:20px; border:1px solid var(--border); background:var(--card); font-size:.68rem; font-weight:500; cursor:pointer; transition:.15s; color:var(--text2); }
+.cat-pill:hover { border-color:var(--accent); color:var(--accent); }
+.cat-pill.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+/* ═══ DRAG HANDLE ═══ */
+.drag-handle { cursor:grab; color:var(--text3); font-size:.7rem; user-select:none; }
+.drag-handle:active { cursor:grabbing; }
+
+/* ═══ RICH TEXT HELPERS ═══ */
+.char-count { font-size:.48rem; color:var(--text3); font-family:var(--mono); text-align:right; margin-top:2px; }
+
+/* ═══ NUTRITION GRID ═══ */
+.nutrition-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.nutrition-item { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:8px; text-align:center; }
+.nutrition-item .n-val { font-size:.88rem; font-weight:700; color:var(--text); }
+.nutrition-item .n-label { font-size:.48rem; color:var(--text3); font-family:var(--mono); text-transform:uppercase; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">S</div>
+    <div>
+      <div class="logo-text">SeaSalt</div>
+      <div class="logo-sub">PRODUCT MANAGER</div>
+    </div>
+  </div>
+
+  <div class="nav-label">Admin</div>
+  <div class="nav-item" onclick="window.open('admin-intel.html','_self')">📊 <span>Dashboard</span></div>
+  <div class="nav-item" onclick="window.open('admin-intel.html','_self')">📦 <span>Orders</span></div>
+  <div class="nav-item active">🏷️ <span>Products</span> <span class="badge" id="product-count">0</span></div>
+  <div class="nav-item" onclick="window.open('admin-intel.html','_self')">👥 <span>Users</span></div>
+  <div class="nav-item" onclick="window.open('admin-intel.html','_self')">🚚 <span>Shipping</span></div>
+
+  <div class="nav-label">Intelligence</div>
+  <div class="nav-item" onclick="window.open('admin-intel.html','_self')">🏆 <span>Competitors</span></div>
+  <div class="nav-item" onclick="window.open('admin-intel.html','_self')">🕵️ <span>Social Spy</span></div>
+
+  <div class="sidebar-footer">
+    <div class="status"><div class="dot-live"></div> Live · Supabase</div>
+    <div style="font-size:.46rem;color:var(--text3);font-family:var(--mono);margin-top:3px">Last sync: <span id="last-sync">—</span></div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1 id="page-title" style="font-size:1.1rem;font-weight:700">🏷️ Product Management</h1>
+      <p id="page-sub" style="font-size:.6rem;color:var(--text3);margin-top:1px;font-family:var(--mono)">Full catalog control · Real-time Supabase sync</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div id="loading-spinner" class="spinner" style="display:none"></div>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="Search products..." oninput="filterProducts()">
+      </div>
+      <div class="view-toggle">
+        <button class="active" id="view-grid" onclick="setView('grid')">▦ Grid</button>
+        <button id="view-table" onclick="setView('table')">≡ Table</button>
+      </div>
+      <button class="btn btn-primary" onclick="openEditor(null)">+ Add Product</button>
+      <button class="btn btn-ghost" onclick="refreshData()">🔄 Refresh</button>
+    </div>
+  </div>
+
+  <div class="content" id="main-content">
+    <!-- Rendered by JS -->
+  </div>
+</div>
+
+</div>
+
+<!-- ═══ PRODUCT EDITOR MODAL ═══ -->
+<div class="modal-overlay" id="editor-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="editor-title">🏷️ Add New Product</h2>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span id="editor-status" class="tag tag-green" style="display:none">Saved</span>
+        <button class="btn-icon" onclick="closeEditor()" title="Close">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="editor-body">
+      <!-- Rendered by JS -->
+    </div>
+    <div class="modal-footer">
+      <div>
+        <button class="btn btn-ghost btn-sm" onclick="previewProduct()" id="btn-preview">👁 Preview</button>
+        <button class="btn btn-ghost btn-sm" onclick="duplicateProduct()" id="btn-duplicate" style="display:none">📋 Duplicate</button>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost" onclick="closeEditor()">Cancel</button>
+        <button class="btn btn-green" onclick="saveProduct()" id="btn-save">💾 Save Product</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PREVIEW MODAL ═══ -->
+<div class="modal-overlay" id="preview-modal">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <h2>📱 Customer Preview</h2>
+      <button class="btn-icon" onclick="document.getElementById('preview-modal').classList.remove('show')">✕</button>
+    </div>
+    <div class="modal-body" id="preview-body"></div>
+  </div>
+</div>
+
+<!-- ═══ DELETE CONFIRM ═══ -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal-box" style="max-width:380px">
+    <div class="modal-header"><h2>⚠️ Delete Product</h2></div>
+    <div class="modal-body" style="text-align:center;padding:24px">
+      <p style="font-size:.82rem;margin-bottom:4px">Are you sure you want to delete</p>
+      <p style="font-weight:700;font-size:1rem;margin-bottom:16px" id="delete-name"></p>
+      <p style="font-size:.68rem;color:var(--text3)">This will also delete all variants. This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer" style="justify-content:center;gap:10px">
+      <button class="btn btn-ghost" onclick="document.getElementById('delete-modal').classList.remove('show')">Cancel</button>
+      <button class="btn" style="background:var(--red);color:#fff" onclick="confirmDelete()">🗑 Delete Forever</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// SUPABASE CONFIG
+// ════════════════════════════════════════════════════════════════
+const SB_URL = 'https://yosjbsncvghpscsrvxds.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlvc2pic25jdmdocHNjc3J2eGRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMjc3NTgsImV4cCI6MjA4NTgwMzc1OH0.PNEbeofoyT7KdkzepRfqg-zqyBiGAat5ElCMiyQ4UAs';
+
+const SB_HEADERS = {
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Content-Type': 'application/json'
+};
+
+// ════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════
+let products = [];
+let variants = [];
+let currentView = 'grid';
+let currentFilter = 'all';
+let searchTerm = '';
+let editingProduct = null;
+let deleteTarget = null;
+let editorTab = 'basic';
+
+// Editor state for the currently open product
+let editorState = {
+  id: null,
+  name: '',
+  slug: '',
+  description: '',
+  short_description: '',
+  category: '',
+  subcategory: '',
+  base_price: 0,
+  compare_price: 0,
+  cost_price: 0,
+  images: [],        // array of URLs
+  is_active: true,
+  is_featured: false,
+  is_bestseller: false,
+  is_new: false,
+  badge_text: '',
+  ingredients: [],
+  oil_type: '',
+  spice_level: '',   // mild, medium, hot, extra-hot
+  shelf_life: '',
+  storage_instructions: '',
+  dietary_info: '',   // veg, non-veg, vegan
+  weight_unit: 'g',
+  sku_prefix: '',
+  sort_order: 0,
+  seo_title: '',
+  seo_description: '',
+  tags: [],
+  // Nutrition
+  calories: '',
+  protein: '',
+  fat: '',
+  carbs: '',
+  sodium: '',
+  // Variants managed separately
+  variants: []
+};
+
+// ════════════════════════════════════════════════════════════════
+// SUPABASE HELPERS
+// ════════════════════════════════════════════════════════════════
+async function sbGet(table, query) {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${table}?${query || 'select=*'}`, { headers: SB_HEADERS });
+    return r.ok ? await r.json() : [];
+  } catch(e) { console.error('sbGet error:', e); return []; }
+}
+
+async function sbUpsert(table, data, conflict) {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${table}${conflict ? '?on_conflict=' + conflict : ''}`, {
+      method: 'POST',
+      headers: { ...SB_HEADERS, 'Prefer': 'return=representation,resolution=merge-duplicates' },
+      body: JSON.stringify(data)
+    });
+    if (!r.ok) { const e = await r.text(); console.error('sbUpsert fail:', e); return null; }
+    return await r.json();
+  } catch(e) { console.error('sbUpsert error:', e); return null; }
+}
+
+async function sbUpdate(table, filter, data) {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${table}?${filter}`, {
+      method: 'PATCH',
+      headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+      body: JSON.stringify(data)
+    });
+    return r.ok ? await r.json() : null;
+  } catch(e) { console.error('sbUpdate error:', e); return null; }
+}
+
+async function sbDelete(table, filter) {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${table}?${filter}`, {
+      method: 'DELETE',
+      headers: SB_HEADERS
+    });
+    return r.ok;
+  } catch(e) { console.error('sbDelete error:', e); return false; }
+}
+
+async function sbInsert(table, data) {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+      body: JSON.stringify(data)
+    });
+    if (!r.ok) { const e = await r.text(); console.error('sbInsert fail:', e); return null; }
+    return await r.json();
+  } catch(e) { console.error('sbInsert error:', e); return null; }
+}
+
+// ════════════════════════════════════════════════════════════════
+// DATA LOADING
+// ════════════════════════════════════════════════════════════════
+function showSpinner(on) {
+  document.getElementById('loading-spinner').style.display = on ? 'block' : 'none';
+}
+
+async function loadData() {
+  showSpinner(true);
+  try {
+    products = await sbGet('products', 'select=*&order=sort_order.asc.nullsfirst,name.asc');
+    // Try to load variants — table may not exist yet
+    try {
+      variants = await sbGet('product_variants', 'select=*&order=sort_order.asc.nullsfirst,name.asc');
+    } catch(e) { variants = []; }
+  } catch(e) {
+    console.error('Load error:', e);
+    products = [];
+    variants = [];
+  }
+  document.getElementById('product-count').textContent = products.length;
+  document.getElementById('last-sync').textContent = new Date().toLocaleTimeString();
+  showSpinner(false);
+  render();
+}
+
+async function refreshData() {
+  await loadData();
+}
+
+// ════════════════════════════════════════════════════════════════
+// FILTERING & SEARCHING
+// ════════════════════════════════════════════════════════════════
+function getCategories() {
+  const cats = new Set();
+  products.forEach(p => { if (p.category) cats.add(p.category); });
+  return [...cats].sort();
+}
+
+function getFilteredProducts() {
+  let list = [...products];
+  if (currentFilter !== 'all') {
+    if (currentFilter === '_active') list = list.filter(p => p.is_active !== false);
+    else if (currentFilter === '_inactive') list = list.filter(p => p.is_active === false);
+    else if (currentFilter === '_featured') list = list.filter(p => p.is_featured);
+    else if (currentFilter === '_bestseller') list = list.filter(p => p.is_bestseller);
+    else if (currentFilter === '_noimage') list = list.filter(p => !p.image_url && (!p.images || !p.images.length));
+    else list = list.filter(p => p.category === currentFilter);
+  }
+  if (searchTerm) {
+    const q = searchTerm.toLowerCase();
+    list = list.filter(p =>
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.category || '').toLowerCase().includes(q) ||
+      (p.description || '').toLowerCase().includes(q) ||
+      (p.sku_prefix || '').toLowerCase().includes(q)
+    );
+  }
+  return list;
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  render();
+}
+
+function filterProducts() {
+  searchTerm = document.getElementById('search-input').value.trim();
+  render();
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('view-grid').className = v === 'grid' ? 'active' : '';
+  document.getElementById('view-table').className = v === 'table' ? 'active' : '';
+  render();
+}
+
+// ════════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════════
+function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function getVariants(productId) { return variants.filter(v => v.product_id == productId); }
+function getBasePrice(p) {
+  var pv = getVariants(p.id);
+  if (pv.length) return Math.min(...pv.map(v => parseFloat(v.price || 0)));
+  return parseFloat(p.price || p.base_price || 0);
+}
+function getPrimaryImage(p) {
+  if (p.images && p.images.length) return p.images[0];
+  return p.image_url || '';
+}
+function generateSlug(name) {
+  return (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+// ════════════════════════════════════════════════════════════════
+// RENDER — MAIN VIEW
+// ════════════════════════════════════════════════════════════════
+function render() {
+  var el = document.getElementById('main-content');
+  var filtered = getFilteredProducts();
+  var cats = getCategories();
+  var totalActive = products.filter(p => p.is_active !== false).length;
+  var totalInactive = products.filter(p => p.is_active === false).length;
+  var totalFeatured = products.filter(p => p.is_featured).length;
+  var noImage = products.filter(p => !p.image_url && (!p.images || !p.images.length)).length;
+  var totalVariants = variants.length;
+
+  var h = '';
+
+  // Stats
+  h += '<div class="stats-row">';
+  h += '<div class="stat-card"><div class="stat-label">Total Products</div><div class="stat-value">' + products.length + '</div><div class="stat-sub">' + totalVariants + ' variants</div></div>';
+  h += '<div class="stat-card"><div class="stat-label">Active</div><div class="stat-value" style="color:var(--green)">' + totalActive + '</div><div class="stat-sub">Visible on store</div></div>';
+  h += '<div class="stat-card"><div class="stat-label">Inactive</div><div class="stat-value" style="color:var(--red)">' + totalInactive + '</div><div class="stat-sub">Hidden from store</div></div>';
+  h += '<div class="stat-card"><div class="stat-label">Featured</div><div class="stat-value" style="color:var(--yellow)">' + totalFeatured + '</div><div class="stat-sub">Highlighted items</div></div>';
+  h += '<div class="stat-card"><div class="stat-label">Missing Images</div><div class="stat-value" style="color:' + (noImage > 0 ? 'var(--red)' : 'var(--green)') + '">' + noImage + '</div><div class="stat-sub">' + (noImage > 0 ? 'Need attention' : 'All set!') + '</div></div>';
+  h += '</div>';
+
+  // Category pills
+  h += '<div class="cat-pills">';
+  h += '<div class="cat-pill ' + (currentFilter === 'all' ? 'active' : '') + '" onclick="setFilter(\'all\')">All (' + products.length + ')</div>';
+  h += '<div class="cat-pill ' + (currentFilter === '_active' ? 'active' : '') + '" onclick="setFilter(\'_active\')">✅ Active (' + totalActive + ')</div>';
+  h += '<div class="cat-pill ' + (currentFilter === '_inactive' ? 'active' : '') + '" onclick="setFilter(\'_inactive\')">❌ Inactive (' + totalInactive + ')</div>';
+  h += '<div class="cat-pill ' + (currentFilter === '_featured' ? 'active' : '') + '" onclick="setFilter(\'_featured\')">⭐ Featured</div>';
+  if (noImage > 0) h += '<div class="cat-pill ' + (currentFilter === '_noimage' ? 'active' : '') + '" onclick="setFilter(\'_noimage\')">📷 No Image (' + noImage + ')</div>';
+  cats.forEach(function(c) {
+    var count = products.filter(p => p.category === c).length;
+    h += '<div class="cat-pill ' + (currentFilter === c ? 'active' : '') + '" onclick="setFilter(\'' + esc(c).replace(/'/g, "\\'") + '\')">' + esc(c) + ' (' + count + ')</div>';
+  });
+  h += '</div>';
+
+  if (filtered.length === 0) {
+    h += '<div class="empty-state"><div class="icon">🫙</div><h3>No products found</h3><p>' + (searchTerm ? 'Try a different search term' : 'Click "+ Add Product" to get started') + '</p></div>';
+    el.innerHTML = h;
+    return;
+  }
+
+  // Grid or Table view
+  if (currentView === 'grid') {
+    h += '<div class="product-grid">';
+    filtered.forEach(function(p) {
+      var img = getPrimaryImage(p);
+      var price = getBasePrice(p);
+      var pv = getVariants(p.id);
+      var inactive = p.is_active === false;
+      h += '<div class="product-card" onclick="openEditor(' + p.id + ')">';
+      if (inactive) h += '<div class="inactive-overlay"><span>INACTIVE</span></div>';
+      if (p.is_bestseller) h += '<div class="card-badge"><span class="tag tag-accent">🔥 Bestseller</span></div>';
+      else if (p.is_new) h += '<div class="card-badge"><span class="tag tag-blue">✨ New</span></div>';
+      else if (p.is_featured) h += '<div class="card-badge"><span class="tag tag-yellow">⭐ Featured</span></div>';
+      h += '<div class="img-wrap">';
+      if (img) h += '<img src="' + esc(img) + '" onerror="this.parentElement.innerHTML=\'<div class=img-placeholder>🫙</div>\'" loading="lazy">';
+      else h += '<div class="img-placeholder">🫙</div>';
+      h += '</div>';
+      h += '<div class="card-info">';
+      h += '<div class="card-cat">' + esc(p.category || 'uncategorized') + '</div>';
+      h += '<div class="card-name">' + esc(p.name) + '</div>';
+      h += '<div class="card-bottom">';
+      h += '<div class="card-price">' + (price > 0 ? '₹' + price : '<span style="color:var(--red)">₹0</span>') + (pv.length > 1 ? '+' : '') + '</div>';
+      h += '<div class="card-variants">' + (pv.length ? pv.length + ' variant' + (pv.length > 1 ? 's' : '') : (p.weight || p.variant || '—')) + '</div>';
+      h += '</div></div></div>';
+    });
+    h += '</div>';
+  } else {
+    // Table view
+    h += '<div class="card"><div style="overflow-x:auto"><table class="tbl"><thead><tr>';
+    h += '<th style="width:40px">#</th><th style="width:50px">Image</th><th>Name</th><th>Category</th><th>Price</th><th>Variants</th><th>Weight</th><th>Status</th><th>Flags</th><th>Actions</th>';
+    h += '</tr></thead><tbody>';
+    filtered.forEach(function(p, i) {
+      var img = getPrimaryImage(p);
+      var price = getBasePrice(p);
+      var pv = getVariants(p.id);
+      h += '<tr class="clickable" onclick="openEditor(' + p.id + ')">';
+      h += '<td style="color:var(--text3);font-family:var(--mono);font-size:.6rem">' + (i + 1) + '</td>';
+      h += '<td>' + (img ? '<img src="' + esc(img) + '" style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML=\'<div style=width:36px;height:36px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:.7rem>🫙</div>\'">' : '<div style="width:36px;height:36px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:.7rem">🫙</div>') + '</td>';
+      h += '<td><div style="font-weight:600;color:var(--text)">' + esc(p.name) + '</div>' + (p.short_description ? '<div style="font-size:.58rem;color:var(--text3);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(p.short_description) + '</div>' : '') + '</td>';
+      h += '<td><span class="tag tag-accent">' + esc(p.category || '—') + '</span></td>';
+      h += '<td style="font-weight:600;color:' + (price > 0 ? 'var(--green)' : 'var(--red)') + '">₹' + price + '</td>';
+      h += '<td style="font-size:.64rem;color:var(--text2)">' + (pv.length || '0') + '</td>';
+      h += '<td style="font-size:.68rem;color:var(--text2)">' + esc(p.weight || p.variant || '—') + '</td>';
+      h += '<td>' + (p.is_active !== false ? '<span class="tag tag-green">Active</span>' : '<span class="tag tag-red">Inactive</span>') + '</td>';
+      h += '<td style="font-size:.7rem">';
+      if (p.is_bestseller) h += '🔥';
+      if (p.is_featured) h += '⭐';
+      if (p.is_new) h += '✨';
+      if (p.dietary_info === 'non-veg') h += '🍗';
+      else if (p.dietary_info === 'veg') h += '🌿';
+      h += '</td>';
+      h += '<td onclick="event.stopPropagation()"><button class="btn-icon" onclick="openEditor(' + p.id + ')" title="Edit">✏️</button> <button class="btn-icon" onclick="promptDelete(' + p.id + ')" title="Delete" style="color:var(--red)">🗑</button></td>';
+      h += '</tr>';
+    });
+    h += '</tbody></table></div></div>';
+  }
+
+  el.innerHTML = h;
+}
+
+// ════════════════════════════════════════════════════════════════
+// EDITOR — OPEN / CLOSE
+// ════════════════════════════════════════════════════════════════
+function openEditor(productId) {
+  editorTab = 'basic';
+  if (productId) {
+    var p = products.find(x => x.id == productId);
+    if (!p) return;
+    editingProduct = p;
+    editorState = {
+      id: p.id,
+      name: p.name || '',
+      slug: p.slug || generateSlug(p.name),
+      description: p.description || '',
+      short_description: p.short_description || '',
+      category: p.category || '',
+      subcategory: p.subcategory || '',
+      base_price: p.price || p.base_price || 0,
+      compare_price: p.compare_price || 0,
+      cost_price: p.cost_price || 0,
+      images: p.images || (p.image_url ? [p.image_url] : []),
+      is_active: p.is_active !== false,
+      is_featured: !!p.is_featured,
+      is_bestseller: !!p.is_bestseller,
+      is_new: !!p.is_new,
+      badge_text: p.badge_text || '',
+      ingredients: p.ingredients || [],
+      oil_type: p.oil_type || '',
+      spice_level: p.spice_level || '',
+      shelf_life: p.shelf_life || '',
+      storage_instructions: p.storage_instructions || '',
+      dietary_info: p.dietary_info || '',
+      weight_unit: p.weight_unit || 'g',
+      sku_prefix: p.sku_prefix || '',
+      sort_order: p.sort_order || 0,
+      seo_title: p.seo_title || '',
+      seo_description: p.seo_description || '',
+      tags: p.tags || [],
+      calories: p.calories || '',
+      protein: p.protein || '',
+      fat: p.fat || '',
+      carbs: p.carbs || '',
+      sodium: p.sodium || '',
+      variants: getVariants(p.id).map(v => ({...v}))
+    };
+    document.getElementById('editor-title').textContent = '✏️ Edit: ' + p.name;
+    document.getElementById('btn-duplicate').style.display = 'inline-flex';
+  } else {
+    editingProduct = null;
+    editorState = {
+      id: null, name: '', slug: '', description: '', short_description: '',
+      category: '', subcategory: '', base_price: 0, compare_price: 0, cost_price: 0,
+      images: [], is_active: true, is_featured: false, is_bestseller: false, is_new: false,
+      badge_text: '', ingredients: [], oil_type: '', spice_level: '', shelf_life: '',
+      storage_instructions: '', dietary_info: '', weight_unit: 'g', sku_prefix: '',
+      sort_order: 0, seo_title: '', seo_description: '', tags: [],
+      calories: '', protein: '', fat: '', carbs: '', sodium: '',
+      variants: []
+    };
+    document.getElementById('editor-title').textContent = '🏷️ Add New Product';
+    document.getElementById('btn-duplicate').style.display = 'none';
+  }
+  document.getElementById('editor-status').style.display = 'none';
+  renderEditor();
+  document.getElementById('editor-modal').classList.add('show');
+}
+
+function closeEditor() {
+  document.getElementById('editor-modal').classList.remove('show');
+  editingProduct = null;
+}
+
+function switchEditorTab(tab) {
+  editorTab = tab;
+  renderEditor();
+}
+
+// ════════════════════════════════════════════════════════════════
+// EDITOR — RENDER
+// ════════════════════════════════════════════════════════════════
+function renderEditor() {
+  var s = editorState;
+  var cats = getCategories();
+  var h = '';
+
+  // Tabs
+  h += '<div class="editor-tabs">';
+  ['basic','images','variants','details','nutrition','seo'].forEach(function(t) {
+    var labels = { basic:'📝 Basic Info', images:'📷 Images', variants:'📦 Variants & Pricing', details:'🫙 Product Details', nutrition:'🥗 Nutrition', seo:'🔍 SEO & Tags' };
+    h += '<div class="editor-tab ' + (editorTab === t ? 'active' : '') + '" onclick="switchEditorTab(\'' + t + '\')">' + labels[t] + '</div>';
+  });
+  h += '</div>';
+
+  // ── BASIC INFO TAB ──
+  h += '<div class="tab-panel ' + (editorTab === 'basic' ? 'active' : '') + '">';
+  h += '<div class="form-row form-row-2">';
+  h += '<div class="form-group"><label class="form-label">Product Name *</label><input class="form-input" id="ed-name" value="' + esc(s.name) + '" placeholder="e.g., Avakaya Mango Pickle" oninput="editorState.name=this.value;if(!editorState.id)document.getElementById(\'ed-slug\').value=generateSlug(this.value)"></div>';
+  h += '<div class="form-group"><label class="form-label">URL Slug</label><input class="form-input" id="ed-slug" value="' + esc(s.slug) + '" placeholder="auto-generated" oninput="editorState.slug=this.value" style="font-family:var(--mono);font-size:.7rem"></div>';
+  h += '</div>';
+
+  h += '<div class="form-row form-row-3">';
+  h += '<div class="form-group"><label class="form-label">Category *</label><input class="form-input" id="ed-category" list="cat-list" value="' + esc(s.category) + '" placeholder="e.g., Veg Pickles" oninput="editorState.category=this.value"><datalist id="cat-list">';
+  cats.forEach(function(c) { h += '<option value="' + esc(c) + '">'; });
+  h += '</datalist><div class="form-hint">Type new or select existing</div></div>';
+  h += '<div class="form-group"><label class="form-label">Subcategory</label><input class="form-input" id="ed-subcat" value="' + esc(s.subcategory) + '" placeholder="e.g., Mango Pickles" oninput="editorState.subcategory=this.value"></div>';
+  h += '<div class="form-group"><label class="form-label">Dietary Info</label><select class="form-input" onchange="editorState.dietary_info=this.value"><option value="">Select...</option><option value="veg"' + (s.dietary_info === 'veg' ? ' selected' : '') + '>🌿 Vegetarian</option><option value="non-veg"' + (s.dietary_info === 'non-veg' ? ' selected' : '') + '>🍗 Non-Vegetarian</option><option value="vegan"' + (s.dietary_info === 'vegan' ? ' selected' : '') + '>🥬 Vegan</option></select></div>';
+  h += '</div>';
+
+  h += '<div class="form-group"><label class="form-label">Short Description</label><input class="form-input" value="' + esc(s.short_description) + '" placeholder="One-line tagline shown on product card" maxlength="120" oninput="editorState.short_description=this.value;this.nextElementSibling.textContent=this.value.length+\'/120\'"><div class="char-count">' + (s.short_description || '').length + '/120</div></div>';
+  h += '<div class="form-group"><label class="form-label">Full Description</label><textarea class="form-input" rows="4" placeholder="Detailed description shown on product page. Supports line breaks." oninput="editorState.description=this.value">' + esc(s.description) + '</textarea></div>';
+
+  // Status toggles
+  h += '<div style="display:flex;gap:20px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--border);margin-top:8px">';
+  h += '<label style="display:flex;align-items:center;gap:8px;font-size:.76rem;cursor:pointer"><div class="toggle"><input type="checkbox" ' + (s.is_active ? 'checked' : '') + ' onchange="editorState.is_active=this.checked"><div class="toggle-slider"></div></div>Active (visible on store)</label>';
+  h += '<label style="display:flex;align-items:center;gap:8px;font-size:.76rem;cursor:pointer"><div class="toggle"><input type="checkbox" ' + (s.is_featured ? 'checked' : '') + ' onchange="editorState.is_featured=this.checked"><div class="toggle-slider"></div></div>⭐ Featured</label>';
+  h += '<label style="display:flex;align-items:center;gap:8px;font-size:.76rem;cursor:pointer"><div class="toggle"><input type="checkbox" ' + (s.is_bestseller ? 'checked' : '') + ' onchange="editorState.is_bestseller=this.checked"><div class="toggle-slider"></div></div>🔥 Bestseller</label>';
+  h += '<label style="display:flex;align-items:center;gap:8px;font-size:.76rem;cursor:pointer"><div class="toggle"><input type="checkbox" ' + (s.is_new ? 'checked' : '') + ' onchange="editorState.is_new=this.checked"><div class="toggle-slider"></div></div>✨ New Arrival</label>';
+  h += '</div>';
+  h += '<div class="form-row form-row-2" style="margin-top:8px">';
+  h += '<div class="form-group"><label class="form-label">Custom Badge Text</label><input class="form-input" value="' + esc(s.badge_text) + '" placeholder="e.g., Limited Edition, Summer Special" oninput="editorState.badge_text=this.value"></div>';
+  h += '<div class="form-group"><label class="form-label">Sort Order</label><input class="form-input" type="number" value="' + (s.sort_order || 0) + '" placeholder="0 = top" oninput="editorState.sort_order=parseInt(this.value)||0"></div>';
+  h += '</div>';
+  h += '</div>';
+
+  // ── IMAGES TAB ──
+  h += '<div class="tab-panel ' + (editorTab === 'images' ? 'active' : '') + '">';
+  h += '<div class="form-label" style="margin-bottom:8px">Product Images <span style="font-weight:400;color:var(--text3)">(First image = primary)</span></div>';
+  h += '<div class="img-manager" id="img-manager">';
+  s.images.forEach(function(url, idx) {
+    h += '<div class="img-slot ' + (idx === 0 ? 'primary' : '') + '">';
+    h += '<img src="' + esc(url) + '" onerror="this.src=\'\';this.style.display=\'none\'">';
+    h += '<button class="remove-img" onclick="event.stopPropagation();removeImage(' + idx + ')">✕</button>';
+    h += '</div>';
+  });
+  h += '<div class="img-slot" onclick="addImagePrompt()"><div class="add-icon">+</div></div>';
+  h += '</div>';
+  h += '<div class="form-hint" style="margin-top:8px">Click + to add image URL. First image is the primary image shown on product card.</div>';
+
+  h += '<div class="form-group" style="margin-top:16px"><label class="form-label">Add Image URL</label><div style="display:flex;gap:6px"><input class="form-input" id="new-image-url" placeholder="https://example.com/image.jpg" style="flex:1"><button class="btn btn-primary btn-sm" onclick="addImageFromInput()">Add</button></div></div>';
+  h += '</div>';
+
+  // ── VARIANTS TAB ──
+  h += '<div class="tab-panel ' + (editorTab === 'variants' ? 'active' : '') + '">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  h += '<div><div class="form-label" style="margin:0">Size / Weight Variants</div><div class="form-hint">Each variant has its own price, weight, SKU, and stock level</div></div>';
+  h += '<button class="btn btn-primary btn-sm" onclick="addVariant()">+ Add Variant</button>';
+  h += '</div>';
+
+  if (!s.variants.length && !s.base_price) {
+    h += '<div class="form-row form-row-3" style="margin-bottom:16px;padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">';
+    h += '<div class="form-group"><label class="form-label">Base Price (₹) *</label><input class="form-input" type="number" value="' + (s.base_price || '') + '" placeholder="349" oninput="editorState.base_price=parseFloat(this.value)||0"></div>';
+    h += '<div class="form-group"><label class="form-label">Compare Price (₹)</label><input class="form-input" type="number" value="' + (s.compare_price || '') + '" placeholder="Strike-through price" oninput="editorState.compare_price=parseFloat(this.value)||0"></div>';
+    h += '<div class="form-group"><label class="form-label">Cost Price (₹)</label><input class="form-input" type="number" value="' + (s.cost_price || '') + '" placeholder="Your cost (private)" oninput="editorState.cost_price=parseFloat(this.value)||0"></div>';
+    h += '</div>';
+    h += '<div class="form-hint" style="margin-bottom:12px;color:var(--yellow)">⚡ If you add variants below, each variant will have its own price. Base price is used as fallback.</div>';
+  }
+
+  if (s.variants.length) {
+    h += '<div style="overflow-x:auto"><div style="min-width:700px">';
+    // Header
+    h += '<div class="variant-row variant-header"><div>Name / Label</div><div>Weight</div><div>Price (₹)</div><div>Compare ₹</div><div>SKU</div><div>Stock</div><div></div></div>';
+    s.variants.forEach(function(v, idx) {
+      h += '<div class="variant-row">';
+      h += '<input class="variant-input" value="' + esc(v.name || '') + '" placeholder="e.g., 250g Jar" oninput="editorState.variants[' + idx + '].name=this.value">';
+      h += '<input class="variant-input" value="' + esc(v.weight || '') + '" placeholder="250g" oninput="editorState.variants[' + idx + '].weight=this.value">';
+      h += '<input class="variant-input" type="number" value="' + (v.price || '') + '" placeholder="349" oninput="editorState.variants[' + idx + '].price=parseFloat(this.value)||0">';
+      h += '<input class="variant-input" type="number" value="' + (v.compare_price || '') + '" placeholder="499" oninput="editorState.variants[' + idx + '].compare_price=parseFloat(this.value)||0">';
+      h += '<input class="variant-input" value="' + esc(v.sku || '') + '" placeholder="SKU" oninput="editorState.variants[' + idx + '].sku=this.value" style="font-family:var(--mono);font-size:.64rem">';
+      h += '<input class="variant-input" type="number" value="' + (v.stock != null ? v.stock : '') + '" placeholder="∞" oninput="editorState.variants[' + idx + '].stock=this.value===\'\'?null:parseInt(this.value)">';
+      h += '<button class="btn-icon" onclick="removeVariant(' + idx + ')" style="color:var(--red)" title="Remove">✕</button>';
+      h += '</div>';
+    });
+    h += '</div></div>';
+  } else {
+    h += '<div style="text-align:center;padding:20px;background:var(--bg);border-radius:8px;border:1px dashed var(--border)">';
+    h += '<div style="font-size:1.5rem;margin-bottom:6px;opacity:.3">📦</div>';
+    h += '<div style="font-size:.76rem;color:var(--text2)">No variants yet</div>';
+    h += '<div style="font-size:.64rem;color:var(--text3)">Add variants for different sizes/weights (e.g., 250g, 500g, 1kg)</div>';
+    h += '</div>';
+  }
+  h += '</div>';
+
+  // ── DETAILS TAB ──
+  h += '<div class="tab-panel ' + (editorTab === 'details' ? 'active' : '') + '">';
+  h += '<div class="form-row form-row-3">';
+  h += '<div class="form-group"><label class="form-label">Oil Type</label><select class="form-input" onchange="editorState.oil_type=this.value"><option value="">Select...</option><option' + (s.oil_type === 'cold-pressed-groundnut' ? ' selected' : '') + ' value="cold-pressed-groundnut">Cold-Pressed Groundnut Oil</option><option' + (s.oil_type === 'sesame' ? ' selected' : '') + ' value="sesame">Sesame Oil</option><option' + (s.oil_type === 'gingelly' ? ' selected' : '') + ' value="gingelly">Gingelly Oil</option><option' + (s.oil_type === 'none' ? ' selected' : '') + ' value="none">No Oil</option></select></div>';
+  h += '<div class="form-group"><label class="form-label">Spice Level</label><select class="form-input" onchange="editorState.spice_level=this.value"><option value="">Select...</option><option' + (s.spice_level === 'mild' ? ' selected' : '') + ' value="mild">🟢 Mild</option><option' + (s.spice_level === 'medium' ? ' selected' : '') + ' value="medium">🟡 Medium</option><option' + (s.spice_level === 'hot' ? ' selected' : '') + ' value="hot">🔴 Hot</option><option' + (s.spice_level === 'extra-hot' ? ' selected' : '') + ' value="extra-hot">🌶️ Extra Hot</option></select></div>';
+  h += '<div class="form-group"><label class="form-label">Shelf Life</label><input class="form-input" value="' + esc(s.shelf_life) + '" placeholder="e.g., 6 months, 1 year" oninput="editorState.shelf_life=this.value"></div>';
+  h += '</div>';
+
+  h += '<div class="form-group"><label class="form-label">Storage Instructions</label><input class="form-input" value="' + esc(s.storage_instructions) + '" placeholder="e.g., Refrigerate after opening. Keep oil layer on top." oninput="editorState.storage_instructions=this.value"></div>';
+
+  // Ingredients
+  h += '<div class="form-group"><label class="form-label">Ingredients</label><div style="display:flex;gap:6px;margin-bottom:6px"><input class="form-input" id="new-ingredient" placeholder="e.g., Raw Mango, Red Chilli Powder, Salt" style="flex:1" onkeydown="if(event.key===\'Enter\')addIngredient()"><button class="btn btn-ghost btn-sm" onclick="addIngredient()">+ Add</button></div>';
+  h += '<div id="ingredients-list">';
+  (s.ingredients || []).forEach(function(ing, idx) {
+    h += '<span class="ingredient-tag">' + esc(ing) + ' <span class="remove" onclick="removeIngredient(' + idx + ')">✕</span></span>';
+  });
+  h += '</div></div>';
+
+  h += '<div class="form-row form-row-2">';
+  h += '<div class="form-group"><label class="form-label">SKU Prefix</label><input class="form-input" value="' + esc(s.sku_prefix) + '" placeholder="e.g., SS-AVK" oninput="editorState.sku_prefix=this.value" style="font-family:var(--mono)"></div>';
+  h += '<div class="form-group"><label class="form-label">Weight Unit</label><select class="form-input" onchange="editorState.weight_unit=this.value"><option' + (s.weight_unit === 'g' ? ' selected' : '') + ' value="g">Grams (g)</option><option' + (s.weight_unit === 'kg' ? ' selected' : '') + ' value="kg">Kilograms (kg)</option><option' + (s.weight_unit === 'ml' ? ' selected' : '') + ' value="ml">Milliliters (ml)</option><option' + (s.weight_unit === 'pcs' ? ' selected' : '') + ' value="pcs">Pieces</option></select></div>';
+  h += '</div>';
+  h += '</div>';
+
+  // ── NUTRITION TAB ──
+  h += '<div class="tab-panel ' + (editorTab === 'nutrition' ? 'active' : '') + '">';
+  h += '<div class="form-label" style="margin-bottom:12px">Nutrition Information <span style="font-weight:400;color:var(--text3)">(per 100g serving)</span></div>';
+  h += '<div class="nutrition-grid">';
+  h += '<div class="nutrition-item"><input class="form-input" style="text-align:center;font-weight:700;font-size:1rem;border:none;background:transparent;padding:4px" value="' + esc(s.calories) + '" placeholder="—" oninput="editorState.calories=this.value"><div class="n-label">Calories (kcal)</div></div>';
+  h += '<div class="nutrition-item"><input class="form-input" style="text-align:center;font-weight:700;font-size:1rem;border:none;background:transparent;padding:4px" value="' + esc(s.protein) + '" placeholder="—" oninput="editorState.protein=this.value"><div class="n-label">Protein (g)</div></div>';
+  h += '<div class="nutrition-item"><input class="form-input" style="text-align:center;font-weight:700;font-size:1rem;border:none;background:transparent;padding:4px" value="' + esc(s.fat) + '" placeholder="—" oninput="editorState.fat=this.value"><div class="n-label">Fat (g)</div></div>';
+  h += '<div class="nutrition-item"><input class="form-input" style="text-align:center;font-weight:700;font-size:1rem;border:none;background:transparent;padding:4px" value="' + esc(s.carbs) + '" placeholder="—" oninput="editorState.carbs=this.value"><div class="n-label">Carbs (g)</div></div>';
+  h += '</div>';
+  h += '<div style="margin-top:12px"><div class="form-group"><label class="form-label">Sodium (mg)</label><input class="form-input" value="' + esc(s.sodium) + '" placeholder="e.g., 890" oninput="editorState.sodium=this.value" style="max-width:200px"></div></div>';
+  h += '</div>';
+
+  // ── SEO TAB ──
+  h += '<div class="tab-panel ' + (editorTab === 'seo' ? 'active' : '') + '">';
+  h += '<div class="form-group"><label class="form-label">SEO Title</label><input class="form-input" value="' + esc(s.seo_title) + '" placeholder="' + esc(s.name || 'Product name') + ' | SeaSalt Pickles" maxlength="70" oninput="editorState.seo_title=this.value;this.nextElementSibling.textContent=this.value.length+\'/70\'"><div class="char-count">' + (s.seo_title || '').length + '/70</div></div>';
+  h += '<div class="form-group"><label class="form-label">SEO Description</label><textarea class="form-input" rows="2" placeholder="Meta description for search engines" maxlength="160" oninput="editorState.seo_description=this.value;this.nextElementSibling.textContent=this.value.length+\'/160\'">' + esc(s.seo_description) + '</textarea><div class="char-count">' + (s.seo_description || '').length + '/160</div></div>';
+
+  // Tags
+  h += '<div class="form-group"><label class="form-label">Tags</label><div style="display:flex;gap:6px;margin-bottom:6px"><input class="form-input" id="new-tag" placeholder="e.g., summer-special, andhra, non-veg" style="flex:1" onkeydown="if(event.key===\'Enter\')addTag()"><button class="btn btn-ghost btn-sm" onclick="addTag()">+ Add</button></div>';
+  h += '<div id="tags-list">';
+  (s.tags || []).forEach(function(tag, idx) {
+    h += '<span class="ingredient-tag" style="background:var(--blue-soft);border-color:rgba(37,99,235,.15)">' + esc(tag) + ' <span class="remove" onclick="removeTag(' + idx + ')">✕</span></span>';
+  });
+  h += '</div></div>';
+
+  // Preview card
+  h += '<div style="margin-top:16px;padding:14px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">';
+  h += '<div class="form-label" style="margin-bottom:8px">🔍 Search Preview</div>';
+  h += '<div style="max-width:500px">';
+  h += '<div style="font-size:.88rem;color:#1a0dab;font-weight:500">' + esc(s.seo_title || s.name || 'Product Name') + ' | SeaSalt Pickles</div>';
+  h += '<div style="font-size:.64rem;color:#006621;font-family:var(--mono)">seasaltpickles.com › ' + esc(s.slug || generateSlug(s.name) || 'product-slug') + '</div>';
+  h += '<div style="font-size:.72rem;color:#545454;line-height:1.4">' + esc(s.seo_description || s.short_description || 'Product description will appear here...') + '</div>';
+  h += '</div></div>';
+  h += '</div>';
+
+  document.getElementById('editor-body').innerHTML = h;
+}
+
+// ════════════════════════════════════════════════════════════════
+// EDITOR ACTIONS
+// ════════════════════════════════════════════════════════════════
+function addImagePrompt() {
+  var url = prompt('Enter image URL:');
+  if (url && url.trim()) {
+    editorState.images.push(url.trim());
+    renderEditor();
+  }
+}
+
+function addImageFromInput() {
+  var inp = document.getElementById('new-image-url');
+  if (inp && inp.value.trim()) {
+    editorState.images.push(inp.value.trim());
+    inp.value = '';
+    renderEditor();
+  }
+}
+
+function removeImage(idx) {
+  editorState.images.splice(idx, 1);
+  renderEditor();
+}
+
+function addVariant() {
+  editorState.variants.push({
+    name: '',
+    weight: '',
+    price: 0,
+    compare_price: 0,
+    sku: editorState.sku_prefix ? editorState.sku_prefix + '-' + (editorState.variants.length + 1) : '',
+    stock: null,
+    is_active: true,
+    sort_order: editorState.variants.length
+  });
+  renderEditor();
+}
+
+function removeVariant(idx) {
+  editorState.variants.splice(idx, 1);
+  renderEditor();
+}
+
+function addIngredient() {
+  var inp = document.getElementById('new-ingredient');
+  if (inp && inp.value.trim()) {
+    // Split by comma to allow multiple
+    inp.value.split(',').forEach(function(i) {
+      var trimmed = i.trim();
+      if (trimmed && !editorState.ingredients.includes(trimmed)) {
+        editorState.ingredients.push(trimmed);
+      }
+    });
+    inp.value = '';
+    renderEditor();
+  }
+}
+
+function removeIngredient(idx) {
+  editorState.ingredients.splice(idx, 1);
+  renderEditor();
+}
+
+function addTag() {
+  var inp = document.getElementById('new-tag');
+  if (inp && inp.value.trim()) {
+    inp.value.split(',').forEach(function(t) {
+      var trimmed = t.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+      if (trimmed && !editorState.tags.includes(trimmed)) {
+        editorState.tags.push(trimmed);
+      }
+    });
+    inp.value = '';
+    renderEditor();
+  }
+}
+
+function removeTag(idx) {
+  editorState.tags.splice(idx, 1);
+  renderEditor();
+}
+
+// ════════════════════════════════════════════════════════════════
+// SAVE PRODUCT
+// ════════════════════════════════════════════════════════════════
+async function saveProduct() {
+  var s = editorState;
+  if (!s.name.trim()) { alert('Product name is required'); return; }
+
+  var btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.textContent = '⏳ Saving...';
+  showSpinner(true);
+
+  // Sync name from input (in case not captured by oninput)
+  var nameInput = document.getElementById('ed-name');
+  if (nameInput) s.name = nameInput.value;
+  var catInput = document.getElementById('ed-category');
+  if (catInput) s.category = catInput.value;
+
+  // Build product data
+  var productData = {
+    name: s.name.trim(),
+    slug: s.slug || generateSlug(s.name),
+    description: s.description,
+    short_description: s.short_description,
+    category: s.category,
+    subcategory: s.subcategory,
+    price: s.base_price || (s.variants.length ? s.variants[0].price : 0),
+    base_price: s.base_price,
+    compare_price: s.compare_price || null,
+    cost_price: s.cost_price || null,
+    image_url: s.images.length ? s.images[0] : null,
+    images: s.images,
+    is_active: s.is_active,
+    is_featured: s.is_featured,
+    is_bestseller: s.is_bestseller,
+    is_new: s.is_new,
+    badge_text: s.badge_text || null,
+    ingredients: s.ingredients,
+    oil_type: s.oil_type || null,
+    spice_level: s.spice_level || null,
+    shelf_life: s.shelf_life || null,
+    storage_instructions: s.storage_instructions || null,
+    dietary_info: s.dietary_info || null,
+    weight_unit: s.weight_unit || 'g',
+    weight: s.variants.length ? s.variants[0].weight : (s.weight || null),
+    sku_prefix: s.sku_prefix || null,
+    sort_order: s.sort_order || 0,
+    seo_title: s.seo_title || null,
+    seo_description: s.seo_description || null,
+    tags: s.tags,
+    calories: s.calories || null,
+    protein: s.protein || null,
+    fat: s.fat || null,
+    carbs: s.carbs || null,
+    sodium: s.sodium || null
+  };
+
+  var savedProduct;
+  if (s.id) {
+    // Update existing
+    savedProduct = await sbUpdate('products', 'id=eq.' + s.id, productData);
+  } else {
+    // Insert new
+    savedProduct = await sbInsert('products', productData);
+  }
+
+  if (!savedProduct) {
+    alert('Error saving product. Check console for details.');
+    btn.disabled = false;
+    btn.textContent = '💾 Save Product';
+    showSpinner(false);
+    return;
+  }
+
+  var productId = Array.isArray(savedProduct) ? savedProduct[0].id : savedProduct.id;
+
+  // Save variants if product_variants table exists
+  if (s.variants.length) {
+    // Delete existing variants for this product
+    await sbDelete('product_variants', 'product_id=eq.' + productId);
+    // Insert new variants
+    for (var i = 0; i < s.variants.length; i++) {
+      var v = s.variants[i];
+      await sbInsert('product_variants', {
+        product_id: productId,
+        name: v.name || ('Variant ' + (i + 1)),
+        weight: v.weight || '',
+        price: v.price || 0,
+        compare_price: v.compare_price || null,
+        sku: v.sku || null,
+        stock: v.stock != null ? v.stock : null,
+        is_active: v.is_active !== false,
+        sort_order: i
+      });
+    }
+  }
+
+  // Show success
+  document.getElementById('editor-status').style.display = 'inline-flex';
+  document.getElementById('editor-status').textContent = '✅ Saved!';
+  setTimeout(function() {
+    document.getElementById('editor-status').style.display = 'none';
+  }, 3000);
+
+  btn.disabled = false;
+  btn.textContent = '💾 Save Product';
+  showSpinner(false);
+
+  // Reload data
+  await loadData();
+
+  // If was new product, update editor state with ID
+  if (!s.id) {
+    editorState.id = productId;
+    editingProduct = products.find(p => p.id == productId);
+    document.getElementById('editor-title').textContent = '✏️ Edit: ' + s.name;
+    document.getElementById('btn-duplicate').style.display = 'inline-flex';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// DELETE
+// ════════════════════════════════════════════════════════════════
+function promptDelete(productId) {
+  var p = products.find(x => x.id == productId);
+  if (!p) return;
+  deleteTarget = p;
+  document.getElementById('delete-name').textContent = p.name;
+  document.getElementById('delete-modal').classList.add('show');
+}
+
+async function confirmDelete() {
+  if (!deleteTarget) return;
+  showSpinner(true);
+  // Delete variants first
+  await sbDelete('product_variants', 'product_id=eq.' + deleteTarget.id);
+  // Delete product
+  await sbDelete('products', 'id=eq.' + deleteTarget.id);
+  document.getElementById('delete-modal').classList.remove('show');
+  deleteTarget = null;
+  closeEditor();
+  await loadData();
+  showSpinner(false);
+}
+
+// ════════════════════════════════════════════════════════════════
+// DUPLICATE
+// ════════════════════════════════════════════════════════════════
+function duplicateProduct() {
+  if (!editorState.id) return;
+  editorState.id = null;
+  editorState.name = editorState.name + ' (Copy)';
+  editorState.slug = generateSlug(editorState.name);
+  editorState.variants = editorState.variants.map(function(v) {
+    return {...v, id: undefined, product_id: undefined};
+  });
+  editingProduct = null;
+  document.getElementById('editor-title').textContent = '🏷️ Duplicate Product';
+  document.getElementById('btn-duplicate').style.display = 'none';
+  renderEditor();
+}
+
+// ════════════════════════════════════════════════════════════════
+// PREVIEW
+// ════════════════════════════════════════════════════════════════
+function previewProduct() {
+  var s = editorState;
+  var img = s.images.length ? s.images[0] : '';
+  var price = s.base_price || (s.variants.length ? s.variants[0].price : 0);
+
+  var h = '<div style="text-align:center">';
+  h += '<div style="width:100%;height:200px;background:#f5f4f1;border-radius:10px;overflow:hidden;margin-bottom:12px;display:flex;align-items:center;justify-content:center">';
+  if (img) h += '<img src="' + esc(img) + '" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=\'<div style=font-size:3rem;opacity:.2>🫙</div>\'">';
+  else h += '<div style="font-size:3rem;opacity:.2">🫙</div>';
+  h += '</div>';
+  if (s.badge_text || s.is_bestseller || s.is_new) {
+    h += '<div style="margin-bottom:8px">';
+    if (s.is_bestseller) h += '<span class="tag tag-accent" style="margin:2px">🔥 Bestseller</span>';
+    if (s.is_new) h += '<span class="tag tag-blue" style="margin:2px">✨ New</span>';
+    if (s.badge_text) h += '<span class="tag tag-yellow" style="margin:2px">' + esc(s.badge_text) + '</span>';
+    h += '</div>';
+  }
+  h += '<div style="font-size:.58rem;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em">' + esc(s.category || 'CATEGORY') + '</div>';
+  h += '<div style="font-size:1.1rem;font-weight:700;margin:4px 0">' + esc(s.name || 'Product Name') + '</div>';
+  if (s.short_description) h += '<div style="font-size:.76rem;color:var(--text2);margin-bottom:8px">' + esc(s.short_description) + '</div>';
+  h += '<div style="font-size:1.3rem;font-weight:700;color:var(--accent)">₹' + price + '</div>';
+  if (s.compare_price && s.compare_price > price) h += '<div style="font-size:.74rem;color:var(--text3);text-decoration:line-through">₹' + s.compare_price + '</div>';
+
+  if (s.variants.length) {
+    h += '<div style="margin-top:12px;text-align:left"><div style="font-size:.6rem;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;font-family:var(--mono)">Select Size</div>';
+    s.variants.forEach(function(v) {
+      h += '<div style="display:inline-block;padding:6px 14px;margin:3px;border:1.5px solid var(--border);border-radius:8px;font-size:.72rem;cursor:pointer">' + esc(v.name || v.weight) + ' — ₹' + (v.price || 0) + '</div>';
+    });
+    h += '</div>';
+  }
+
+  if (s.spice_level) {
+    var spiceMap = { mild: '🟢 Mild', medium: '🟡 Medium', hot: '🔴 Hot', 'extra-hot': '🌶️ Extra Hot' };
+    h += '<div style="margin-top:10px;font-size:.72rem;color:var(--text2)">Spice: ' + (spiceMap[s.spice_level] || s.spice_level) + '</div>';
+  }
+
+  if (s.ingredients.length) {
+    h += '<div style="margin-top:12px;text-align:left;font-size:.68rem;color:var(--text2)"><strong>Ingredients:</strong> ' + s.ingredients.map(esc).join(', ') + '</div>';
+  }
+  h += '</div>';
+
+  document.getElementById('preview-body').innerHTML = h;
+  document.getElementById('preview-modal').classList.add('show');
+}
+
+// ════════════════════════════════════════════════════════════════
+// CLOSE MODALS ON OVERLAY CLICK
+// ════════════════════════════════════════════════════════════════
+document.addEventListener('click', function(e) {
+  if (e.target.id === 'editor-modal') closeEditor();
+  if (e.target.id === 'preview-modal') e.target.classList.remove('show');
+  if (e.target.id === 'delete-modal') e.target.classList.remove('show');
+});
+
+// ESC key closes
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.getElementById('editor-modal').classList.remove('show');
+    document.getElementById('preview-modal').classList.remove('show');
+    document.getElementById('delete-modal').classList.remove('show');
+  }
+});
+
+// ════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════
+loadData();
+</script>
+</body>
+</html>
