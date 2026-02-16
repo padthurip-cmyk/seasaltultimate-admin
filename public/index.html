@@ -1,12 +1,1357 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta http-equiv="refresh" content="0;url=admin-intel.html">
-<title>SeaSalt Admin</title>
-<script>window.location.replace('admin-intel.html');</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SeaSalt Command Center v3.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; }
+        .sidebar { width: 250px; background: #1a1a2e; min-height: 100vh; position: fixed; left: 0; top: 0; z-index: 50; transition: transform 0.3s; }
+        .sidebar.closed { transform: translateX(-250px); }
+        .main { margin-left: 250px; padding: 24px; transition: margin-left 0.3s; }
+        .main.expanded { margin-left: 0; }
+        .sidebar-link { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #a0a0b8; text-decoration: none; transition: all 0.2s; border-left: 3px solid transparent; }
+        .sidebar-link:hover, .sidebar-link.active { color: #fff; background: rgba(255,255,255,0.08); border-left-color: #e67e22; }
+        .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .stat-card { text-align: center; }
+        .stat-value { font-size: 2rem; font-weight: 700; }
+        .stat-label { font-size: 0.85rem; color: #666; margin-top: 4px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-green { background: #d4edda; color: #155724; }
+        .badge-yellow { background: #fff3cd; color: #856404; }
+        .badge-blue { background: #cce5ff; color: #004085; }
+        .badge-red { background: #f8d7da; color: #721c24; }
+        .badge-gray { background: #e2e3e5; color: #383d41; }
+        .funnel { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 30px 0; flex-wrap: wrap; }
+        .funnel-step { text-align: center; min-width: 90px; }
+        .funnel-circle { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 700; margin: 0 auto 8px; }
+        .funnel-arrow { color: #ccc; font-size: 1.5rem; }
+        .funnel-label { font-size: 0.8rem; color: #666; }
+        .funnel-pct { font-size: 0.7rem; color: #999; margin-top: 2px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 10px 12px; font-size: 0.8rem; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; }
+        td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        tr:hover td { background: #f8f9fa; }
+        .btn { padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+        .btn-primary { background: #e67e22; color: #fff; }
+        .btn-primary:hover { background: #d35400; }
+        .btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+        .page { display: none !important; }
+        .page.active { display: block !important; }
+        .login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #1a1a2e, #16213e); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .login-box { background: #fff; padding: 40px; border-radius: 16px; width: 380px; max-width: 90vw; text-align: center; }
+        .login-box input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; margin-bottom: 12px; font-size: 1rem; }
+        .login-box input:focus { outline: none; border-color: #e67e22; }
+        .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin-top: 12px; }
+        .bar { flex: 1; background: linear-gradient(to top, #e67e22, #f39c12); border-radius: 4px 4px 0 0; min-height: 4px; position: relative; transition: height 0.5s; }
+        .bar-label { font-size: 0.65rem; color: #999; text-align: center; margin-top: 4px; }
+        .product-img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #f0f0f0; }
+        .product-img-fallback { width: 50px; height: 50px; border-radius: 8px; background: linear-gradient(135deg, #e67e22, #f39c12); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 60; display: none; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal-box { background: #fff; border-radius: 16px; padding: 24px; max-width: 600px; width: 90vw; max-height: 85vh; overflow-y: auto; }
+        .refresh-btn { background: none; border: 2px solid #e67e22; color: #e67e22; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .refresh-btn:hover { background: #e67e22; color: #fff; }
+        .activity-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .dot-blue { background: #3b82f6; }
+        .dot-green { background: #10b981; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-red { background: #ef4444; }
+        .dot-purple { background: #8b5cf6; }
+        .notification-badge { position: absolute; top: 8px; right: 15px; background: #ef4444; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; font-weight: 700; }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-250px); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+        }
+        @keyframes notifSlideIn{from{transform:translateX(120%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+        @keyframes notifSlideOut{from{transform:translateX(0);opacity:1;}to{transform:translateX(120%);opacity:0;}}
+        @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+        .btn-green { background: #10b981; color: #fff; }
+        .btn-green:hover { background: #059669; }
+        /* Product Grid */
+        .prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+        .prod-card{background:#fff;border-radius:12px;overflow:hidden;cursor:pointer;transition:all 0.2s;border:1px solid #eee;position:relative}
+        .prod-card:hover{box-shadow:0 8px 25px rgba(0,0,0,0.1);transform:translateY(-3px);border-color:rgba(230,126,34,0.3)}
+        .prod-card .pi{width:100%;height:160px;background:linear-gradient(135deg,#f8f7f4,#ede9e3);display:flex;align-items:center;justify-content:center;overflow:hidden}
+        .prod-card .pi img{width:100%;height:100%;object-fit:cover}
+        .prod-card .pb{padding:14px}
+        .prod-card .pcat{font-size:0.7rem;color:#999;text-transform:uppercase;letter-spacing:0.04em;font-weight:600}
+        .prod-card .pnm{font-weight:700;font-size:0.95rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .prod-card .pdesc{font-size:0.78rem;color:#888;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4}
+        .prod-card .pfoot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0}
+        .prod-card .pprice{font-weight:700;color:#e67e22;font-size:1.05rem}
+        .prod-card .pvars{font-size:0.7rem;color:#999}
+        .prod-card .pbadge{position:absolute;top:8px;right:8px}
+        .prod-card .pinactive{position:absolute;inset:0;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+        .prod-card .pinactive span{background:#fee;color:#c00;padding:4px 14px;border-radius:8px;font-size:0.75rem;font-weight:700}
+        /* Product pills */
+        .ppill{padding:6px 14px;border-radius:20px;border:2px solid #eee;background:#fff;font-size:0.78rem;font-weight:500;cursor:pointer;color:#666;transition:0.15s}
+        .ppill:hover{border-color:#e67e22;color:#e67e22}.ppill.active{background:#e67e22;color:#fff;border-color:#e67e22}
+        /* Editor tabs */
+        .pe-tab{padding:8px 16px;font-size:0.8rem;font-weight:500;color:#888;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:0.15s}
+        .pe-tab:hover{color:#333}.pe-tab.active{color:#e67e22;border-bottom-color:#e67e22;font-weight:700}
+        .pe-fg{margin-bottom:14px}
+        .pe-fl{display:block;font-size:0.75rem;font-weight:700;color:#555;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em}
+        .pe-inp{width:100%;padding:10px;border:2px solid #eee;border-radius:8px;font-size:0.9rem;font-family:inherit;transition:0.15s}
+        .pe-inp:focus{outline:none;border-color:#e67e22}
+        textarea.pe-inp{resize:vertical;min-height:60px}
+        .pe-row{display:grid;gap:12px}
+        .pe-r2{grid-template-columns:1fr 1fr}.pe-r3{grid-template-columns:1fr 1fr 1fr}
+        /* Toggle switch */
+        .pe-tog{position:relative;width:40px;height:22px;display:inline-block}
+        .pe-tog input{opacity:0;width:0;height:0}
+        .pe-tog .slider{position:absolute;inset:0;background:#ccc;border-radius:22px;cursor:pointer;transition:0.2s}
+        .pe-tog .slider:before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.2s}
+        .pe-tog input:checked+.slider{background:#10b981}
+        .pe-tog input:checked+.slider:before{transform:translateX(18px)}
+        /* Variant rows */
+        .vr-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 0.3fr;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid #f5f5f5}
+        .vr-hd{font-size:0.65rem;color:#999;text-transform:uppercase;font-weight:600;padding-bottom:6px;border-bottom:2px solid #eee}
+        .vr-inp{width:100%;padding:6px 8px;border:1px solid #eee;border-radius:6px;font-size:0.8rem;font-family:inherit}
+        .vr-inp:focus{outline:none;border-color:#e67e22}
+        /* Ingredient tags */
+        .ing-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:#f8f8f8;border:1px solid #eee;border-radius:20px;font-size:0.78rem;margin:2px}
+        .ing-tag .x{cursor:pointer;color:#ccc;font-size:0.7rem}.ing-tag .x:hover{color:#e74c3c}
+        /* Nutrition */
+        .nut-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+        .nut-item{background:#f8f9fa;border:2px solid #eee;border-radius:10px;padding:12px;text-align:center}
+        .nut-item input{text-align:center;font-weight:700;font-size:1.1rem;border:none;background:transparent;width:100%;font-family:inherit}
+        .nut-item .nl{font-size:0.7rem;color:#999;font-weight:600;text-transform:uppercase;margin-top:4px}
+        /* Image slots */
+        .img-slot{width:90px;height:90px;border:2px dashed #ddd;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;background:#fafafa;transition:0.15s}
+        .img-slot:hover{border-color:#e67e22;background:rgba(230,126,34,0.03)}
+        .img-slot img{width:100%;height:100%;object-fit:cover}
+        .img-slot .rm{position:absolute;top:2px;right:2px;width:18px;height:18px;background:#e74c3c;color:#fff;border-radius:50%;font-size:0.55rem;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:0.15s;border:none}
+        .img-slot:hover .rm{opacity:1}
+        .img-slot.primary{border-color:#e67e22;border-style:solid}
+        .img-slot.primary::after{content:'PRIMARY';position:absolute;bottom:0;left:0;right:0;background:#e67e22;color:#fff;font-size:0.55rem;text-align:center;padding:2px;font-weight:700}
+    </style>
 </head>
 <body>
-<p>Redirecting to <a href="admin-intel.html">Command Center</a>...</p>
+
+<!-- ════════════ LOGIN ════════════ -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <div style="font-size:2.5rem;margin-bottom:12px;">🫙</div>
+        <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:4px;">SeaSalt Admin</h2>
+        <p style="color:#888;margin-bottom:24px;font-size:0.9rem;">Enter credentials to continue</p>
+        <input type="text" id="loginUser" placeholder="Username" autocomplete="off">
+        <input type="password" id="loginPass" placeholder="Password">
+        <button class="btn btn-primary" style="width:100%;padding:12px;" id="loginBtn">Sign In</button>
+        <p id="loginError" style="color:#e74c3c;margin-top:12px;font-size:0.85rem;display:none;">Invalid credentials</p>
+    </div>
+</div>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<aside class="sidebar" id="sidebar">
+    <div style="padding:20px;border-bottom:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:40px;height:40px;background:#e67e22;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🫙</div>
+            <div>
+                <div style="color:#fff;font-weight:700;font-size:1rem;">SeaSalt Admin</div>
+                <div style="color:#888;font-size:0.75rem;">Command Center v3.0</div>
+            </div>
+        </div>
+    </div>
+    <nav style="margin-top:12px;">
+        <div style="padding:6px 20px;font-size:0.65rem;color:#555;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Admin</div>
+        <a href="#" class="sidebar-link active" data-page="dashboard">📊 Dashboard</a>
+        <a href="#" class="sidebar-link" data-page="analytics">📈 Analytics</a>
+        <a href="#" class="sidebar-link" data-page="orders">📦 Orders</a>
+        <a href="#" class="sidebar-link" data-page="products">🏷️ Products</a>
+        <a href="#" class="sidebar-link" data-page="users">👥 Users</a>
+        <a href="#" class="sidebar-link" data-page="shipping">🚚 Shipping</a>
+        <a href="#" class="sidebar-link" data-page="notifications" style="position:relative;">🔔 Notifications <span class="notification-badge" id="notifBadge" style="display:none;">0</span></a>
+        <a href="#" class="sidebar-link" data-page="settings">⚙️ Settings</a>
+        <div style="padding:10px 20px 6px;font-size:0.65rem;color:#555;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-top:6px;border-top:1px solid rgba(255,255,255,0.06);">Intelligence</div>
+        <a href="#" class="sidebar-link" data-page="competitors">🏆 Competitors</a>
+        <a href="#" class="sidebar-link" data-page="spy">🕵️ Social Spy</a>
+        <a href="#" class="sidebar-link" data-page="insights">🧠 Insights</a>
+        <a href="#" class="sidebar-link" data-page="content">📱 Content Studio</a>
+    </nav>
+    <div style="position:absolute;bottom:20px;left:20px;right:20px;">
+        <a href="https://seasaltultimate.netlify.app" target="_blank" class="btn btn-primary" style="display:block;text-align:center;width:100%;">View Store →</a>
+    </div>
+</aside>
+
+<!-- ════════════ MAIN CONTENT ════════════ -->
+<div class="main" id="mainContent">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <button id="toggleSidebar" style="background:none;border:none;font-size:1.5rem;cursor:pointer;display:none;">☰</button>
+            <h1 style="font-size:1.5rem;font-weight:700;" id="pageTitle">Dashboard</h1>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <button class="refresh-btn" id="refreshBtn">🔄 Refresh</button>
+            <span style="font-size:0.8rem;color:#999;" id="lastUpdated"></span>
+        </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+            <div class="card stat-card"><div class="stat-value" style="color:#3b82f6;" id="statSessions">-</div><div class="stat-label">Sessions Today</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#10b981;" id="statPageViews">-</div><div class="stat-label">Page Views</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#f59e0b;" id="statOrders">-</div><div class="stat-label">Orders Today</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#e67e22;" id="statRevenue">-</div><div class="stat-label">Revenue Today</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+            <div class="card stat-card" style="background:#f8fafc;"><div class="stat-value" style="color:#6366f1;font-size:1.5rem;" id="statTotalOrders">-</div><div class="stat-label">Total Orders (All Time)</div></div>
+            <div class="card stat-card" style="background:#f8fafc;"><div class="stat-value" style="color:#6366f1;font-size:1.5rem;" id="statTotalRevenue">-</div><div class="stat-label">Total Revenue (All Time)</div></div>
+            <div class="card stat-card" style="background:#f8fafc;"><div class="stat-value" style="color:#059669;font-size:1.5rem;" id="statPendingOrders">-</div><div class="stat-label">Pending / Processing</div></div>
+            <div class="card stat-card" style="background:#f8fafc;"><div class="stat-value" style="color:#dc2626;font-size:1.5rem;" id="statShippedOrders">-</div><div class="stat-label">Shipped / Delivered</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+            <div class="card"><h3 style="font-weight:600;margin-bottom:8px;">📈 Page Views (Last 7 Days)</h3><div class="bar-chart" id="chartBars"></div><div style="display:flex;gap:6px;margin-top:4px;" id="chartLabels"></div></div>
+            <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">🔥 Conversion Funnel</h3><div class="funnel" id="dashFunnel"></div></div>
+        </div>
+        <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">🕐 Recent Activity</h3><div id="recentActivity" style="max-height:300px;overflow-y:auto;"></div></div>
+    </div>
+
+    <!-- ANALYTICS PAGE -->
+    <div class="page" id="page-analytics">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;">
+            <div class="card stat-card"><div class="stat-value" style="color:#3b82f6;" id="anSessions">-</div><div class="stat-label">Total Sessions</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#10b981;" id="anPageViews">-</div><div class="stat-label">Total Page Views</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#8b5cf6;" id="anAvgTime">-</div><div class="stat-label">Avg Time on Page</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#ef4444;" id="anBounceRate">-</div><div class="stat-label">Bounce Rate</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#e67e22;" id="anConversion">-</div><div class="stat-label">Conversion Rate</div></div>
+        </div>
+        <div class="card" style="margin-bottom:24px;"><h3 style="font-weight:600;margin-bottom:12px;">🔄 Conversion Funnel</h3><div class="funnel" id="analyticsFunnel"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+            <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">📱 Device Breakdown</h3><div id="deviceBreakdown"></div></div>
+            <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">🌐 Traffic Sources</h3><div id="trafficSources"></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+            <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">📄 Top Pages</h3><div id="topPages"></div></div>
+            <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">🏷️ Top Products Viewed</h3><div id="topProductsViewed"></div></div>
+        </div>
+        <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">🕐 Live Activity Feed</h3><div id="activityFeed" style="max-height:400px;overflow-y:auto;"></div></div>
+    </div>
+
+    <!-- USERS PAGE -->
+    <div class="page" id="page-users">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
+            <div class="card stat-card"><div class="stat-value" style="color:#3b82f6;" id="usersTotalUsers">-</div><div class="stat-label">Total Users</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#10b981;" id="usersLoggedIn">-</div><div class="stat-label">Logged In Users</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#f59e0b;" id="usersGuests">-</div><div class="stat-label">Guest Sessions</div></div>
+            <div class="card stat-card"><div class="stat-value" style="color:#8b5cf6;" id="usersActiveToday">-</div><div class="stat-label">Active Today</div></div>
+        </div>
+        <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">📱 Registered Users</h3>
+            <table><thead><tr><th>User</th><th>Country</th><th>Visits</th><th>Cart</th><th>Purchases</th><th>Wallet</th><th>Last Active</th><th>Action</th></tr></thead><tbody id="usersTable"></tbody></table>
+        </div>
+    </div>
+
+    <!-- NOTIFICATIONS PAGE -->
+    <div class="page" id="page-notifications">
+        <div style="display:flex;gap:16px;margin-bottom:24px;">
+            <div class="card" style="flex:1;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h3 style="font-weight:600;">🔔 Admin Alerts</h3>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-sm" style="background:#fef3c7;" id="testNotifBtn">🧪 Test Alert</button>
+                        <button class="btn btn-sm" style="background:#eee;" id="markAllReadBtn">✓ Mark All Read</button>
+                    </div>
+                </div>
+                <div id="notificationsList" style="max-height:500px;overflow-y:auto;"></div>
+            </div>
+        </div>
+        <div class="card" style="max-width:400px;">
+            <h4 style="font-weight:600;margin-bottom:12px;">ℹ️ How Alerts Work</h4>
+            <ul style="font-size:0.9rem;color:#666;line-height:1.8;padding-left:20px;">
+                <li>🔥 <strong>High Activity</strong> — User visits 4+ times without buying</li>
+                <li>🔄 <strong>Repeat Visitor</strong> — User returns multiple times</li>
+                <li>Alerts popup automatically every 30 seconds</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- PRODUCTS PAGE (DEEP) -->
+    <div class="page" id="page-products">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px;" id="prodStats"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="prodSearchInput" placeholder="🔍 Search products..." style="padding:8px 14px;border:2px solid #eee;border-radius:8px;width:200px;font-size:0.85rem;" oninput="prodSearch=this.value;renderProducts()">
+                <div style="display:flex;border:2px solid #eee;border-radius:8px;overflow:hidden;">
+                    <button class="btn btn-sm" id="viewGrid" onclick="prodViewMode='grid';renderProducts()" style="border-radius:0;">▦ Grid</button>
+                    <button class="btn btn-sm" id="viewTable" onclick="prodViewMode='table';renderProducts()" style="border-radius:0;">≡ Table</button>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <span style="font-size:0.85rem;color:#666;" id="productCount">Loading...</span>
+                <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
+            </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;" id="prodPills"></div>
+        <div id="productsContent"></div>
+    </div>
+
+    <!-- ══════ ORDERS PAGE (UPGRADED with Tracking + WhatsApp) ══════ -->
+    <div class="page" id="page-orders">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-sm" style="background:#eee;" data-order-filter="all">All</button>
+                <button class="btn btn-sm" style="background:#fff3cd;" data-order-filter="pending">Pending</button>
+                <button class="btn btn-sm" style="background:#cce5ff;" data-order-filter="confirmed">Confirmed</button>
+                <button class="btn btn-sm" style="background:#d4edda;" data-order-filter="shipped">Shipped</button>
+                <button class="btn btn-sm" style="background:#d4edda;" data-order-filter="delivered">Delivered</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <div id="smsStatusIndicator" style="display:flex;align-items:center;gap:4px;font-size:0.75rem;padding:4px 10px;border-radius:8px;background:#f0f0f0;color:#999;">
+                    ⏳ SMS...
+                </div>
+                <div id="waStatusIndicator" style="display:flex;align-items:center;gap:4px;font-size:0.75rem;padding:4px 10px;border-radius:8px;background:#f0f0f0;color:#999;">
+                    ⏳ WA...
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <table>
+                <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Tracking</th><th>Notified</th><th>Actions</th></tr></thead>
+                <tbody id="ordersTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SHIPPING PAGE -->
+    <div class="page" id="page-shipping">
+        <div class="card" style="margin-bottom:24px;"><h3 style="font-weight:600;margin-bottom:12px;">📦 Pending Shipments</h3>
+            <table><thead><tr><th>Order</th><th>Customer</th><th>Address</th><th>Partner</th><th>Tracking</th><th>Action</th></tr></thead><tbody id="shippingTable"></tbody></table>
+        </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+                <div class="card"><h3 style="font-weight:600;margin-bottom:16px;">⚙️ Store Settings</h3>
+                    <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Store Name</label>
+                    <input type="text" id="settingStoreName" value="SeaSalt Pickles" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+                    <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Default Currency</label>
+                    <select id="settingCurrency" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:16px;">
+                        <option value="INR">₹ INR</option><option value="USD">$ USD</option><option value="GBP">£ GBP</option><option value="AED">د.إ AED</option>
+                    </select>
+                    <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+                </div>
+                <div class="card" style="margin-top:16px;"><h3 style="font-weight:600;margin-bottom:16px;">🔐 Change Password</h3>
+                    <input type="password" id="newPassword" placeholder="New password" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+                    <button class="btn btn-primary" id="changePassBtn">Update Password</button>
+                </div>
+            </div>
+            <div>
+                <div class="card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h3 style="font-weight:600;">🚚 Delivery Charges</h3>
+                        <button class="btn btn-sm btn-primary" id="addDeliveryChargeBtn">+ Add</button>
+                    </div>
+                    <table style="font-size:0.85rem;"><thead><tr><th>Country</th><th>Region</th><th>Free Above</th><th>Flat Fee</th><th>Actions</th></tr></thead><tbody id="deliveryChargesTable"></tbody></table>
+                </div>
+                <div class="card" style="margin-top:16px;"><h3 style="font-weight:600;margin-bottom:12px;">🌍 Active Countries</h3>
+                    <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">Countries shown in customer sign-up</p>
+                    <div id="countriesList" style="max-height:200px;overflow-y:auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ COMPETITORS PAGE ═══════ -->
+    <div class="page" id="page-competitors">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px;" id="compCards"></div>
+        <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">💬 Recent Reviews</h3>
+            <table><thead><tr><th>Competitor</th><th>Rating</th><th>Review</th><th>Time</th></tr></thead><tbody id="compReviews"></tbody></table>
+        </div>
+    </div>
+
+    <!-- ═══════ SOCIAL SPY PAGE ═══════ -->
+    <div class="page" id="page-spy">
+        <div class="card" style="margin-bottom:24px;">
+            <h3 style="font-weight:600;margin-bottom:12px;">🔍 YouTube Deep Profiler</h3>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;align-items:end;">
+                <div><label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">YouTube Video URL</label><input type="text" id="spy-url" placeholder="https://youtube.com/watch?v=..." style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;"></div>
+                <button class="btn btn-primary" onclick="runSpy()" style="height:44px;">🕵️ Deep Profile</button>
+            </div>
+        </div>
+        <div id="spy-results"></div>
+    </div>
+
+    <!-- ═══════ INSIGHTS PAGE ═══════ -->
+    <div class="page" id="page-insights">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="insightsGrid"></div>
+    </div>
+
+    <!-- ═══════ CONTENT STUDIO PAGE ═══════ -->
+    <div class="page" id="page-content">
+        <div class="card" style="margin-bottom:16px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div><label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Product</label><select id="cs-product" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;"></select></div>
+                <div><label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Platform</label>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;" id="cs-platforms"></div>
+                </div>
+            </div>
+        </div>
+        <div class="card"><textarea id="cs-output" rows="8" style="width:100%;padding:12px;border:2px solid #eee;border-radius:8px;font-size:0.9rem;line-height:1.6;resize:vertical;"></textarea>
+            <div style="margin-top:8px;"><button class="btn btn-primary btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('cs-output').value);this.textContent='✅ Copied';setTimeout(()=>this.textContent='📋 Copy',2000)">📋 Copy</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- DELIVERY CHARGE MODAL -->
+<div class="modal-overlay" id="deliveryModal">
+    <div class="modal-box" style="max-width:400px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="font-weight:700;" id="deliveryModalTitle">Add Delivery Charge</h3>
+            <button style="background:none;border:none;font-size:1.5rem;cursor:pointer;" onclick="document.getElementById('deliveryModal').classList.remove('show')">&times;</button>
+        </div>
+        <input type="hidden" id="dc-id">
+        <label style="font-size:0.8rem;font-weight:600;">Country</label>
+        <select id="dc-country" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;"></select>
+        <label style="font-size:0.8rem;font-weight:600;">Region (optional)</label>
+        <input type="text" id="dc-region" placeholder="e.g., Telangana" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+        <label style="font-size:0.8rem;font-weight:600;">Free Delivery Above (₹)</label>
+        <input type="number" id="dc-minFree" value="500" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+        <label style="font-size:0.8rem;font-weight:600;">Flat Delivery Fee (₹)</label>
+        <input type="number" id="dc-flatFee" value="50" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:12px;">
+        <label style="font-size:0.8rem;font-weight:600;">Notes</label>
+        <input type="text" id="dc-notes" placeholder="e.g., Local delivery" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;margin-bottom:16px;">
+        <button class="btn btn-primary" style="width:100%;" id="saveDeliveryChargeBtn">Save</button>
+    </div>
+</div>
+
+<!-- DEEP PRODUCT EDITOR MODAL -->
+<div class="modal-overlay" id="productModal">
+    <div class="modal-box" style="max-width:780px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="font-weight:700;" id="productModalTitle">Add Product</h3>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <span id="peSavedBadge" class="badge badge-green" style="display:none;">✅ Saved</span>
+                <button style="background:none;border:none;font-size:1.5rem;cursor:pointer;" id="closeProductModal">&times;</button>
+            </div>
+        </div>
+        <div id="peTabBar" style="display:flex;border-bottom:2px solid #eee;margin-bottom:16px;gap:2px;overflow-x:auto;"></div>
+        <div id="peTabContent" style="max-height:55vh;overflow-y:auto;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:12px;border-top:1px solid #eee;">
+            <div style="display:flex;gap:6px;">
+                <button class="btn btn-sm" style="background:#eee;" onclick="pePreview()">👁 Preview</button>
+                <button class="btn btn-sm" style="background:#eee;" id="peDupBtn" onclick="peDuplicate()" style="display:none;">📋 Duplicate</button>
+            </div>
+            <div style="display:flex;gap:6px;">
+                <button class="btn btn-sm" style="background:#fee;color:#c00;" id="peDelBtn" onclick="peDelete()">🗑 Delete</button>
+                <button class="btn btn-primary" id="saveProductBtn">💾 Save Product</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Product Preview Modal -->
+<div class="modal-overlay" id="previewModal">
+    <div class="modal-box" style="max-width:380px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3 style="font-weight:700;">📱 Customer Preview</h3><button style="background:none;border:none;font-size:1.5rem;cursor:pointer;" onclick="document.getElementById('previewModal').classList.remove('show')">&times;</button></div>
+        <div id="previewBody"></div>
+    </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-overlay" id="orderModal">
+    <div class="modal-box" id="orderModalContent"></div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    const SUPA_URL = 'https://yosjbsncvghpscsrvxds.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlvc2pic25jdmdocHNjc3J2eGRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMjc3NTgsImV4cCI6MjA4NTgwMzc1OH0.PNEbeofoyT7KdkzepRfqg-zqyBiGAat5ElCMiyQ4UAs';
+    const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    // AUTH
+    const ADMIN_USER = 'admin';
+    let ADMIN_PASS = localStorage.getItem('seasalt_admin_pass') || 'seasalt2024';
+
+    function checkAuth() {
+        if (sessionStorage.getItem('seasalt_admin_auth') === 'true') {
+            document.getElementById('loginOverlay').style.display = 'none';
+            loadAllData();
+        }
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', function() {
+        const u = document.getElementById('loginUser').value.trim();
+        const p = document.getElementById('loginPass').value.trim();
+        if (u === ADMIN_USER && p === ADMIN_PASS) {
+            sessionStorage.setItem('seasalt_admin_auth', 'true');
+            document.getElementById('loginOverlay').style.display = 'none';
+            loadAllData();
+        } else {
+            document.getElementById('loginError').style.display = 'block';
+        }
+    });
+    document.getElementById('loginPass').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
+
+    // NAVIGATION
+    const pages = ['dashboard','analytics','users','notifications','products','orders','shipping','settings','competitors','spy','insights','content'];
+    const pageNames = {dashboard:'Dashboard',analytics:'Analytics',users:'Users',notifications:'Notifications',products:'Products',orders:'Orders',shipping:'Shipping',settings:'Settings',competitors:'Competitors',spy:'Social Spy',insights:'Insights',content:'Content Studio'};
+
+    document.querySelectorAll('.sidebar-link').forEach(function(link) {
+        link.addEventListener('click', function(e) { e.preventDefault(); showPage(this.getAttribute('data-page')); });
+    });
+    function showPage(page) {
+        pages.forEach(function(p) { var el = document.getElementById('page-'+p); if(el) el.classList.toggle('active', p===page); });
+        document.querySelectorAll('.sidebar-link').forEach(function(l) { l.classList.toggle('active', l.getAttribute('data-page')===page); });
+        document.getElementById('pageTitle').textContent = pageNames[page] || page;
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', loadAllData);
+    var toggleBtn = document.getElementById('toggleSidebar');
+    if (window.innerWidth <= 768) toggleBtn.style.display = 'block';
+    toggleBtn.addEventListener('click', function() { document.getElementById('sidebar').classList.toggle('open'); });
+
+    // DATA LOADING
+    async function loadAllData() {
+        document.getElementById('lastUpdated').textContent = 'Loading...';
+        try { await Promise.all([loadDashboard(), loadAnalytics(), loadUsers(), loadNotifications(), loadProducts(), loadOrders()]); loadIntelligence(); } catch(err) { console.error('Load error:', err); }
+        document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+    }
+
+    // ══════════ DASHBOARD ══════════
+    async function loadDashboard() {
+        var today = new Date().toISOString().split('T')[0];
+        var weekAgo = new Date(Date.now()-7*86400000).toISOString();
+        var {data:todayEvents} = await db.from('analytics_events').select('*').gte('created_at', today+'T00:00:00Z');
+        var events = todayEvents || [];
+        var sessions = new Set(events.map(function(e){return e.session_id})).size;
+        var views = events.filter(function(e){return e.event_type==='page_view'}).length;
+
+        // Count orders + revenue from BOTH analytics_events AND orders table
+        var purchaseEvents = events.filter(function(e){return e.event_type==='purchase'});
+        var analyticsRevenue = purchaseEvents.reduce(function(sum,e){try{var d=JSON.parse(e.data||'{}');return sum+(d.total||0)}catch(x){return sum}},0);
+
+        // Also fetch real orders from orders table for today
+        var {data:todayOrders} = await db.from('orders').select('id,total,status,created_at').gte('created_at', today+'T00:00:00Z');
+        todayOrders = todayOrders || [];
+        var realOrderCount = todayOrders.length;
+        var realRevenue = todayOrders.reduce(function(sum,o){return sum + (parseFloat(o.total) || 0)},0);
+
+        // Use the HIGHER of the two sources (avoids showing 0 when orders exist)
+        var orderCount = Math.max(purchaseEvents.length, realOrderCount);
+        var revenue = Math.max(analyticsRevenue, realRevenue);
+
+        document.getElementById('statSessions').textContent=sessions;
+        document.getElementById('statPageViews').textContent=views;
+        document.getElementById('statOrders').textContent=orderCount;
+        document.getElementById('statRevenue').textContent='₹'+revenue.toLocaleString();
+
+        // All Time stats from orders table
+        var {data:allTimeOrders} = await db.from('orders').select('id,total,status');
+        allTimeOrders = allTimeOrders || [];
+        var totalRevAll = allTimeOrders.reduce(function(sum,o){return sum + (parseFloat(o.total) || 0)},0);
+        var pendingCount = allTimeOrders.filter(function(o){return o.status==='pending'||o.status==='confirmed'||o.status==='processing'}).length;
+        var shippedCount = allTimeOrders.filter(function(o){return o.status==='shipped'||o.status==='dispatched'||o.status==='delivered'}).length;
+        document.getElementById('statTotalOrders').textContent = allTimeOrders.length;
+        document.getElementById('statTotalRevenue').textContent = '₹' + totalRevAll.toLocaleString();
+        document.getElementById('statPendingOrders').textContent = pendingCount;
+        document.getElementById('statShippedOrders').textContent = shippedCount;
+
+        var {data:weekEvents} = await db.from('analytics_events').select('created_at').eq('event_type','page_view').gte('created_at',weekAgo);
+        renderWeekChart(weekEvents||[]);
+        renderFunnel('dashFunnel',events);
+        renderRecentActivity(events.slice(-20).reverse());
+    }
+
+    function renderWeekChart(events){var days={};var labels=[];for(var i=6;i>=0;i--){var d=new Date(Date.now()-i*86400000);var key=d.toISOString().split('T')[0];days[key]=0;labels.push({key:key,label:d.toLocaleDateString('en',{weekday:'short'})});}events.forEach(function(e){var k=e.created_at.split('T')[0];if(days[k]!==undefined)days[k]++});var mx=Math.max.apply(null,Object.values(days).concat([1]));var bH='',lH='';labels.forEach(function(l){var h=Math.max(4,(days[l.key]/mx)*100);bH+='<div class="bar" style="height:'+h+'%" title="'+days[l.key]+' views"></div>';lH+='<div class="bar-label" style="flex:1;">'+l.label+'</div>';});document.getElementById('chartBars').innerHTML=bH;document.getElementById('chartLabels').innerHTML=lH;}
+
+    function renderFunnel(cid,events){var v=events.filter(function(e){return e.event_type==='page_view'}).length;var c=events.filter(function(e){return e.event_type==='add_to_cart'}).length;var ch=events.filter(function(e){return e.event_type==='checkout_start'}).length;var p=events.filter(function(e){return e.event_type==='purchase'}).length;var steps=[{label:'Views',value:v,color:'#dbeafe'},{label:'Cart',value:c,color:'#fef3c7'},{label:'Checkout',value:ch,color:'#ede9fe'},{label:'Purchase',value:p,color:'#d1fae5'}];var html='';steps.forEach(function(s,i){var pct=i>0&&steps[i-1].value>0?Math.round((s.value/steps[i-1].value)*100):'';html+='<div class="funnel-step"><div class="funnel-circle" style="background:'+s.color+';">'+s.value+'</div><div class="funnel-label">'+s.label+'</div>';if(pct!=='')html+='<div class="funnel-pct">'+pct+'%</div>';html+='</div>';if(i<steps.length-1)html+='<div class="funnel-arrow">→</div>';});document.getElementById(cid).innerHTML=html;}
+
+    function renderRecentActivity(events){var el=document.getElementById('recentActivity');if(!events.length){el.innerHTML='<p style="color:#999;text-align:center;padding:20px;">No activity yet.</p>';return;}var dotMap={page_view:'dot-blue',product_view:'dot-purple',add_to_cart:'dot-yellow',checkout_start:'dot-yellow',purchase:'dot-green',search:'dot-blue'};var labelMap={page_view:'Viewed page',product_view:'Viewed product',add_to_cart:'Added to cart',checkout_start:'Started checkout',purchase:'Purchased',search:'Searched',page_exit:'Left page',spin_wheel:'Spun wheel'};var html='';events.forEach(function(e){var time=new Date(e.created_at).toLocaleTimeString();var label=labelMap[e.event_type]||e.event_type;var detail=e.page||'';if(e.product_name)detail=e.product_name;try{var d=JSON.parse(e.data||'{}');if(d.query)detail='"'+d.query+'"'}catch(x){}var ph=e.user_phone?'<span style="background:#e8f5e9;color:#2e7d32;padding:2px 6px;border-radius:4px;font-size:0.7rem;margin-left:6px;">📱 '+e.user_phone+'</span>':'<span style="background:#f5f5f5;color:#999;padding:2px 6px;border-radius:4px;font-size:0.7rem;margin-left:6px;">Guest</span>';html+='<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span class="activity-dot '+(dotMap[e.event_type]||'dot-gray')+'"></span><span style="font-size:0.85rem;">'+label+(detail?' — <strong>'+detail+'</strong>':'')+' </span>'+ph+'<span style="margin-left:auto;font-size:0.75rem;color:#999;">'+time+'</span></div>';});el.innerHTML=html;}
+
+    // ══════════ ANALYTICS ══════════
+    async function loadAnalytics(){var ago=new Date(Date.now()-30*86400000).toISOString();var{data:events}=await db.from('analytics_events').select('*').gte('created_at',ago).order('created_at',{ascending:false}).limit(5000);events=events||[];var sessions=new Set(events.map(function(e){return e.session_id})).size;var pv=events.filter(function(e){return e.event_type==='page_view'}).length;var exits=events.filter(function(e){return e.event_type==='page_exit'});var avgT=0;if(exits.length>0){avgT=Math.round(exits.reduce(function(s,e){return s+(e.time_on_page||0)},0)/exits.length)}var sv={};events.filter(function(e){return e.event_type==='page_view'}).forEach(function(e){sv[e.session_id]=(sv[e.session_id]||0)+1});var bounces=Object.values(sv).filter(function(v){return v===1}).length;var br=sessions>0?Math.round((bounces/sessions)*100):0;var purchases=events.filter(function(e){return e.event_type==='purchase'}).length;var cr=sessions>0?((purchases/sessions)*100).toFixed(1):'0';document.getElementById('anSessions').textContent=sessions;document.getElementById('anPageViews').textContent=pv;document.getElementById('anAvgTime').textContent=avgT+'s';document.getElementById('anBounceRate').textContent=br+'%';document.getElementById('anConversion').textContent=cr+'%';renderFunnel('analyticsFunnel',events);var devices={};events.forEach(function(e){var d=e.device_type||'unknown';devices[d]=(devices[d]||0)+1});renderBreakdown('deviceBreakdown',devices,{mobile:'#3b82f6',desktop:'#10b981',tablet:'#f59e0b',unknown:'#ccc'});var sources={};events.filter(function(e){return e.event_type==='page_view'}).forEach(function(e){var r=e.referrer||'direct';sources[r]=(sources[r]||0)+1});renderBreakdown('trafficSources',sources,{direct:'#3b82f6',google:'#ea4335',facebook:'#1877f2',instagram:'#e4405f',whatsapp:'#25d366'});var pc={};events.filter(function(e){return e.event_type==='page_view'}).forEach(function(e){var p=e.page||'unknown';pc[p]=(pc[p]||0)+1});renderTopList('topPages',pc);var prc={};events.filter(function(e){return e.event_type==='product_view'&&e.product_name}).forEach(function(e){prc[e.product_name]=(prc[e.product_name]||0)+1});renderTopList('topProductsViewed',prc);renderRecentActivity(events.slice(0,50));document.getElementById('activityFeed').innerHTML=document.getElementById('recentActivity').innerHTML;}
+
+    function renderBreakdown(cid,data,colors){var total=Object.values(data).reduce(function(a,b){return a+b},0);if(total===0){document.getElementById(cid).innerHTML='<p style="color:#999;">No data yet</p>';return;}var sorted=Object.entries(data).sort(function(a,b){return b[1]-a[1]});var html='';sorted.forEach(function(item){var pct=Math.round((item[1]/total)*100);var color=(colors&&colors[item[0]])||'#999';html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;"><div style="width:12px;height:12px;border-radius:3px;background:'+color+';"></div><span style="font-size:0.85rem;flex:1;">'+item[0]+'</span><span style="font-size:0.85rem;font-weight:600;">'+item[1]+' ('+pct+'%)</span></div>';});document.getElementById(cid).innerHTML=html;}
+    function renderTopList(cid,data){var sorted=Object.entries(data).sort(function(a,b){return b[1]-a[1]}).slice(0,10);if(!sorted.length){document.getElementById(cid).innerHTML='<p style="color:#999;">No data yet</p>';return;}var mx=sorted[0][1];var html='';sorted.forEach(function(item,i){var pct=Math.round((item[1]/mx)*100);html+='<div style="padding:6px 0;"><div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:3px;"><span>'+(i+1)+'. '+item[0]+'</span><span style="font-weight:600;">'+item[1]+'</span></div><div style="height:6px;background:#f0f0f0;border-radius:3px;"><div style="height:100%;width:'+pct+'%;background:#e67e22;border-radius:3px;"></div></div></div>';});document.getElementById(cid).innerHTML=html;}
+
+    // ══════════ USERS ══════════
+    async function loadUsers(){var ago=new Date(Date.now()-30*86400000).toISOString();var today=new Date().toISOString().split('T')[0];var{data:usersData}=await db.from('users').select('*').order('last_seen',{ascending:false});usersData=usersData||[];var{data:events}=await db.from('analytics_events').select('*').gte('created_at',ago).order('created_at',{ascending:false});events=events||[];var allSessions=new Set(events.map(function(e){return e.session_id})).size;var loggedInUsers=usersData.length;var guestSessions=new Set(events.filter(function(e){return!e.user_phone}).map(function(e){return e.session_id})).size;var todayEvents=events.filter(function(e){return e.created_at&&e.created_at.startsWith(today)});var activeToday=new Set(todayEvents.map(function(e){return e.user_phone||e.session_id})).size;document.getElementById('usersTotalUsers').textContent=allSessions;document.getElementById('usersLoggedIn').textContent=loggedInUsers;document.getElementById('usersGuests').textContent=guestSessions;document.getElementById('usersActiveToday').textContent=activeToday;var activityMap={};events.forEach(function(e){if(!e.user_phone)return;if(!activityMap[e.user_phone])activityMap[e.user_phone]={pageViews:0,cartAdds:0,purchases:0};if(e.event_type==='page_view')activityMap[e.user_phone].pageViews++;if(e.event_type==='add_to_cart')activityMap[e.user_phone].cartAdds++;if(e.event_type==='purchase')activityMap[e.user_phone].purchases++;});var html='';if(usersData.length===0){html='<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">No registered users yet.</td></tr>';}else{usersData.forEach(function(u){var a=activityMap[u.phone]||{pageViews:0,cartAdds:0,purchases:0};var la=u.last_seen?new Date(u.last_seen).toLocaleString():'-';var wb=u.wallet_balance>0?'<span class="badge badge-green">₹'+u.wallet_balance+'</span>':'₹0';var cf=getCountryFlag(u.selected_country);html+='<tr><td><div><strong>'+( u.name||'Unknown')+'</strong></div><div style="font-size:0.8rem;color:#666;">📱 '+u.phone+'</div></td><td>'+cf+' '+(u.selected_country||'-')+'</td><td>'+(u.total_visits||a.pageViews||0)+'</td><td>'+a.cartAdds+'</td><td>'+(u.total_purchases||0)+'</td><td>'+wb+'</td><td style="font-size:0.8rem;">'+la+'</td><td><button class="btn btn-sm btn-green" onclick="openWalletModal(\''+u.phone+'\','+(u.wallet_balance||0)+',\''+(u.name||'').replace(/'/g,"\\'")+ '\')">💰</button></td></tr>';});}document.getElementById('usersTable').innerHTML=html;}
+    function getCountryFlag(c){var f={'India':'🇮🇳','United States':'🇺🇸','United Kingdom':'🇬🇧','United Arab Emirates':'🇦🇪','Singapore':'🇸🇬','Australia':'🇦🇺','Canada':'🇨🇦','Germany':'🇩🇪','France':'🇫🇷','Saudi Arabia':'🇸🇦','Qatar':'🇶🇦','Kuwait':'🇰🇼','Oman':'🇴🇲','Malaysia':'🇲🇾','New Zealand':'🇳🇿'};return f[c]||'🌍';}
+    window.showUserDetail=function(phone){showPage('users');};
+    window.openWalletModal=async function(phone,balance,name){
+        var amt=prompt('Add wallet credit for '+(name||phone)+' (current: ₹'+(balance||0)+'):');
+        if(!amt||isNaN(amt))return;var n=parseFloat(amt);var nb=(parseFloat(balance)||0)+n;
+        await db.from('users').update({wallet_balance:nb}).eq('phone',phone);
+        showToast('💰 ₹'+n+' added! New balance: ₹'+nb,'success');loadUsers();
+    };
+
+    // ══════════ PRODUCTS (DEEP MANAGEMENT) ══════════
+    let allProducts = [];
+    let prodViewMode = 'grid';
+    let prodFilter = 'all';
+    let prodSearch = '';
+    let peTab = 'basic';
+    let peState = {};
+    let peIsEdit = false;
+
+    async function loadProducts(){
+        var{data:products,error}=await db.from('products').select('*').order('name');
+        if(error){console.error('Products error:',error);return;}
+        allProducts=products||[];
+        renderProducts();
+    }
+
+    function getVariants(p){try{return typeof p.variants==='string'?JSON.parse(p.variants):(p.variants||[]);}catch(e){return[];}}
+    function getPrice(p){var v=getVariants(p);return v.length>0?v[0].price:parseFloat(p.price||0);}
+    function getImg(p){return p.image&&p.image.startsWith('http')?p.image:'';}
+    function getCats(){var s=new Set();allProducts.forEach(function(p){if(p.category)s.add(p.category);});return Array.from(s).sort();}
+    function slugify(n){return(n||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+
+    function renderProducts(){
+        var filtered=allProducts.slice();
+        if(prodFilter==='_active')filtered=filtered.filter(p=>p.is_active!==false);
+        else if(prodFilter==='_inactive')filtered=filtered.filter(p=>p.is_active===false);
+        else if(prodFilter==='_featured')filtered=filtered.filter(p=>p.is_featured);
+        else if(prodFilter==='_noimg')filtered=filtered.filter(p=>!getImg(p));
+        else if(prodFilter!=='all')filtered=filtered.filter(p=>p.category===prodFilter);
+        if(prodSearch){var q=prodSearch.toLowerCase();filtered=filtered.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.category||'').toLowerCase().includes(q)||(p.description||'').toLowerCase().includes(q));}
+
+        document.getElementById('productCount').textContent=filtered.length+' of '+allProducts.length+' products';
+        var act=allProducts.filter(p=>p.is_active!==false).length,inact=allProducts.filter(p=>p.is_active===false).length;
+        var feat=allProducts.filter(p=>p.is_featured).length,noimg=allProducts.filter(p=>!getImg(p)).length;
+
+        // Stats
+        document.getElementById('prodStats').innerHTML=
+            '<div class="card stat-card"><div class="stat-value" style="color:#3b82f6;">'+allProducts.length+'</div><div class="stat-label">Total Products</div></div>'+
+            '<div class="card stat-card"><div class="stat-value" style="color:#10b981;">'+act+'</div><div class="stat-label">Active</div></div>'+
+            '<div class="card stat-card"><div class="stat-value" style="color:#ef4444;">'+inact+'</div><div class="stat-label">Inactive</div></div>'+
+            '<div class="card stat-card"><div class="stat-value" style="color:#f59e0b;">'+feat+'</div><div class="stat-label">Featured</div></div>'+
+            '<div class="card stat-card"><div class="stat-value" style="color:'+(noimg?'#ef4444':'#10b981')+';">'+noimg+'</div><div class="stat-label">No Image</div></div>';
+
+        // View toggle
+        document.getElementById('viewGrid').style.background=prodViewMode==='grid'?'#e67e22':'#eee';
+        document.getElementById('viewGrid').style.color=prodViewMode==='grid'?'#fff':'#333';
+        document.getElementById('viewTable').style.background=prodViewMode==='table'?'#e67e22':'#eee';
+        document.getElementById('viewTable').style.color=prodViewMode==='table'?'#fff':'#333';
+
+        // Pills
+        var cats=getCats(),ph='';
+        ph+='<button class="ppill'+(prodFilter==='all'?' active':'')+'" onclick="prodFilter=\'all\';renderProducts()">All ('+allProducts.length+')</button>';
+        ph+='<button class="ppill'+(prodFilter==='_active'?' active':'')+'" onclick="prodFilter=\'_active\';renderProducts()">✅ Active ('+act+')</button>';
+        ph+='<button class="ppill'+(prodFilter==='_inactive'?' active':'')+'" onclick="prodFilter=\'_inactive\';renderProducts()">❌ Inactive ('+inact+')</button>';
+        if(feat)ph+='<button class="ppill'+(prodFilter==='_featured'?' active':'')+'" onclick="prodFilter=\'_featured\';renderProducts()">⭐ Featured</button>';
+        if(noimg)ph+='<button class="ppill'+(prodFilter==='_noimg'?' active':'')+'" onclick="prodFilter=\'_noimg\';renderProducts()">📷 No Image ('+noimg+')</button>';
+        cats.forEach(c=>{var n=allProducts.filter(p=>p.category===c).length;ph+='<button class="ppill'+(prodFilter===c?' active':'')+'" onclick="prodFilter=\''+c+'\';renderProducts()">'+c+' ('+n+')</button>';});
+        document.getElementById('prodPills').innerHTML=ph;
+
+        if(!filtered.length){document.getElementById('productsContent').innerHTML='<div class="card" style="text-align:center;padding:40px;"><div style="font-size:2.5rem;opacity:0.2;margin-bottom:8px;">🫙</div><div style="color:#999;">No products found</div></div>';return;}
+
+        // Grid view
+        if(prodViewMode==='grid'){
+            var h='<div class="prod-grid">';
+            filtered.forEach(p=>{
+                var img=getImg(p),pr=getPrice(p),vs=getVariants(p),inact=p.is_active===false;
+                h+='<div class="prod-card" onclick="peOpen(\''+p.id+'\')">';
+                if(inact)h+='<div class="pinactive"><span>INACTIVE</span></div>';
+                if(p.is_featured)h+='<div class="pbadge"><span class="badge badge-yellow">⭐ Featured</span></div>';
+                else if(p.badge)h+='<div class="pbadge"><span class="badge badge-blue">'+p.badge+'</span></div>';
+                h+='<div class="pi">';
+                if(img)h+='<img src="'+img+'" onerror="this.outerHTML=\'<div style=font-size:2.5rem;opacity:0.15>🫙</div>\'" loading="lazy">';
+                else h+='<div style="font-size:2.5rem;opacity:0.15">🫙</div>';
+                h+='</div><div class="pb"><div class="pcat">'+((p.category||'—').toUpperCase())+'</div><div class="pnm">'+(p.name||'')+'</div>';
+                if(p.description)h+='<div class="pdesc">'+(p.description||'')+'</div>';
+                h+='<div class="pfoot"><div class="pprice">'+(pr>0?'₹'+pr:'<span style="color:#e74c3c">₹0</span>')+'</div>';
+                h+='<div class="pvars">'+(vs.length?vs.length+' variant'+(vs.length>1?'s':''):'—')+'</div></div></div></div>';
+            });
+            h+='</div>';
+            document.getElementById('productsContent').innerHTML=h;
+        }else{
+            // Table view
+            var h='<div class="card"><table><thead><tr><th>#</th><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Variants</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+            filtered.forEach((p,i)=>{
+                var img=getImg(p),pr=getPrice(p),vs=getVariants(p);
+                h+='<tr style="cursor:pointer" onclick="peOpen(\''+p.id+'\')">';
+                h+='<td style="color:#999;font-size:0.8rem;">'+(i+1)+'</td>';
+                h+='<td>'+(img?'<img src="'+img+'" style="width:40px;height:40px;border-radius:8px;object-fit:cover" onerror="this.outerHTML=\'<div class=product-img-fallback>🫙</div>\'">':'<div class="product-img-fallback">🫙</div>')+'</td>';
+                h+='<td><strong>'+p.name+'</strong>'+(p.description?'<br><span style="font-size:0.75rem;color:#999;">'+p.description.substring(0,50)+'</span>':'')+'</td>';
+                h+='<td><span class="badge badge-blue">'+((p.category||'—'))+'</span></td>';
+                h+='<td style="font-weight:700;color:'+(pr>0?'#10b981':'#e74c3c')+';">₹'+pr+'</td>';
+                h+='<td style="font-size:0.8rem;color:#666;">'+(vs.length||0)+'</td>';
+                h+='<td>'+(p.is_active!==false?'<span class="badge badge-green">Active</span>':'<span class="badge badge-red">Off</span>')+'</td>';
+                h+='<td onclick="event.stopPropagation()"><button class="btn btn-sm btn-primary" onclick="peOpen(\''+p.id+'\')">✏️</button></td></tr>';
+            });
+            h+='</tbody></table></div>';
+            document.getElementById('productsContent').innerHTML=h;
+        }
+    }
+
+    // ── PRODUCT EDITOR ──
+    function peOpen(id){
+        peTab='basic';
+        if(id){
+            var p=allProducts.find(x=>x.id===id);if(!p)return;peIsEdit=true;
+            var vs=getVariants(p);
+            peState={id:p.id,name:p.name||'',slug:slugify(p.name),description:p.description||'',short_description:p.short_description||'',
+                category:p.category||'',image:p.image||'',images:p.images||(p.image?[p.image]:[]),badge:p.badge||'',
+                variants:vs,is_active:p.is_active!==false,is_featured:!!p.is_featured,is_bestseller:!!p.is_bestseller,is_new:!!p.is_new,
+                ingredients:p.ingredients||[],oil_type:p.oil_type||'',spice_level:p.spice_level||'',shelf_life:p.shelf_life||'',
+                storage_instructions:p.storage_instructions||'',dietary_info:p.dietary_info||'',weight_unit:p.weight_unit||'g',
+                seo_title:p.seo_title||'',seo_description:p.seo_description||'',tags:p.tags||[],
+                calories:p.calories||'',protein:p.protein||'',fat:p.fat||'',carbs:p.carbs||'',sodium:p.sodium||''};
+            document.getElementById('productModalTitle').textContent='✏️ Edit: '+p.name;
+            document.getElementById('peDupBtn').style.display='inline-flex';
+            document.getElementById('peDelBtn').style.display='inline-flex';
+        }else{
+            peIsEdit=false;
+            peState={id:null,name:'',slug:'',description:'',short_description:'',category:'',image:'',images:[],badge:'',
+                variants:[],is_active:true,is_featured:false,is_bestseller:false,is_new:false,
+                ingredients:[],oil_type:'',spice_level:'',shelf_life:'',storage_instructions:'',dietary_info:'',weight_unit:'g',
+                seo_title:'',seo_description:'',tags:[],calories:'',protein:'',fat:'',carbs:'',sodium:''};
+            document.getElementById('productModalTitle').textContent='🏷️ Add New Product';
+            document.getElementById('peDupBtn').style.display='none';
+            document.getElementById('peDelBtn').style.display='none';
+        }
+        document.getElementById('peSavedBadge').style.display='none';
+        peRender();document.getElementById('productModal').classList.add('show');
+    }
+
+    function peRender(){
+        var s=peState,cats=getCats();
+        // Tabs
+        var tabs=[{k:'basic',l:'📝 Basic'},{k:'images',l:'📷 Images'},{k:'variants',l:'📦 Variants'},{k:'details',l:'🫙 Details'},{k:'nutrition',l:'🥗 Nutrition'},{k:'seo',l:'🔍 SEO'}];
+        document.getElementById('peTabBar').innerHTML=tabs.map(t=>'<div class="pe-tab'+(peTab===t.k?' active':'')+'" onclick="peTab=\''+t.k+'\';peRender()">'+t.l+'</div>').join('');
+
+        var h='';
+        // BASIC
+        if(peTab==='basic'){
+            h+='<div class="pe-row pe-r2"><div class="pe-fg"><label class="pe-fl">Product Name *</label><input class="pe-inp" value="'+(s.name||'')+'" oninput="peState.name=this.value" placeholder="Avakaya Mango Pickle"></div>';
+            h+='<div class="pe-fg"><label class="pe-fl">Category *</label><input class="pe-inp" list="pe-cats" value="'+(s.category||'')+'" oninput="peState.category=this.value"><datalist id="pe-cats">';cats.forEach(c=>h+='<option value="'+c+'">');h+='</datalist></div></div>';
+            h+='<div class="pe-row pe-r2"><div class="pe-fg"><label class="pe-fl">Dietary</label><select class="pe-inp" onchange="peState.dietary_info=this.value"><option value="">—</option><option value="veg"'+(s.dietary_info==='veg'?' selected':'')+'>🌿 Veg</option><option value="non-veg"'+(s.dietary_info==='non-veg'?' selected':'')+'>🍗 Non-Veg</option><option value="vegan"'+(s.dietary_info==='vegan'?' selected':'')+'>🥬 Vegan</option></select></div>';
+            h+='<div class="pe-fg"><label class="pe-fl">Badge Text</label><input class="pe-inp" value="'+(s.badge||'')+'" oninput="peState.badge=this.value" placeholder="Bestseller"></div></div>';
+            h+='<div class="pe-fg"><label class="pe-fl">Short Description</label><input class="pe-inp" value="'+(s.short_description||'')+'" oninput="peState.short_description=this.value" placeholder="One-line tagline" maxlength="120"></div>';
+            h+='<div class="pe-fg"><label class="pe-fl">Full Description</label><textarea class="pe-inp" rows="3" oninput="peState.description=this.value">'+(s.description||'')+'</textarea></div>';
+            h+='<div style="display:flex;gap:20px;flex-wrap:wrap;padding:12px 0;border-top:2px solid #f0f0f0;margin-top:6px">';
+            [['is_active','Active'],['is_featured','⭐ Featured'],['is_bestseller','🔥 Bestseller'],['is_new','✨ New']].forEach(([k,l])=>{
+                h+='<label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;cursor:pointer"><div class="pe-tog"><input type="checkbox"'+(s[k]?' checked':'')+' onchange="peState.'+k+'=this.checked"><div class="slider"></div></div>'+l+'</label>';
+            });
+            h+='</div>';
+        }
+        // IMAGES
+        else if(peTab==='images'){
+            h+='<label class="pe-fl" style="margin-bottom:8px">Images <span style="font-weight:400;color:#bbb">(First = primary on store)</span></label>';
+            h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">';
+            (s.images||[]).forEach((u,i)=>{h+='<div class="img-slot'+(i===0?' primary':'')+'"><img src="'+u+'" onerror="this.style.display=\'none\'"><button class="rm" onclick="event.stopPropagation();peState.images.splice('+i+',1);peRender()">✕</button></div>';});
+            h+='<div class="img-slot" onclick="peAddImg()"><div style="font-size:1.3rem;color:#ccc">+</div></div></div>';
+            h+='<div class="pe-fg"><label class="pe-fl">Add Image URL</label><div style="display:flex;gap:6px"><input class="pe-inp" id="pe-imgurl" placeholder="https://..." style="flex:1"><button class="btn btn-primary btn-sm" onclick="peAddImgUrl()">Add</button></div></div>';
+        }
+        // VARIANTS
+        else if(peTab==='variants'){
+            h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div><label class="pe-fl" style="margin:0">Size / Weight Variants</label><div style="font-size:0.75rem;color:#999">Each variant has its own price and weight</div></div>';
+            h+='<button class="btn btn-primary btn-sm" onclick="peState.variants.push({weight:\'\',price:0});peRender()">+ Add Variant</button></div>';
+            if(!s.variants.length){h+='<div style="text-align:center;padding:30px;background:#f8f9fa;border-radius:10px;border:2px dashed #eee"><div style="font-size:1.5rem;opacity:0.2;margin-bottom:6px">📦</div><div style="font-size:0.85rem;color:#999">No variants. Click + Add to create sizes.</div></div>';}
+            else{
+                h+='<div style="overflow-x:auto"><div style="min-width:500px"><div class="vr-row vr-hd"><div>Name/Size</div><div>Weight</div><div>Price ₹</div><div>Compare ₹</div><div>SKU</div><div></div></div>';
+                s.variants.forEach((v,i)=>{
+                    h+='<div class="vr-row"><input class="vr-inp" value="'+(v.name||v.weight||'')+'" placeholder="250g Jar" oninput="peState.variants['+i+'].name=this.value">';
+                    h+='<input class="vr-inp" value="'+(v.weight||'')+'" placeholder="250g" oninput="peState.variants['+i+'].weight=this.value">';
+                    h+='<input class="vr-inp" type="number" value="'+(v.price||'')+'" placeholder="349" oninput="peState.variants['+i+'].price=parseFloat(this.value)||0">';
+                    h+='<input class="vr-inp" type="number" value="'+(v.compare_price||'')+'" placeholder="499" oninput="peState.variants['+i+'].compare_price=parseFloat(this.value)||0">';
+                    h+='<input class="vr-inp" value="'+(v.sku||'')+'" placeholder="SKU" oninput="peState.variants['+i+'].sku=this.value" style="font-family:monospace;font-size:0.75rem">';
+                    h+='<button style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:1rem" onclick="peState.variants.splice('+i+',1);peRender()">✕</button></div>';
+                });
+                h+='</div></div>';
+            }
+        }
+        // DETAILS
+        else if(peTab==='details'){
+            h+='<div class="pe-row pe-r3"><div class="pe-fg"><label class="pe-fl">Oil Type</label><select class="pe-inp" onchange="peState.oil_type=this.value"><option value="">—</option><option value="cold-pressed-groundnut"'+(s.oil_type==='cold-pressed-groundnut'?' selected':'')+'>Cold-Pressed Groundnut</option><option value="sesame"'+(s.oil_type==='sesame'?' selected':'')+'>Sesame</option><option value="gingelly"'+(s.oil_type==='gingelly'?' selected':'')+'>Gingelly</option><option value="none"'+(s.oil_type==='none'?' selected':'')+'>None</option></select></div>';
+            h+='<div class="pe-fg"><label class="pe-fl">Spice Level</label><select class="pe-inp" onchange="peState.spice_level=this.value"><option value="">—</option><option value="mild"'+(s.spice_level==='mild'?' selected':'')+'>🟢 Mild</option><option value="medium"'+(s.spice_level==='medium'?' selected':'')+'>🟡 Medium</option><option value="hot"'+(s.spice_level==='hot'?' selected':'')+'>🔴 Hot</option><option value="extra-hot"'+(s.spice_level==='extra-hot'?' selected':'')+'>🌶️ Extra Hot</option></select></div>';
+            h+='<div class="pe-fg"><label class="pe-fl">Shelf Life</label><input class="pe-inp" value="'+(s.shelf_life||'')+'" placeholder="6 months" oninput="peState.shelf_life=this.value"></div></div>';
+            h+='<div class="pe-fg"><label class="pe-fl">Storage</label><input class="pe-inp" value="'+(s.storage_instructions||'')+'" placeholder="Refrigerate after opening" oninput="peState.storage_instructions=this.value"></div>';
+            h+='<div class="pe-fg"><label class="pe-fl">Ingredients</label><div style="display:flex;gap:6px;margin-bottom:6px"><input class="pe-inp" id="pe-ing" placeholder="Raw Mango, Red Chilli..." onkeydown="if(event.key===\'Enter\')peAddIng()" style="flex:1"><button class="btn btn-sm" style="background:#eee" onclick="peAddIng()">+</button></div>';
+            h+='<div>'+(s.ingredients||[]).map((g,i)=>'<span class="ing-tag">'+g+' <span class="x" onclick="peState.ingredients.splice('+i+',1);peRender()">✕</span></span>').join('')+'</div></div>';
+        }
+        // NUTRITION
+        else if(peTab==='nutrition'){
+            h+='<label class="pe-fl" style="margin-bottom:10px">Per 100g serving</label>';
+            h+='<div class="nut-grid"><div class="nut-item"><input value="'+(s.calories||'')+'" placeholder="—" oninput="peState.calories=this.value"><div class="nl">Calories</div></div>';
+            h+='<div class="nut-item"><input value="'+(s.protein||'')+'" placeholder="—" oninput="peState.protein=this.value"><div class="nl">Protein</div></div>';
+            h+='<div class="nut-item"><input value="'+(s.fat||'')+'" placeholder="—" oninput="peState.fat=this.value"><div class="nl">Fat</div></div>';
+            h+='<div class="nut-item"><input value="'+(s.carbs||'')+'" placeholder="—" oninput="peState.carbs=this.value"><div class="nl">Carbs</div></div></div>';
+        }
+        // SEO
+        else if(peTab==='seo'){
+            h+='<div class="pe-fg"><label class="pe-fl">SEO Title</label><input class="pe-inp" value="'+(s.seo_title||'')+'" placeholder="'+(s.name||'Product')+' | SeaSalt" maxlength="70" oninput="peState.seo_title=this.value"></div>';
+            h+='<div class="pe-fg"><label class="pe-fl">Meta Description</label><textarea class="pe-inp" rows="2" maxlength="160" oninput="peState.seo_description=this.value">'+(s.seo_description||'')+'</textarea></div>';
+            h+='<div class="pe-fg"><label class="pe-fl">Tags</label><div style="display:flex;gap:6px;margin-bottom:6px"><input class="pe-inp" id="pe-tag" placeholder="andhra, spicy, pickle" onkeydown="if(event.key===\'Enter\')peAddTag()" style="flex:1"><button class="btn btn-sm" style="background:#eee" onclick="peAddTag()">+</button></div>';
+            h+='<div>'+(s.tags||[]).map((t,i)=>'<span class="ing-tag" style="background:#e8f0fe;border-color:#c3d9f8">'+t+' <span class="x" onclick="peState.tags.splice('+i+',1);peRender()">✕</span></span>').join('')+'</div></div>';
+            h+='<div style="margin-top:14px;padding:14px;background:#f8f9fa;border-radius:10px;border:2px solid #eee"><label class="pe-fl" style="margin-bottom:6px">🔍 Google Preview</label>';
+            h+='<div style="font-size:1rem;color:#1a0dab;font-weight:500">'+(s.seo_title||s.name||'Product')+' | SeaSalt</div>';
+            h+='<div style="font-size:0.78rem;color:#006621;font-family:monospace">seasaltpickles.com/'+(s.slug||slugify(s.name)||'product')+'</div>';
+            h+='<div style="font-size:0.85rem;color:#545454">'+(s.seo_description||s.short_description||s.description||'Description...')+'</div></div>';
+        }
+        document.getElementById('peTabContent').innerHTML=h;
+    }
+
+    function peAddImg(){var u=prompt('Image URL:');if(u&&u.trim()){peState.images.push(u.trim());peRender();}}
+    function peAddImgUrl(){var i=document.getElementById('pe-imgurl');if(i&&i.value.trim()){peState.images.push(i.value.trim());i.value='';peRender();}}
+    function peAddIng(){var i=document.getElementById('pe-ing');if(i&&i.value.trim()){i.value.split(',').forEach(x=>{var t=x.trim();if(t&&!peState.ingredients.includes(t))peState.ingredients.push(t);});i.value='';peRender();}}
+    function peAddTag(){var i=document.getElementById('pe-tag');if(i&&i.value.trim()){i.value.split(',').forEach(x=>{var t=x.trim().toLowerCase();if(t&&!peState.tags.includes(t))peState.tags.push(t);});i.value='';peRender();}}
+
+    document.getElementById('addProductBtn').addEventListener('click',()=>peOpen(null));
+    document.getElementById('closeProductModal').addEventListener('click',()=>document.getElementById('productModal').classList.remove('show'));
+    document.getElementById('productModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show')});
+
+    document.getElementById('saveProductBtn').addEventListener('click',async function(){
+        var s=peState;if(!s.name.trim()){alert('Product name required');return;}
+        this.disabled=true;this.textContent='⏳ Saving...';
+        var data={name:s.name.trim(),description:s.description,short_description:s.short_description||null,
+            category:s.category,image:s.images.length?s.images[0]:(s.image||null),images:s.images,badge:s.badge||null,
+            variants:s.variants,is_active:s.is_active,is_featured:s.is_featured,is_bestseller:s.is_bestseller||false,is_new:s.is_new||false,
+            ingredients:s.ingredients.length?s.ingredients:null,oil_type:s.oil_type||null,spice_level:s.spice_level||null,
+            shelf_life:s.shelf_life||null,storage_instructions:s.storage_instructions||null,dietary_info:s.dietary_info||null,
+            weight_unit:s.weight_unit||'g',seo_title:s.seo_title||null,seo_description:s.seo_description||null,tags:s.tags.length?s.tags:null,
+            calories:s.calories||null,protein:s.protein||null,fat:s.fat||null,carbs:s.carbs||null,sodium:s.sodium||null};
+        if(s.id){await db.from('products').update(data).eq('id',s.id);}
+        else{data.id=slugify(s.name);await db.from('products').insert(data);peState.id=data.id;}
+        document.getElementById('peSavedBadge').style.display='inline-block';
+        setTimeout(()=>document.getElementById('peSavedBadge').style.display='none',3000);
+        this.disabled=false;this.textContent='💾 Save Product';
+        await loadProducts();
+    });
+
+    function peDelete(){if(!peState.id)return;if(!confirm('Delete "'+peState.name+'"?'))return;
+        db.from('products').delete().eq('id',peState.id).then(()=>{document.getElementById('productModal').classList.remove('show');loadProducts();});}
+    function peDuplicate(){if(!peState.id)return;peState.id=null;peState.name+=' (Copy)';peIsEdit=false;
+        document.getElementById('productModalTitle').textContent='📋 Duplicate Product';document.getElementById('peDupBtn').style.display='none';document.getElementById('peDelBtn').style.display='none';peRender();}
+    function pePreview(){
+        var s=peState,img=s.images.length?s.images[0]:(s.image||''),pr=s.variants.length?s.variants[0].price:0;
+        var h='<div style="text-align:center">';
+        h+='<div style="width:100%;height:200px;background:linear-gradient(135deg,#f8f7f4,#ede9e3);border-radius:10px;overflow:hidden;margin-bottom:12px;display:flex;align-items:center;justify-content:center">';
+        if(img)h+='<img src="'+img+'" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=\'<div style=font-size:3rem;opacity:.15>🫙</div>\'">';
+        else h+='<div style="font-size:3rem;opacity:0.15">🫙</div>';
+        h+='</div>';
+        if(s.badge)h+='<span class="badge badge-yellow">'+s.badge+'</span> ';
+        h+='<div style="font-size:0.7rem;color:#999;text-transform:uppercase;margin-top:8px">'+(s.category||'CATEGORY')+'</div>';
+        h+='<div style="font-size:1.2rem;font-weight:700;margin:4px 0">'+(s.name||'Product')+'</div>';
+        if(s.short_description)h+='<div style="font-size:0.85rem;color:#666;margin-bottom:8px">'+s.short_description+'</div>';
+        h+='<div style="font-size:1.4rem;font-weight:700;color:#e67e22">₹'+pr+'</div>';
+        if(s.variants.length>1){h+='<div style="margin-top:10px;text-align:left"><label class="pe-fl" style="margin-bottom:4px">Select Size</label>';
+            s.variants.forEach(v=>{h+='<div style="display:inline-block;padding:6px 14px;margin:3px;border:2px solid #eee;border-radius:8px;font-size:0.8rem;cursor:pointer">'+(v.name||v.weight)+' — ₹'+(v.price||0)+'</div>';});
+            h+='</div>';}
+        h+='</div>';
+        document.getElementById('previewBody').innerHTML=h;document.getElementById('previewModal').classList.add('show');
+    }
+
+    // ══════════ INTELLIGENCE — COMPETITORS ══════════
+    async function loadCompetitors(){
+        try{
+            var{data:comps}=await db.from('competitors').select('*').order('google_reviews_count',{ascending:false});comps=comps||[];
+            var{data:revs}=await db.from('competitor_reviews').select('*').order('publish_time',{ascending:false}).limit(20);revs=revs||[];
+            var ch='';comps.forEach(c=>{var stars='★'.repeat(Math.floor(c.google_rating||0))+'☆'.repeat(5-Math.floor(c.google_rating||0));
+                ch+='<div class="card" style="padding:16px"><div style="font-weight:700;font-size:1rem;margin-bottom:4px">'+c.name+'</div>';
+                ch+='<div style="color:#f59e0b;font-size:0.9rem">'+stars+' '+(c.google_rating||0)+'</div>';
+                ch+='<div style="font-size:0.8rem;color:#666;margin-top:4px">'+(c.google_reviews_count||0)+' reviews</div>';
+                if(c.active_ads_count>0)ch+='<div style="margin-top:6px"><span class="badge badge-red">🔴 '+c.active_ads_count+' ads running</span></div>';
+                ch+='</div>';});
+            document.getElementById('compCards').innerHTML=ch||'<div class="card" style="padding:20px;text-align:center;grid-column:1/-1"><button class="btn btn-primary" onclick="document.getElementById(\'refreshBtn\').click()">🔍 Run First Scan</button></div>';
+            var rh='';revs.forEach(r=>{rh+='<tr><td style="font-weight:600">'+r.competitor_name+'</td><td style="color:#f59e0b">'+('★'.repeat(Math.floor(r.rating||0)))+'</td><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.8rem">'+(r.text||'-')+'</td><td style="font-size:0.8rem;color:#999">'+(r.publish_time?new Date(r.publish_time).toLocaleDateString():'—')+'</td></tr>';});
+            document.getElementById('compReviews').innerHTML=rh||'<tr><td colspan="4" style="text-align:center;color:#999;padding:20px;">No reviews yet</td></tr>';
+        }catch(e){console.log('Competitors not loaded:',e);}
+    }
+
+    // ══════════ INTELLIGENCE — INSIGHTS ══════════
+    function renderInsights(){
+        var h='';
+        var noP=allProducts.filter(p=>!getPrice(p)||getPrice(p)===0).length;
+        var noI=allProducts.filter(p=>!getImg(p)).length;
+        h+='<div class="card" style="padding:16px"><div style="font-size:1.5rem;margin-bottom:6px">🏷️</div><div style="font-weight:700;font-size:1rem">Product Health</div><div style="font-size:0.85rem;color:#666;margin-top:6px;line-height:1.6">'+noP+' products with ₹0 price.<br>'+noI+' missing images.<br><a href="#" onclick="showPage(\'products\');prodFilter=\'_noimg\';renderProducts();return false" style="color:#e67e22">Fix now →</a></div></div>';
+        var rec=allOrders.filter(o=>Date.now()-new Date(o.created_at)<7*86400000).length;
+        h+='<div class="card" style="padding:16px"><div style="font-size:1.5rem;margin-bottom:6px">📦</div><div style="font-weight:700;font-size:1rem">Order Trends</div><div style="font-size:0.85rem;color:#666;margin-top:6px;line-height:1.6">'+rec+' orders in last 7 days. '+(rec>5?'🔥 Good pace!':'📈 Room to grow.')+'</div></div>';
+        h+='<div class="card" style="padding:16px"><div style="font-size:1.5rem;margin-bottom:6px">👥</div><div style="font-weight:700;font-size:1rem">User Engagement</div><div style="font-size:0.85rem;color:#666;margin-top:6px;line-height:1.6">Registered users active. SpinWheel & wallet features engaged.</div></div>';
+        h+='<div class="card" style="padding:16px"><div style="font-size:1.5rem;margin-bottom:6px">💡</div><div style="font-weight:700;font-size:1rem">Quick Actions</div><div style="font-size:0.85rem;color:#666;margin-top:6px;line-height:1.6"><a href="#" onclick="showPage(\'content\');return false" style="color:#e67e22">Generate content →</a><br><a href="#" onclick="showPage(\'competitors\');return false" style="color:#e67e22">Check competitors →</a></div></div>';
+        document.getElementById('insightsGrid').innerHTML=h;
+    }
+
+    // ══════════ INTELLIGENCE — CONTENT STUDIO ══════════
+    let csPlat='ig_post';
+    function renderContentStudio(){
+        var plats=[{id:'ig_post',l:'📸 IG Post'},{id:'ig_reel',l:'🎬 Reel'},{id:'fb_post',l:'📘 FB'},{id:'wa_msg',l:'💬 WA'},{id:'yt_short',l:'▶️ YT'}];
+        var ph='';plats.forEach(p=>{ph+='<button class="btn btn-sm" style="background:'+(csPlat===p.id?'#e67e22;color:#fff':'#eee;color:#333')+'" onclick="csPlat=\''+p.id+'\';renderContentStudio()">'+p.l+'</button>';});
+        document.getElementById('cs-platforms').innerHTML=ph;
+        var sel=document.getElementById('cs-product');
+        var curVal=sel.value;
+        sel.innerHTML='';
+        allProducts.forEach(p=>{sel.innerHTML+='<option value="'+p.name+'"'+(curVal===p.name?' selected':'')+'>'+p.name+'</option>';});
+        if(!sel.onchange)sel.onchange=function(){renderContentStudio();};
+        var pr=sel.value||allProducts[0]?.name||'Avakaya Pickle';
+        var txt='';
+        if(csPlat==='ig_post')txt='🫙 Craving '+pr+'?\n\nHandmade with love. Cold-pressed oil. Zero preservatives.\n\n🛒 seasaltpickles.com\n\n#SeaSaltPickles #AndhraPickles #Hyderabad';
+        else if(csPlat==='ig_reel')txt='🎬 REEL SCRIPT: '+pr+'\n\n[0-2s] Jar opening shot\n[2-5s] Ingredients close-up\n[5-8s] Mixing process\n[8-12s] Final product\n[12-15s] CTA + link';
+        else if(csPlat==='fb_post')txt='Fresh batch of '+pr+' just made! 🫙\n\nCold-pressed oil • Zero preservatives • Authentic Andhra recipe\n\nOrder now: seasaltpickles.com';
+        else if(csPlat==='wa_msg')txt='*SeaSalt Pickles* 🫙\n\n*'+pr+'* is ready!\nFrom ₹249 • Free delivery above ₹499\n\nReply ORDER to place!';
+        else txt='New '+pr+' available at seasaltpickles.com! Fresh, authentic, homemade. 🫙';
+        document.getElementById('cs-output').value=txt;
+    }
+
+    async function runSpy(){var url=document.getElementById('spy-url').value;if(!url){alert('Enter a YouTube URL');return;}
+        document.getElementById('spy-results').innerHTML='<div class="card" style="padding:20px;text-align:center"><div class="spinner" style="display:inline-block;width:24px;height:24px;border:3px solid #eee;border-top-color:#e67e22;border-radius:50%;animation:spin 0.6s linear infinite"></div><p style="margin-top:8px;color:#999">Scanning...</p></div>';
+        try{var r=await fetch('/.netlify/functions/social-listen?action=deep-profile&videoUrl='+encodeURIComponent(url)+'&maxComments=50');var d=await r.json();
+            if(d.success){document.getElementById('spy-results').innerHTML='<div class="card" style="padding:16px"><h3 style="font-weight:600;margin-bottom:8px;color:#10b981">✅ Found '+d.profiles_found+' profiles</h3><p style="font-size:0.85rem;color:#666">Leads saved to Supabase.</p></div>';}
+            else{document.getElementById('spy-results').innerHTML='<div class="card" style="padding:16px;color:#e74c3c">Error: '+(d.error||'Unknown')+'</div>';}
+        }catch(e){document.getElementById('spy-results').innerHTML='<div class="card" style="padding:16px;color:#e74c3c">'+e.message+'</div>';}}
+
+    // ── Load intelligence data ──
+    async function loadIntelligence(){loadCompetitors();renderInsights();renderContentStudio();}
+    setTimeout(loadIntelligence,1500);
+
+    // ══════════ NOTIFICATIONS ══════════
+    async function loadNotifications(){var{data:notifs}=await db.from('admin_notifications').select('*').order('created_at',{ascending:false}).limit(50);notifs=notifs||[];var unread=notifs.filter(function(n){return!n.is_read}).length;var badge=document.getElementById('notifBadge');if(unread>0){badge.textContent=unread;badge.style.display='block'}else{badge.style.display='none'}var html='';if(notifs.length===0){html='<p style="color:#999;text-align:center;padding:40px;">No notifications yet.</p>';}else{notifs.forEach(function(n){var time=new Date(n.created_at).toLocaleString();var bgColor=n.is_read?'#fff':'#fef3c7';var icon=n.type==='high_activity'?'🔥':n.type==='repeat_visitor'?'🔄':'🔔';html+='<div style="padding:12px;margin-bottom:8px;border-radius:8px;background:'+bgColor+';border:1px solid #eee;"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;"><div style="flex:1;"><span style="font-size:1.2rem;margin-right:8px;">'+icon+'</span><strong style="color:#333;">'+n.message+'</strong><div style="font-size:0.8rem;color:#999;margin-top:4px;">'+time+'</div></div></div>';if(n.user_phone){html+='<div style="margin-top:10px;display:flex;gap:8px;"><button class="btn btn-sm btn-primary" onclick="showUserDetail(\''+n.user_phone+'\')">👤 View</button><button class="btn btn-sm btn-green" onclick="openWalletModal(\''+n.user_phone+'\',0)">💰 Credit</button>';if(!n.is_read)html+='<button class="btn btn-sm" style="background:#eee;" onclick="markNotifRead('+n.id+')">✓ Read</button>';html+='</div>';}html+='</div>';});}document.getElementById('notificationsList').innerHTML=html;}
+    window.markNotifRead=async function(id){await db.from('admin_notifications').update({is_read:true}).eq('id',id);loadNotifications()};
+    document.getElementById('markAllReadBtn').addEventListener('click',async function(){await db.from('admin_notifications').update({is_read:true}).eq('is_read',false);loadNotifications()});
+    document.getElementById('testNotifBtn').addEventListener('click',function(){showNotificationPopup({id:0,type:'high_activity',user_phone:'+919876543210',message:'🧪 TEST: User has visited 5 times!',created_at:new Date().toISOString()})});
+
+    // ══════════════════════════════════════════
+    // ORDERS — FULLY INTEGRATED WITH TRACKING + WHATSAPP
+    // ══════════════════════════════════════════
+    let allOrders = [];
+
+    async function loadOrders() {
+        var { data: orders, error } = await db.from('orders').select('*').order('created_at', { ascending: false });
+        if (error) console.error('Orders error:', error);
+        allOrders = orders || [];
+        renderOrdersTable(allOrders);
+        renderShippingTable(allOrders.filter(function(o) { return o.status === 'confirmed' || o.status === 'processing'; }));
+
+        document.querySelectorAll('[data-order-filter]').forEach(function(btn) {
+            // Remove old listeners by cloning
+            var newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', function() {
+                var filter = this.getAttribute('data-order-filter');
+                renderOrdersTable(filter === 'all' ? allOrders : allOrders.filter(function(o) { return o.status === filter; }));
+            });
+        });
+    }
+
+    function renderOrdersTable(orders) {
+        var html = '';
+        if (!orders.length) {
+            html = '<tr><td colspan="9" style="text-align:center;color:#999;padding:40px;">No orders yet</td></tr>';
+            document.getElementById('ordersTable').innerHTML = html;
+            return;
+        }
+
+        orders.forEach(function(o) {
+            var items = [];
+            try { items = typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []); } catch(e) {}
+            var itemsStr = items.map(function(i) { return i.name; }).join(', ').substring(0, 40) || '-';
+            var statusClass = { pending:'badge-yellow', confirmed:'badge-blue', processing:'badge-blue', shipped:'badge-green', dispatched:'badge-green', delivered:'badge-green', cancelled:'badge-red' };
+            var date = o.created_at ? new Date(o.created_at).toLocaleDateString() : '-';
+            var fullId = o.id || '';
+            var displayId = fullId.substring(0, 8);
+
+            html += '<tr data-full-order-id="' + fullId + '">';
+            html += '<td><strong title="' + fullId + '" style="cursor:help;">' + displayId + '</strong></td>';
+            html += '<td>' + (o.customer_name || o.phone || '-') + '</td>';
+            html += '<td style="font-size:0.8rem;">' + itemsStr + '</td>';
+            html += '<td>₹' + (o.total || 0) + '</td>';
+            html += '<td><span class="badge ' + (statusClass[o.status] || 'badge-gray') + '">' + (o.status || 'unknown') + '</span></td>';
+            html += '<td style="font-size:0.8rem;">' + date + '</td>';
+
+            // TRACKING COLUMN
+            html += '<td>';
+            html += '<input type="text" class="order-tracking-input" data-oid="' + fullId + '" placeholder="Tracking #" ';
+            html += 'value="' + (o.tracking_number || '') + '" ';
+            html += 'style="width:110px;padding:4px 6px;font-size:0.75rem;border:1px solid ' + (o.tracking_number ? '#4F46E5' : '#ddd') + ';border-radius:5px;' + (o.tracking_number ? 'font-weight:600;' : '') + '">';
+            html += '</td>';
+
+            // NOTIFICATION STATUS COLUMN
+            var smsIcon = o.sms_sent ? '<span title="SMS sent" style="font-size:0.9rem;">📨</span>' : '';
+            var waIcon = o.whatsapp_sent ? '<span title="WhatsApp sent" style="font-size:0.9rem;">💬</span>' : '';
+            var noneIcon = (!o.sms_sent && !o.whatsapp_sent) ? '<span style="opacity:0.3;font-size:0.8rem;">—</span>' : '';
+            html += '<td style="text-align:center;">' + smsIcon + waIcon + noneIcon + '</td>';
+
+            // ACTIONS COLUMN — status dropdown + save button
+            html += '<td>';
+            html += '<select class="order-status-select" data-oid="' + fullId + '" data-customer="' + (o.customer_name || '').replace(/"/g, '') + '" data-phone="' + (o.customer_phone || '') + '" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;">';
+            ['pending','confirmed','processing','shipped','delivered','cancelled'].forEach(function(s) {
+                html += '<option value="' + s + '"' + (o.status === s ? ' selected' : '') + '>' + s + '</option>';
+            });
+            html += '</select>';
+            html += '<button class="btn btn-sm" style="background:#4F46E5;color:#fff;margin-left:4px;font-size:0.7rem;padding:3px 8px;" data-save-oid="' + fullId + '">💾</button>';
+            html += '</td></tr>';
+        });
+
+        document.getElementById('ordersTable').innerHTML = html;
+
+        // Attach status change + save handlers
+        document.querySelectorAll('.order-status-select').forEach(function(sel) {
+            sel.addEventListener('change', function() {
+                var oid = this.getAttribute('data-oid');
+                var customer = this.getAttribute('data-customer');
+                var phone = this.getAttribute('data-phone');
+                var newStatus = this.value;
+                var trackingInput = document.querySelector('.order-tracking-input[data-oid="' + oid + '"]');
+                var tracking = trackingInput ? trackingInput.value.trim() : '';
+                handleStatusChange(oid, newStatus, tracking, customer, phone);
+            });
+        });
+
+        // Save button (saves tracking without changing status)
+        document.querySelectorAll('[data-save-oid]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var oid = this.getAttribute('data-save-oid');
+                var trackingInput = document.querySelector('.order-tracking-input[data-oid="' + oid + '"]');
+                var tracking = trackingInput ? trackingInput.value.trim() : '';
+                if (!tracking) { showToast('Enter a tracking number first', 'error'); return; }
+                var row = this.closest('tr');
+                var sel = row.querySelector('.order-status-select');
+                var customer = sel ? sel.getAttribute('data-customer') : '';
+                var phone = sel ? sel.getAttribute('data-phone') : '';
+                saveTrackingOnly(oid, tracking, customer, phone);
+            });
+        });
+    }
+
+    // ══════════════════════════════════════════
+    // DUAL NOTIFICATION SYSTEM — SMS (Fast2SMS) + WhatsApp (Meta Cloud API)
+    // ══════════════════════════════════════════
+    let notifConfig = null; // Unified notification config
+
+    async function loadNotificationConfig() {
+        var smsInd = document.getElementById('smsStatusIndicator');
+        var waInd = document.getElementById('waStatusIndicator');
+        try {
+            var { data } = await db.from('notification_config').select('*').eq('id', 1).single();
+            if (data) {
+                notifConfig = data;
+                // SMS status
+                if (data.sms_is_active && data.sms_api_key && data.sms_api_key.length > 10) {
+                    if (smsInd) { smsInd.style.background='#d1fae5'; smsInd.style.color='#065f46'; smsInd.innerHTML = data.sms_route === 'dlt' ? '🟢 SMS DLT Active' : '🟢 SMS Quick Active'; }
+                    console.log('[SMS] Fast2SMS config loaded ✅ Route:', data.sms_route);
+                } else {
+                    if (smsInd) { smsInd.style.background='#fef3c7'; smsInd.style.color='#92400e'; smsInd.innerHTML = '🟡 SMS Off — <a href="https://www.fast2sms.com" target="_blank" style="color:#92400e;text-decoration:underline;">Setup</a>'; }
+                }
+                // WhatsApp status
+                if (data.wa_is_active && data.wa_access_token && data.wa_access_token.length > 10) {
+                    if (waInd) { waInd.style.background='#d1fae5'; waInd.style.color='#065f46'; waInd.innerHTML = '🟢 WhatsApp ON'; }
+                    console.log('[WhatsApp] Meta API config loaded ✅');
+                } else {
+                    if (waInd) { waInd.style.background='#f0f0f0'; waInd.style.color='#999'; waInd.innerHTML = '⚪ WhatsApp Off'; }
+                }
+            }
+        } catch(e) {
+            console.log('[Notifications] Config table not found. Run notification-setup.sql');
+            if (smsInd) { smsInd.style.background='#fee2e2'; smsInd.style.color='#991b1b'; smsInd.innerHTML = '🔴 Run SQL setup'; }
+            if (waInd) { waInd.style.background='#fee2e2'; waInd.style.color='#991b1b'; waInd.innerHTML = '🔴 Run SQL setup'; }
+        }
+    }
+    setTimeout(loadNotificationConfig, 500);
+
+    // ── SMS STATUS → MESSAGE TEXT MAP ──
+    var SMS_MESSAGES = {
+        confirmed: function(n, id) { return 'Dear ' + n + ', your order #' + id + ' has been confirmed! We are preparing it. Track at seasaltpickles.com - SeaSalt Pickles'; },
+        processing: function(n, id) { return 'Dear ' + n + ', your order #' + id + ' is being prepared! Our team is packing your authentic pickles. Thank you! - SeaSalt Pickles'; },
+        preparing: function(n, id) { return 'Dear ' + n + ', your order #' + id + ' is being prepared! Our team is packing your authentic pickles. Thank you! - SeaSalt Pickles'; },
+        shipped: function(n, id, t) { return 'Dear ' + n + ', your order #' + id + ' has been dispatched!' + (t ? ' Tracking: ' + t + '. Track at indiapost.gov.in' : '') + ' - SeaSalt Pickles'; },
+        dispatched: function(n, id, t) { return 'Dear ' + n + ', your order #' + id + ' has been dispatched!' + (t ? ' Tracking: ' + t + '. Track at indiapost.gov.in' : '') + ' - SeaSalt Pickles'; },
+        delivered: function(n, id) { return 'Dear ' + n + ', your order #' + id + ' has been delivered! Enjoy your pickles. Thank you! - SeaSalt Pickles'; },
+        cancelled: function(n, id) { return 'Dear ' + n + ', your order #' + id + ' has been cancelled. Contact us for queries. - SeaSalt Pickles'; }
+    };
+
+    // ── SEND SMS VIA FAST2SMS ──
+    async function sendSMS(phone, orderId, status, tracking, customerName) {
+        if (!notifConfig || !notifConfig.sms_is_active || !notifConfig.sms_api_key) {
+            return { success: false, reason: 'sms_not_configured' };
+        }
+
+        var cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (cleanPhone.startsWith('91') && cleanPhone.length === 12) cleanPhone = cleanPhone.substring(2);
+        if (cleanPhone.length !== 10) return { success: false, reason: 'invalid_phone_' + cleanPhone };
+
+        var shortId = orderId.substring(0, 8);
+        var name = customerName || 'Customer';
+        var route = notifConfig.sms_route || 'q';
+
+        try {
+            var apiUrl = 'https://www.fast2sms.com/dev/bulkV2';
+            var params = { route: route, numbers: cleanPhone };
+
+            if (route === 'dlt') {
+                // DLT Route — use template message IDs
+                var templates = notifConfig.sms_templates || {};
+                var msgId = templates[status] || templates.confirmed;
+                if (!msgId) return { success: false, reason: 'no_dlt_template_for_' + status };
+
+                params.sender_id = notifConfig.sms_sender_id || 'SEASLT';
+                params.message = msgId;
+                // Build variable values: name|orderId|tracking (pipe separated)
+                var vars = name + '|' + shortId;
+                if ((status === 'shipped' || status === 'dispatched') && tracking) vars += '|' + tracking;
+                params.variables_values = vars;
+            } else {
+                // Quick SMS Route — send plain text message
+                var msgFn = SMS_MESSAGES[status];
+                params.message = msgFn ? msgFn(name, shortId, tracking) : ('Order #' + shortId + ' status: ' + status + ' - SeaSalt Pickles');
+                params.language = 'english';
+            }
+
+            var res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'authorization': notifConfig.sms_api_key,
+                    'Content-Type': 'application/json',
+                    'accept': '*/*',
+                    'cache-control': 'no-cache'
+                },
+                body: JSON.stringify(params)
+            });
+
+            var result = await res.json();
+
+            // Log
+            try {
+                await db.from('notification_log').insert({
+                    order_id: orderId, customer_phone: cleanPhone, channel: 'sms',
+                    template_name: status, message_text: params.message,
+                    status: result.return === true ? 'sent' : 'failed',
+                    provider_message_id: result.request_id || null,
+                    error_message: result.return === true ? null : JSON.stringify(result.message || result)
+                });
+            } catch(logErr) { console.warn('[SMS] Log failed:', logErr); }
+
+            if (result.return === true) {
+                console.log('[SMS] ✅ Sent to', cleanPhone, '| Request ID:', result.request_id);
+                return { success: true, requestId: result.request_id };
+            } else {
+                console.error('[SMS] ❌ Error:', result);
+                return { success: false, error: result.message || 'SMS failed' };
+            }
+        } catch(e) {
+            console.error('[SMS] ❌ Network error:', e);
+            try { await db.from('notification_log').insert({ order_id: orderId, customer_phone: cleanPhone, channel: 'sms', template_name: status, status: 'error', error_message: e.message }); } catch(x) {}
+            return { success: false, error: e.message };
+        }
+    }
+
+    // ── SEND WHATSAPP VIA META CLOUD API ──
+    var WA_TEMPLATE_MAP = { confirmed:'order_confirmed', processing:'order_preparing', preparing:'order_preparing', shipped:'order_shipped', dispatched:'order_shipped', delivered:'order_delivered', cancelled:'order_cancelled' };
+
+    // Direct text messages for each status (used when templates aren't approved yet)
+    var WA_TEXT_MESSAGES = {
+        confirmed: function(n, id) { return 'Hi ' + n + '! ✅\n\nYour order *#' + id + '* has been *confirmed*!\n\nWe\'re getting it ready for you.\n\nThank you! — SeaSalt Pickles 🌶️'; },
+        processing: function(n, id) { return 'Hi ' + n + '! 👨‍🍳\n\nYour order *#' + id + '* is now being *prepared*!\n\nOur team is carefully packing your pickles & masalas.\n\nThank you! 🥒'; },
+        preparing: function(n, id) { return 'Hi ' + n + '! 👨‍🍳\n\nYour order *#' + id + '* is now being *prepared*!\n\nOur team is carefully packing your pickles & masalas.\n\nThank you! 🥒'; },
+        shipped: function(n, id, t) { return 'Hi ' + n + '! 🚚\n\nYour order *#' + id + '* has been *dispatched*!' + (t ? '\n\n📦 *Tracking:* ' + t + '\nTrack here: https://www.indiapost.gov.in/_layouts/15/dop.portal.tracking/trackconsignment.aspx' : '') + '\n\nOn its way! 🎉'; },
+        dispatched: function(n, id, t) { return 'Hi ' + n + '! 🚚\n\nYour order *#' + id + '* has been *dispatched*!' + (t ? '\n\n📦 *Tracking:* ' + t + '\nTrack here: https://www.indiapost.gov.in/_layouts/15/dop.portal.tracking/trackconsignment.aspx' : '') + '\n\nOn its way! 🎉'; },
+        delivered: function(n, id) { return 'Hi ' + n + '! 🎉\n\nYour order *#' + id + '* has been *delivered*!\n\nEnjoy your authentic Andhra pickles!\n\nThank you! ❤️ — SeaSalt Pickles'; },
+        cancelled: function(n, id) { return 'Hi ' + n + ',\n\nYour order *#' + id + '* has been *cancelled*.\n\nPlease reach out if you need help.\n\n— SeaSalt Pickles 🙏'; }
+    };
+
+    async function sendWhatsAppAPI(phone, orderId, status, tracking, customerName) {
+        if (!notifConfig || !notifConfig.wa_is_active || !notifConfig.wa_access_token || notifConfig.wa_access_token.length < 10) {
+            return { success: false, reason: 'wa_not_configured' };
+        }
+
+        var cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+
+        var shortId = orderId.substring(0, 8);
+        var name = customerName || 'Customer';
+        var apiUrl = 'https://graph.facebook.com/v21.0/' + notifConfig.wa_phone_number_id + '/messages';
+        var headers = { 'Authorization': 'Bearer ' + notifConfig.wa_access_token, 'Content-Type': 'application/json' };
+
+        // Strategy: Try TEMPLATE first → if fails, send DIRECT TEXT
+        var templateName = WA_TEMPLATE_MAP[status];
+        var usedMethod = 'template';
+
+        try {
+            var res, result;
+
+            // ── Attempt 1: Template message ──
+            if (templateName) {
+                var params = [{ type:'text', text:name }, { type:'text', text:shortId }];
+                if ((status === 'shipped' || status === 'dispatched') && tracking) params.push({ type:'text', text:tracking });
+
+                res = await fetch(apiUrl, {
+                    method: 'POST', headers: headers,
+                    body: JSON.stringify({
+                        messaging_product: 'whatsapp', to: cleanPhone, type: 'template',
+                        template: { name: templateName, language: { code: 'en' }, components: [{ type: 'body', parameters: params }] }
+                    })
+                });
+                result = await res.json();
+
+                if (res.ok && result.messages) {
+                    console.log('[WhatsApp] ✅ Template sent to', cleanPhone);
+                    try { await db.from('notification_log').insert({ order_id: orderId, customer_phone: cleanPhone, channel: 'whatsapp', template_name: templateName, status: 'sent', provider_message_id: result.messages[0].id }); } catch(e) {}
+                    return { success: true, messageId: result.messages[0].id, method: 'template' };
+                }
+                console.warn('[WhatsApp] Template failed, trying direct text...', result.error ? result.error.message : '');
+            }
+
+            // ── Attempt 2: Direct text message (no template needed) ──
+            usedMethod = 'text';
+            var msgFn = WA_TEXT_MESSAGES[status];
+            var textBody = msgFn ? msgFn(name, shortId, tracking) : ('Hi ' + name + '! Your order #' + shortId + ' status: ' + status + ' — SeaSalt Pickles');
+
+            res = await fetch(apiUrl, {
+                method: 'POST', headers: headers,
+                body: JSON.stringify({
+                    messaging_product: 'whatsapp', to: cleanPhone, type: 'text',
+                    text: { preview_url: true, body: textBody }
+                })
+            });
+            result = await res.json();
+
+            try {
+                await db.from('notification_log').insert({
+                    order_id: orderId, customer_phone: cleanPhone, channel: 'whatsapp',
+                    template_name: usedMethod === 'text' ? 'direct_text_' + status : templateName,
+                    status: res.ok && result.messages ? 'sent' : 'failed',
+                    provider_message_id: result.messages ? result.messages[0].id : null,
+                    error_message: res.ok ? null : JSON.stringify(result.error || result)
+                });
+            } catch(logErr) {}
+
+            if (res.ok && result.messages) {
+                console.log('[WhatsApp] ✅ Text message sent to', cleanPhone);
+                return { success: true, messageId: result.messages[0].id, method: 'text' };
+            } else {
+                console.error('[WhatsApp] ❌ Both template and text failed:', result);
+                return { success: false, error: result.error ? result.error.message : 'WA failed' };
+            }
+        } catch(e) {
+            console.error('[WhatsApp] ❌ Network:', e);
+            try { await db.from('notification_log').insert({ order_id: orderId, customer_phone: cleanPhone, channel: 'whatsapp', template_name: usedMethod + '_' + status, status: 'error', error_message: e.message }); } catch(x) {}
+            return { success: false, error: e.message };
+        }
+    }
+
+    // ── MANUAL FALLBACK (wa.me link) ──
+    function sendManualFallback(phone, orderId, status, tracking, name) {
+        var cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+        if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+        if (!cleanPhone) return;
+        var n = name || 'Customer'; var shortId = orderId.substring(0, 8); var msg = '';
+        switch(status) {
+            case 'confirmed': msg='Hi '+n+'! Your order #'+shortId+' confirmed! - SeaSalt Pickles'; break;
+            case 'processing': case 'preparing': msg='Hi '+n+'! Order #'+shortId+' being prepared! - SeaSalt Pickles'; break;
+            case 'shipped': case 'dispatched': msg='Hi '+n+'! Order #'+shortId+' dispatched!'; if(tracking)msg+=' Tracking: '+tracking; break;
+            case 'delivered': msg='Hi '+n+'! Order #'+shortId+' delivered! Enjoy!'; break;
+            case 'cancelled': msg='Hi '+n+', Order #'+shortId+' cancelled.'; break;
+            default: msg='Hi '+n+'! Order #'+shortId+': '+status;
+        }
+        var waUrl = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent(msg);
+        var popup = document.createElement('div');
+        popup.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:#25D366;color:white;padding:12px 16px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.2);display:flex;align-items:center;gap:10px;max-width:380px;animation:slideUp 0.3s ease;font-family:sans-serif;';
+        popup.innerHTML = '<div style="font-size:22px;">📱</div><div style="flex:1;"><p style="font-weight:700;font-size:12px;margin:0;">Manual: Send to '+n+'</p><p style="font-size:10px;margin:2px 0 0;opacity:0.9;">#'+shortId+' → '+status+'</p></div><a href="'+waUrl+'" target="_blank" rel="noopener" style="background:white;color:#25D366;padding:6px 14px;border-radius:8px;font-weight:700;font-size:11px;text-decoration:none;">Send ↗</a><button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;font-size:16px;cursor:pointer;">✕</button>';
+        document.body.appendChild(popup);
+        setTimeout(function() { if (popup.parentElement) popup.remove(); }, 15000);
+    }
+
+    // ── MASTER NOTIFICATION HANDLER — Sends BOTH SMS + WhatsApp ──
+    async function sendNotifications(phone, orderId, status, tracking, customerName) {
+        if (!phone) { showToast('⚠️ No phone number for this order', 'error'); return; }
+
+        var smsOk = false, waOk = false;
+
+        // 1. Send SMS
+        if (notifConfig && notifConfig.sms_is_active) {
+            showToast('📨 Sending SMS...', 'info');
+            var smsResult = await sendSMS(phone, orderId, status, tracking, customerName);
+            smsOk = smsResult.success;
+            if (smsOk) {
+                showToast('✅ SMS sent to ' + (customerName || phone), 'success');
+                await db.from('orders').update({ sms_sent: true }).eq('id', orderId);
+            } else {
+                showToast('⚠️ SMS failed: ' + (smsResult.error || smsResult.reason), 'error');
+            }
+        }
+
+        // 2. Send WhatsApp
+        if (notifConfig && notifConfig.wa_is_active) {
+            var waResult = await sendWhatsAppAPI(phone, orderId, status, tracking, customerName);
+            waOk = waResult.success;
+            if (waOk) {
+                showToast('✅ WhatsApp sent to ' + (customerName || phone), 'success');
+                await db.from('orders').update({ whatsapp_sent: true }).eq('id', orderId);
+            } else {
+                console.warn('[WhatsApp] Failed:', waResult.error);
+            }
+        }
+
+        // 3. Fallback — if BOTH failed, show manual link
+        if (!smsOk && !waOk) {
+            sendManualFallback(phone, orderId, status, tracking, customerName);
+        }
+    }
+
+    // ── Status Change → Supabase + Notifications ──
+    async function handleStatusChange(orderId, newStatus, tracking, customerName, customerPhone) {
+        var payload = { status: newStatus, updated_at: new Date().toISOString() };
+        if (tracking) payload.tracking_number = tracking;
+
+        var { error } = await db.from('orders').update(payload).eq('id', orderId);
+        if (error) { showToast('❌ Failed: ' + error.message, 'error'); return; }
+
+        showToast('✅ ' + orderId.substring(0,8) + ' → ' + newStatus, 'success');
+        await sendNotifications(customerPhone, orderId, newStatus, tracking, customerName);
+    }
+
+    // ── Save Tracking Only ──
+    async function saveTrackingOnly(orderId, tracking, customerName, customerPhone) {
+        var { error } = await db.from('orders').update({ tracking_number: tracking, updated_at: new Date().toISOString() }).eq('id', orderId);
+        if (error) { showToast('❌ Failed to save tracking', 'error'); return; }
+        showToast('📦 Tracking saved: ' + tracking, 'success');
+
+        var { data } = await db.from('orders').select('status,customer_phone,customer_name').eq('id', orderId).single();
+        if (data && (data.status === 'shipped' || data.status === 'dispatched')) {
+            await sendNotifications(data.customer_phone || customerPhone, orderId, data.status, tracking, data.customer_name || customerName);
+        }
+    }
+
+    // ── Toast ──
+    function showToast(msg, type) {
+        var toast = document.createElement('div');
+        var bg = type === 'success' ? '#059669' : type === 'error' ? '#DC2626' : '#3B82F6';
+        toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;background:' + bg + ';color:white;padding:10px 18px;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.15);font-size:13px;font-weight:600;animation:slideUp 0.3s ease;';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.remove(); }, 4000);
+    }
+
+    // ══════════ SHIPPING ══════════
+    function renderShippingTable(orders){var html='';orders.forEach(function(o){html+='<tr><td>'+(o.id||'').toString().substring(0,8)+'</td><td>'+(o.customer_name||'-')+'</td><td style="font-size:0.8rem;">'+(o.customer_address||o.address||'-')+'</td><td><select class="ship-partner" data-oid="'+o.id+'" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;"><option value="">Select</option><option>India Post</option><option>Delhivery</option><option>DTDC</option><option>DHL</option><option>Other</option></select></td><td><input type="text" class="ship-tracking" data-oid="'+o.id+'" placeholder="Tracking #" value="'+(o.tracking_number||'')+'" style="padding:4px;border:1px solid #ddd;border-radius:4px;width:120px;font-size:0.8rem;"></td><td><button class="btn btn-sm btn-primary ship-btn" data-oid="'+o.id+'">Ship</button></td></tr>';});document.getElementById('shippingTable').innerHTML=html||'<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No pending shipments</td></tr>';document.querySelectorAll('.ship-btn').forEach(function(btn){btn.addEventListener('click',async function(){var oid=this.getAttribute('data-oid');var partner=document.querySelector('.ship-partner[data-oid="'+oid+'"]').value;var tracking=document.querySelector('.ship-tracking[data-oid="'+oid+'"]').value;if(!partner){alert('Select a shipping partner');return;}await db.from('orders').update({status:'shipped',shipping_partner:partner,tracking_number:tracking,updated_at:new Date().toISOString()}).eq('id',oid);showToast('🚚 Order shipped!','success');var order=allOrders.find(function(o){return o.id===oid});if(order)sendNotifications(order.customer_phone,oid,'shipped',tracking,order.customer_name);loadOrders();});});}
+
+    // ══════════ SETTINGS ══════════
+    document.getElementById('saveSettingsBtn').addEventListener('click',function(){alert('Settings saved!')});
+    document.getElementById('changePassBtn').addEventListener('click',function(){var np=document.getElementById('newPassword').value.trim();if(np.length<4){alert('Password too short');return;}ADMIN_PASS=np;localStorage.setItem('seasalt_admin_pass',np);alert('Password updated!');document.getElementById('newPassword').value='';});
+
+    // ══════════ REAL-TIME NOTIFICATIONS ══════════
+    let lastNotifCheck=Date.now();
+    async function checkNewNotifications(){try{var{data:notifs}=await db.from('admin_notifications').select('*').eq('is_read',false).order('created_at',{ascending:false}).limit(10);notifs=notifs||[];var badge=document.getElementById('notifBadge');if(notifs.length>0){badge.textContent=notifs.length;badge.style.display='block'}else{badge.style.display='none'}notifs.filter(function(n){return new Date(n.created_at).getTime()>lastNotifCheck}).forEach(function(n){showNotificationPopup(n)});lastNotifCheck=Date.now();}catch(err){}}
+    function showNotificationPopup(notif){playNotifSound();var popup=document.createElement('div');popup.className='notif-popup';popup.style.cssText='position:fixed;top:20px;right:20px;background:'+(notif.type==='high_activity'?'#fef2f2':'#fffbeb')+';border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.25);padding:16px 20px;z-index:9999;max-width:380px;animation:notifSlideIn 0.4s ease;border-left:5px solid #ef4444;';var icon=notif.type==='high_activity'?'🔥':'🔔';popup.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;"><div style="flex:1;"><div style="font-weight:700;font-size:1.1rem;margin-bottom:6px;color:#dc2626;">'+icon+' Alert!</div><div style="font-size:0.9rem;color:#333;margin-bottom:10px;line-height:1.4;">'+notif.message+'</div><div style="display:flex;gap:8px;">'+(notif.user_phone?'<button class="btn btn-sm btn-primary" onclick="showUserDetail(\''+notif.user_phone+'\');this.closest(\'.notif-popup\').remove();">👤 View</button>':'')+'<button class="btn btn-sm btn-green" onclick="markNotifRead('+notif.id+');this.closest(\'.notif-popup\').remove();">✓ Got it</button></div></div><button onclick="this.closest(\'.notif-popup\').remove()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#999;">&times;</button></div>';document.body.appendChild(popup);setTimeout(function(){if(popup.parentElement){popup.style.animation='notifSlideOut 0.4s ease forwards';setTimeout(function(){if(popup.parentElement)popup.remove()},400)}},20000);}
+    function playNotifSound(){try{var ctx=new(window.AudioContext||window.webkitAudioContext)();[800,1000].forEach(function(f,i){setTimeout(function(){var o=ctx.createOscillator();var g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;o.type='sine';g.gain.value=0.2;o.start();setTimeout(function(){o.stop()},150)},i*200)})}catch(e){}}
+    setInterval(checkNewNotifications,30000);
+    setTimeout(checkNewNotifications,2000);
+
+    // ══════════ DELIVERY CHARGES ══════════
+    let deliveryCharges=[];let countriesList=[];
+    async function loadDeliveryCharges(){var{data:charges}=await db.from('delivery_charges').select('*').order('country');deliveryCharges=charges||[];var{data:countries}=await db.from('countries').select('*').order('sort_order');countriesList=countries||[];renderDeliveryChargesTable();renderCountriesList();populateCountryDropdown();}
+    function renderDeliveryChargesTable(){var html='';if(deliveryCharges.length===0){html='<tr><td colspan="5" style="text-align:center;color:#999;padding:20px;">No delivery charges</td></tr>';}else{deliveryCharges.forEach(function(dc){html+='<tr><td><strong>'+dc.country+'</strong></td><td>'+(dc.region||'All')+'</td><td>₹'+(dc.min_order_free||0)+'</td><td>₹'+(dc.flat_charge||0)+'</td><td><button class="btn btn-sm" style="background:#eee;margin-right:4px;" onclick="editDeliveryCharge('+dc.id+')">✏️</button><button class="btn btn-sm" style="background:#fee;color:#c00;" onclick="deleteDeliveryCharge('+dc.id+')">🗑️</button></td></tr>';});}document.getElementById('deliveryChargesTable').innerHTML=html;}
+    function renderCountriesList(){var html='';countriesList.forEach(function(c){html+='<div style="display:flex;align-items:center;gap:8px;padding:4px 0;"><input type="checkbox" '+(c.is_active?'checked':'')+' onchange="toggleCountry(\''+c.code+'\',this.checked)"><span style="font-size:0.9rem;">'+c.name+' ('+c.currency_symbol+')</span></div>';});document.getElementById('countriesList').innerHTML=html||'<p style="color:#999;">No countries configured</p>';}
+    function populateCountryDropdown(){var s=document.getElementById('dc-country');s.innerHTML='<option value="">Select country</option>';countriesList.forEach(function(c){s.innerHTML+='<option value="'+c.name+'">'+c.name+'</option>'});}
+    window.toggleCountry=async function(code,active){await db.from('countries').update({is_active:active}).eq('code',code);loadDeliveryCharges();};
+    document.getElementById('addDeliveryChargeBtn').addEventListener('click',function(){document.getElementById('deliveryModalTitle').textContent='Add Delivery Charge';document.getElementById('dc-id').value='';document.getElementById('dc-country').value='';document.getElementById('dc-region').value='';document.getElementById('dc-minFree').value='500';document.getElementById('dc-flatFee').value='50';document.getElementById('dc-notes').value='';document.getElementById('deliveryModal').classList.add('show');});
+    window.editDeliveryCharge=function(id){var dc=deliveryCharges.find(function(d){return d.id===id});if(!dc)return;document.getElementById('deliveryModalTitle').textContent='Edit Delivery Charge';document.getElementById('dc-id').value=dc.id;document.getElementById('dc-country').value=dc.country;document.getElementById('dc-region').value=dc.region||'';document.getElementById('dc-minFree').value=dc.min_order_free||0;document.getElementById('dc-flatFee').value=dc.flat_charge||0;document.getElementById('dc-notes').value=dc.notes||'';document.getElementById('deliveryModal').classList.add('show');};
+    window.deleteDeliveryCharge=async function(id){if(!confirm('Delete this delivery charge?'))return;await db.from('delivery_charges').delete().eq('id',id);loadDeliveryCharges();};
+    document.getElementById('saveDeliveryChargeBtn').addEventListener('click',async function(){var id=document.getElementById('dc-id').value;var data={country:document.getElementById('dc-country').value,region:document.getElementById('dc-region').value||null,min_order_free:parseFloat(document.getElementById('dc-minFree').value)||0,flat_charge:parseFloat(document.getElementById('dc-flatFee').value)||0,notes:document.getElementById('dc-notes').value||null};if(!data.country){alert('Please select a country');return;}if(id){await db.from('delivery_charges').update(data).eq('id',id)}else{await db.from('delivery_charges').insert(data)}document.getElementById('deliveryModal').classList.remove('show');loadDeliveryCharges();});
+    document.getElementById('deliveryModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show')});
+    setTimeout(loadDeliveryCharges,1000);
+
+    // ══════════ INIT ══════════
+    checkAuth();
+})();
+</script>
 </body>
 </html>
