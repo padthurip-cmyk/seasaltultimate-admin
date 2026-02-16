@@ -1,7 +1,6 @@
 const GOOGLE_KEY = 'AIzaSyA33gWiI28GPZw2v-sOYYcyEyMTz9Lm5s8';
 const SB_URL = 'https://yosjbsncvghpscsrvxds.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlvc2pic25jdmdocHNjc3J2eGRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgzMzI4MTMsImV4cCI6MjA1MzkwODgxM30.yGMPq3C_Zbs1S_GBJCsjH67W4TYj7QHZE_9EhfjhsXA';
-
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
 const COMPETITORS = [
   { name: "Vellanki Foods", search: "Vellanki Foods pickles Hyderabad", url: "vellankifoods.com", code: "VF", color: "#C2410C" },
   { name: "Tulasi Pickles", search: "Tulasi Pickles Hyderabad", url: "tulasipickles.com", code: "TP", color: "#16A34A" },
