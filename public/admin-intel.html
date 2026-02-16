@@ -3,352 +3,670 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SeaSalt Admin — Competitor Intel (Live)</title>
+<title>SeaSalt Command Center</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}body{background:#0B0E11;color:#E8ECF1;font-family:'DM Sans',sans-serif}
-  ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#252B38;border-radius:3px}
-  .sl{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:10px;font-size:.82rem;font-weight:500;color:#8B95A5;cursor:pointer;transition:.15s}
-  .sl:hover{background:rgba(255,255,255,.04);color:#E8ECF1}.sl.on{background:rgba(255,77,45,.12);color:#FF4D2D;font-weight:600}
-  .cd{background:#141820;border:1px solid #252B38;border-radius:12px;overflow:hidden}
-  .ch{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #252B38}
-  .ch h3{font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:8px}
-  .bg{font-size:.6rem;font-family:'Space Mono',monospace;padding:3px 8px;border-radius:6px}
-  .bg-l{background:rgba(34,197,94,.1);color:#22C55E}.bg-c{background:#1A1F2B;color:#8B95A5}
-  .tbl{width:100%;border-collapse:collapse}
-  .tbl th{text-align:left;padding:10px 14px;font-size:.6rem;color:#8B95A5;text-transform:uppercase;letter-spacing:.08em;font-family:'Space Mono',monospace;border-bottom:1px solid #252B38;font-weight:400}
-  .tbl td{padding:13px 14px;border-bottom:1px solid rgba(37,43,56,.4);font-size:.82rem}
-  .tbl tr:last-child td{border-bottom:none}.tbl tr.clk{cursor:pointer;transition:.12s}.tbl tr.clk:hover{background:rgba(255,77,45,.04)}
-  .btn{padding:9px 18px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.78rem;cursor:pointer;transition:.2s}
-  .bp{background:#FF4D2D;color:#fff}.bp:hover{background:#FF6B4D}.bg2{background:#141820;color:#E8ECF1;border:1px solid #252B38}.bg2:hover{border-color:#FF4D2D}
-  .bs{padding:6px 12px;font-size:.7rem;border-radius:6px}
-  .ai-box{background:linear-gradient(135deg,rgba(255,77,45,.07),rgba(255,140,66,.03));border:1px solid rgba(255,77,45,.25);border-radius:12px;padding:20px}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}.dot{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 8px rgba(34,197,94,.5);animation:pulse 2s infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}.spinner{width:20px;height:20px;border:2px solid #252B38;border-top-color:#FF4D2D;border-radius:50%;animation:spin .6s linear infinite}
-  .pf{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:.8rem;transition:.15s;border:1px solid transparent}
-  .pf.on{background:rgba(255,77,45,.12);border-color:rgba(255,77,45,.3);color:#fff}.pf.off{color:#8B95A5}.pf.off:hover{background:rgba(255,255,255,.03)}
-  .fade-in{animation:fadeIn .3s ease}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#F5F6FA;color:#1A1D26;font-family:'DM Sans',sans-serif;font-size:13px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:3px}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:210px;background:#fff;border-right:1px solid #E5E7EB;padding:14px 10px;position:fixed;height:100vh;overflow-y:auto;z-index:10;display:flex;flex-direction:column}
+.main{flex:1;margin-left:210px;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:9;background:#F5F6FA;border-bottom:1px solid #E5E7EB;padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+.content{padding:16px 20px}
+.logo{display:flex;align-items:center;gap:7px;padding:3px 8px;margin-bottom:14px}
+.logo-i{width:32px;height:32px;background:#D4451A;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;color:#fff}
+.logo-t{font-weight:700;font-size:.82rem}.logo-s{font-size:.46rem;color:#9CA3AF;font-family:'Space Mono',monospace}
+.sec{font-size:.42rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:.1em;font-family:'Space Mono',monospace;padding:0 10px 3px;margin-top:10px}
+.sl{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:8px;font-size:.74rem;font-weight:500;color:#6B7280;cursor:pointer;transition:.12s}
+.sl:hover{background:rgba(0,0,0,.03);color:#1A1D26}.sl.on{background:rgba(212,69,26,.08);color:#D4451A;font-weight:600}
+.sl .bdg{margin-left:auto;background:#D4451A;color:#fff;font-size:.46rem;padding:1px 5px;border-radius:8px;font-family:'Space Mono',monospace}
+.cd{background:#fff;border:1px solid #E5E7EB;border-radius:10px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #F0F1F3}
+.ch h3{font-size:.76rem;font-weight:600}
+.tg{display:inline-flex;align-items:center;padding:2px 7px;border-radius:5px;font-size:.52rem;font-weight:600;font-family:'Space Mono',monospace}
+.tg-g{background:rgba(22,163,74,.08);color:#16A34A}.tg-r{background:rgba(220,38,38,.08);color:#DC2626}
+.tg-y{background:rgba(202,138,4,.08);color:#CA8A04}.tg-b{background:rgba(37,99,235,.08);color:#2563EB}
+.tg-a{background:rgba(212,69,26,.06);color:#D4451A}
+.btn{padding:7px 14px;border-radius:7px;border:none;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.7rem;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:.15s}
+.bp{background:#D4451A;color:#fff}.bp:hover{background:#B93A15}
+.bg2{background:#fff;color:#374151;border:1px solid #E5E7EB}.bg2:hover{border-color:#D4451A}
+.bw{background:#25D366;color:#fff}
+.bs{padding:4px 10px;font-size:.62rem;border-radius:5px}
+.bi{width:26px;height:26px;border-radius:6px;border:1px solid #E5E7EB;background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:.66rem;transition:.1s}
+.bi:hover{border-color:#D4451A}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;padding:7px 10px;font-size:.48rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:.05em;font-family:'Space Mono',monospace;border-bottom:1px solid #F0F1F3;background:#FAFBFC;font-weight:400}
+.tbl td{padding:8px 10px;border-bottom:1px solid #F5F6FA;font-size:.74rem;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr.clk{cursor:pointer;transition:.1s}.tbl tr.clk:hover{background:#FFF7ED}
+.inp{width:100%;padding:6px 10px;border-radius:6px;background:#FAFBFC;border:1.5px solid #E5E7EB;color:#1A1D26;font-size:.72rem;font-family:'DM Sans',sans-serif;transition:.12s}
+.inp:focus{outline:none;border-color:#D4451A;background:#fff}
+textarea.inp{resize:vertical;min-height:55px}select.inp{cursor:pointer}
+.gd{display:grid;gap:10px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:repeat(4,1fr)}.g5{grid-template-columns:repeat(5,1fr)}
+.st{padding:14px}.st .lb{font-size:.46rem;color:#9CA3AF;text-transform:uppercase;font-family:'Space Mono',monospace;margin-bottom:3px}
+.st .vl{font-size:1.3rem;font-weight:700}.st .sb{font-size:.5rem;color:#9CA3AF;margin-top:1px}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:25px 15px;overflow-y:auto}
+.mo.show{display:flex}
+.mbox{background:#fff;border:1px solid #E5E7EB;border-radius:12px;width:820px;max-width:98vw;box-shadow:0 20px 50px rgba(0,0,0,.15);animation:mIn .2s ease}
+@keyframes mIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #E5E7EB}
+.mhd h3{font-size:.86rem;font-weight:700}
+.mbd{padding:18px;max-height:72vh;overflow-y:auto}
+.mft{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid #E5E7EB;background:#FAFBFC;border-radius:0 0 12px 12px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}.dot{width:6px;height:6px;border-radius:50%;background:#22C55E;box-shadow:0 0 6px rgba(34,197,94,.5);animation:pulse 2s infinite}
+@keyframes spin{to{transform:rotate(360deg)}}.spinner{width:16px;height:16px;border:2px solid #E5E7EB;border-top-color:#D4451A;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}.fade{animation:fadeIn .2s ease}
+.hidden{display:none!important}
+.bar{height:28px;border-radius:4px;background:linear-gradient(135deg,#D4451A,#FF6B4D);min-width:4px;transition:width .3s}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.pcard{background:#fff;border:1px solid #E5E7EB;border-radius:10px;overflow:hidden;cursor:pointer;transition:.18s;position:relative}
+.pcard:hover{box-shadow:0 6px 20px rgba(0,0,0,.08);transform:translateY(-2px);border-color:rgba(212,69,26,.2)}
+.pcard .pimg{width:100%;height:130px;background:#F5F6FA;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pcard .pimg img{width:100%;height:100%;object-fit:cover}
+.pcard .pinfo{padding:10px}
+.pcard .pcat{font-size:.48rem;color:#9CA3AF;font-family:'Space Mono',monospace;text-transform:uppercase}
+.pcard .pnm{font-weight:600;font-size:.76rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .pbot{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.pcard .ppr{font-weight:700;color:#D4451A;font-size:.82rem}
+.pcard .pvr{font-size:.46rem;color:#9CA3AF;font-family:'Space Mono',monospace}
+.pcard .pbdg{position:absolute;top:6px;right:6px}
+.pcard .pinact{position:absolute;inset:0;background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center}
+.pcard .pinact span{background:rgba(220,38,38,.08);color:#DC2626;padding:3px 10px;border-radius:5px;font-size:.56rem;font-weight:600}
+.ppills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.ppill{padding:4px 12px;border-radius:16px;border:1px solid #E5E7EB;background:#fff;font-size:.62rem;font-weight:500;cursor:pointer;color:#6B7280;transition:.12s}
+.ppill:hover{border-color:#D4451A;color:#D4451A}.ppill.on{background:#D4451A;color:#fff;border-color:#D4451A}
+.etabs{display:flex;border-bottom:2px solid #E5E7EB;margin-bottom:14px}
+.etab{padding:7px 14px;font-size:.64rem;font-weight:500;color:#6B7280;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.1s}
+.etab:hover{color:#1A1D26}.etab.on{color:#D4451A;border-bottom-color:#D4451A;font-weight:600}
+.etp{display:none}.etp.on{display:block}
+.imgslot{width:85px;height:85px;border:2px dashed #E5E7EB;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;background:#FAFBFC;transition:.12s}
+.imgslot:hover{border-color:#D4451A;background:rgba(212,69,26,.04)}
+.imgslot img{width:100%;height:100%;object-fit:cover}
+.imgslot .rm{position:absolute;top:1px;right:1px;width:16px;height:16px;background:#DC2626;color:#fff;border-radius:50%;font-size:.44rem;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:.12s;border:none}
+.imgslot:hover .rm{opacity:1}
+.imgslot.pri{border-color:#D4451A;border-style:solid}
+.imgslot.pri::after{content:'PRIMARY';position:absolute;bottom:0;left:0;right:0;background:#D4451A;color:#fff;font-size:.34rem;text-align:center;padding:1px;font-family:'Space Mono',monospace}
+.vrow{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr .5fr .3fr;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(229,231,235,.4)}
+.vrow:last-child{border-bottom:none}
+.vhd{font-size:.42rem;color:#9CA3AF;text-transform:uppercase;font-family:'Space Mono',monospace;padding-bottom:5px;border-bottom:1px solid #E5E7EB}
+.vi{width:100%;padding:5px 7px;border-radius:4px;border:1px solid #E5E7EB;background:#FAFBFC;font-size:.66rem;font-family:'DM Sans',sans-serif}
+.vi:focus{outline:none;border-color:#D4451A;background:#fff}
+.itag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:#FAFBFC;border:1px solid #E5E7EB;border-radius:16px;font-size:.6rem;margin:2px}
+.itag .x{cursor:pointer;color:#9CA3AF;font-size:.52rem}.itag .x:hover{color:#DC2626}
+.ngrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.nitem{background:#FAFBFC;border:1px solid #E5E7EB;border-radius:6px;padding:7px;text-align:center}
+.nitem input{text-align:center;font-weight:700;font-size:.88rem;border:none;background:transparent;width:100%;padding:2px;font-family:'DM Sans',sans-serif}
+.nitem .nl{font-size:.42rem;color:#9CA3AF;font-family:'Space Mono',monospace;text-transform:uppercase}
+.tog{position:relative;width:34px;height:18px;display:inline-block}
+.tog input{opacity:0;width:0;height:0}
+.tog .ts{position:absolute;inset:0;background:#D1D5DB;border-radius:18px;cursor:pointer;transition:.2s}
+.tog .ts:before{content:'';position:absolute;height:14px;width:14px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:.2s}
+.tog input:checked+.ts{background:#16A34A}
+.tog input:checked+.ts:before{transform:translateX(16px)}
+.fg{margin-bottom:10px}
+.fl{display:block;font-size:.5rem;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;font-family:'Space Mono',monospace}
+.fh{font-size:.48rem;color:#9CA3AF;margin-top:1px}
+.cc{font-size:.44rem;color:#9CA3AF;text-align:right;margin-top:1px;font-family:'Space Mono',monospace}
+@media(max-width:900px){.sidebar{width:56px;padding:8px 4px}.sidebar .logo-t,.sidebar .logo-s,.sidebar .sec,.sidebar .sl span,.sidebar>div:last-child{display:none}.main{margin-left:56px}.g4,.g5{grid-template-columns:repeat(2,1fr)}.pgrid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}.vrow{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
-<div class="flex min-h-screen">
-
-<!-- SIDEBAR -->
-<aside class="w-60 border-r border-gray-800 flex flex-col p-4 flex-shrink-0" style="background:#0D1015">
-  <div class="flex items-center gap-3 mb-8 px-2">
-    <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg" style="background:linear-gradient(135deg,#FF4D2D,#FF8C42)">🫙</div>
-    <div><div class="font-bold text-sm">SeaSalt Admin</div><div class="text-xs text-gray-600" style="font-family:monospace">Intel v2.0 · LIVE</div></div>
-  </div>
-  <div class="text-xs text-gray-600 uppercase tracking-widest px-2 mb-2" style="font-family:monospace">Main</div>
-  <a href="admin-index.html" class="sl">📊 Dashboard</a>
-  <a href="admin-index.html#analytics" class="sl">📈 Analytics</a>
-  <a href="admin-index.html#orders" class="sl">📦 Orders</a>
-  <a href="admin-index.html#products" class="sl">🏷️ Products</a>
-  <a href="admin-index.html#users" class="sl">👥 Users</a>
-  <div class="text-xs text-gray-600 uppercase tracking-widest px-2 mb-2 mt-6" style="font-family:monospace">Intelligence</div>
-  <div class="sl on" onclick="go('intel')" id="n-intel">🏆 Competitor Intel</div>
-  <div class="sl" onclick="go('social')" id="n-social">📱 Social Hub</div>
-  <div class="sl" onclick="go('insights')" id="n-insights">🧠 Insights</div>
-  <div class="flex-1"></div>
-  <div class="px-2 py-3 rounded-lg" style="background:rgba(255,77,45,.06);border:1px solid rgba(255,77,45,.15)">
-    <div class="flex items-center gap-2 mb-1"><div class="dot"></div><span class="text-xs text-gray-500" style="font-family:monospace">Live · Supabase Connected</span></div>
-    <div class="text-xs text-gray-600" style="font-family:monospace">Last sync: <span id="sb-sync">—</span></div>
-  </div>
+<div class="shell">
+<aside class="sidebar">
+  <div class="logo"><div class="logo-i">S</div><div><div class="logo-t">SeaSalt</div><div class="logo-s">Command Center</div></div></div>
+  <div class="sec">Admin</div>
+  <div class="sl" onclick="go('dash')" id="n-dash">📊 <span>Dashboard</span></div>
+  <div class="sl" onclick="go('orders')" id="n-orders">📦 <span>Orders</span></div>
+  <div class="sl" onclick="go('products')" id="n-products">🏷️ <span>Products</span></div>
+  <div class="sl" onclick="go('users')" id="n-users">👥 <span>Users</span></div>
+  <div class="sl" onclick="go('shipping')" id="n-shipping">🚚 <span>Shipping</span></div>
+  <div class="sl" onclick="go('notifs')" id="n-notifs">🔔 <span>Notifications</span> <span id="notif-badge" class="bdg hidden">0</span></div>
+  <div class="sl" onclick="go('settings')" id="n-settings">⚙️ <span>Settings</span></div>
+  <div class="sec" style="margin-top:12px">Intelligence</div>
+  <div class="sl" onclick="go('intel')" id="n-intel">🏆 <span>Competitors</span></div>
+  <div class="sl" onclick="go('spy')" id="n-spy">🕵️ <span>Social Spy</span></div>
+  <div class="sl" onclick="go('insights')" id="n-insights">🧠 <span>Insights</span></div>
+  <div class="sl" onclick="go('content')" id="n-content">📱 <span>Content Studio</span></div>
+  <div class="sec" style="margin-top:12px">Links</div>
+  <div class="sl" onclick="window.open('https://seasaltpickles.com','_blank')">🌐 <span>Store</span></div>
+  <div class="sl" onclick="window.open('https://dashboard.razorpay.com','_blank')">💳 <span>Razorpay</span></div>
+  <div class="sl" onclick="window.open('https://supabase.com/dashboard','_blank')">🗄️ <span>Supabase</span></div>
+  <div style="flex:1"></div>
+  <div style="padding:8px;border-top:1px solid #E5E7EB;font-size:.48rem;color:#9CA3AF;font-family:'Space Mono',monospace"><div style="display:flex;align-items:center;gap:4px"><div class="dot"></div> Live</div><div style="margin-top:2px">Sync: <span id="sb-sync">—</span></div></div>
 </aside>
-
-<!-- MAIN -->
-<main class="flex-1 overflow-y-auto" style="max-height:100vh">
-  <div class="flex items-center justify-between px-6 py-4 border-b border-gray-800 sticky top-0 z-40" style="background:#0B0E11">
-    <div><h1 class="text-lg font-bold" id="ptitle">🏆 Competitor Intelligence</h1><p class="text-xs text-gray-500" style="font-family:monospace" id="psub">Live Data · Supabase + Google Places API</p></div>
-    <div class="flex items-center gap-3">
-      <div id="sync-spinner" class="hidden"><div class="spinner"></div></div>
-      <button class="btn bg2 bs" onclick="syncNow()">🔄 Sync Live Data</button>
-      <button class="btn bp bs" onclick="exportCSV()">↓ Export</button>
-    </div>
+<main class="main">
+  <div class="topbar">
+    <div><h1 id="pt" style="font-size:1.1rem;font-weight:700">📊 Dashboard</h1><p id="ps" style="font-size:.6rem;color:#9CA3AF;margin-top:1px">Overview</p></div>
+    <div style="display:flex;gap:4px"><div id="sp" class="spinner hidden"></div><button class="btn bg2 bs" onclick="syncNow()">🔄 Sync</button></div>
   </div>
-  <div class="p-6 fade-in" id="content"></div>
+  <div id="ct" class="content fade"></div>
+  <div id="wa-pop"></div>
 </main>
 </div>
-
+<!-- Product Editor Modal -->
+<div class="mo" id="pe-modal"><div class="mbox"><div class="mhd"><h3 id="pe-title">🏷️ Add Product</h3><div style="display:flex;gap:5px;align-items:center"><span id="pe-saved" class="tg tg-g" style="display:none">✅ Saved</span><button class="bi" onclick="peClose()">✕</button></div></div><div class="mbd" id="pe-body"></div><div class="mft"><div><button class="btn bg2 bs" onclick="pePreview()">👁 Preview</button> <button class="btn bg2 bs" id="pe-dup" onclick="peDuplicate()" style="display:none">📋 Duplicate</button></div><div style="display:flex;gap:5px"><button class="btn bg2" onclick="peClose()">Cancel</button><button class="btn bp" onclick="peSave()" id="pe-savebtn">💾 Save</button></div></div></div></div>
+<!-- Preview Modal -->
+<div class="mo" id="pv-modal"><div class="mbox" style="max-width:380px"><div class="mhd"><h3>📱 Preview</h3><button class="bi" onclick="document.getElementById('pv-modal').classList.remove('show')">✕</button></div><div class="mbd" id="pv-body"></div></div></div>
+<!-- Delete Modal -->
+<div class="mo" id="pd-modal"><div class="mbox" style="max-width:340px"><div class="mhd"><h3>⚠️ Delete Product</h3></div><div class="mbd" style="text-align:center;padding:18px"><p style="font-weight:700;font-size:.88rem;margin-bottom:12px" id="pd-name"></p><p style="font-size:.6rem;color:#9CA3AF">This will delete all variants too.</p></div><div class="mft" style="justify-content:center;gap:8px"><button class="btn bg2" onclick="document.getElementById('pd-modal').classList.remove('show')">Cancel</button><button class="btn" style="background:#DC2626;color:#fff" onclick="pdConfirm()">🗑 Delete</button></div></div></div>
 <script>
-// ═══════════════════════════════════
-// CONFIG
-// ═══════════════════════════════════
-const SB_URL='https://yosjbsncvghpscsrvxds.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlvc2pic25jdmdocHNjc3J2eGRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgzMzI4MTMsImV4cCI6MjA1MzkwODgxM30.yGMPq3C_Zbs1S_GBJCsjH67W4TYj7QHZE_9EhfjhsXA';
-const SEASALT={avakaya:349,chicken:499,gongura:299,lemon:249,garlic:279};
-const PRODUCTS=["Avakaya Mango Pickle","Gongura Red Chilli Pickle","Chicken Pickle with Bone","Boneless Chicken Pickle","Mutton Pickle","Prawn Pickle","Garlic Pachadi","Tomato Thokku","Lemon Spice Pickle","Mixed Vegetable Pickle","Summer Combo Pack","Family Pack"];
-const PLATFORMS=[{id:"ig_post",l:"Instagram Post",i:"📸"},{id:"ig_reel",l:"Reel Script",i:"🎬"},{id:"fb_post",l:"Facebook Post",i:"📘"},{id:"g_post",l:"Google Business",i:"📍"},{id:"wa_msg",l:"WhatsApp Broadcast",i:"💬"},{id:"yt_short",l:"YouTube Short",i:"▶️"}];
+// ═══ CONFIG ═══
+var SB='https://yosjbsncvghpscsrvxds.supabase.co';
+var SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlvc2pic25jdmdocHNjc3J2eGRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMjc3NTgsImV4cCI6MjA4NTgwMzc1OH0.PNEbeofoyT7KdkzepRfqg-zqyBiGAat5ElCMiyQ4UAs';
+// ═══ STATE ═══
+var pg='dash',selUser=null;
+var orders=[],users=[],walletTx=[],products=[],prodVar=[],deliveryCharges=[],notifs=[],notifConfig=null;
+var comps=[],revs=[],ads=[];
+var pView='grid',pFilter='all',pSearch='',pTab='basic',pEdit=null,pDel=null,pState={};
+var sPl='ig_post',sPr='Avakaya Mango Pickle';
+var STATUSES=['confirmed','preparing','dispatched','delivered','cancelled'];
+var STAT_E={confirmed:'✅',preparing:'👨‍🍳',dispatched:'🚚',delivered:'🎉',cancelled:'❌'};
+var CS={'Vellanki Foods':{ig:'vellankifoods'},'Priya Pickles':{ig:'priyafoodsofficial'},'Nirupama Pickles':{ig:'nirupamapickles'}};
 
-let page='intel',drill=null,comps=[],revs=[],sPlat='ig_post',sProd=PRODUCTS[0];
+// ═══ HELPERS ═══
+function e(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function ta(d){if(!d)return'-';var s=Math.floor((Date.now()-new Date(d))/1000);if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d';}
+function hd(){return{'apikey':SK,'Authorization':'Bearer '+SK};}
+function spin(on){document.getElementById('sp').classList[on?'remove':'add']('hidden');}
 
-// ═══════════════════════════════════
-// SUPABASE HELPERS
-// ═══════════════════════════════════
-async function sbGet(table,params=''){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}?${params}`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}});
-  return r.ok?r.json():[];
+// ═══ SUPABASE ═══
+async function sg(t,p){try{var r=await fetch(SB+'/rest/v1/'+t+'?'+(p||''),{headers:hd()});return r.ok?await r.json():[];}catch(x){return[];}}
+async function si(t,d){try{var r=await fetch(SB+'/rest/v1/'+t,{method:'POST',headers:Object.assign({'Content-Type':'application/json','Prefer':'return=representation'},hd()),body:JSON.stringify(d)});return r.ok?await r.json():null;}catch(x){return null;}}
+async function su(t,f,d){try{var r=await fetch(SB+'/rest/v1/'+t+'?'+f,{method:'PATCH',headers:Object.assign({'Content-Type':'application/json','Prefer':'return=representation'},hd()),body:JSON.stringify(d)});return r.ok?await r.json():null;}catch(x){return null;}}
+async function sdl(t,f){try{var r=await fetch(SB+'/rest/v1/'+t+'?'+f,{method:'DELETE',headers:hd()});return r.ok;}catch(x){return false;}}
+
+// ═══ DATA LOAD ═══
+async function ld(){spin(1);try{
+orders=await sg('orders','select=*&order=created_at.desc&limit=200');
+users=await sg('users','select=*&order=last_seen.desc&limit=300');
+try{walletTx=await sg('wallet_transactions','select=*&order=created_at.desc&limit=100');}catch(x){walletTx=[];}
+products=await sg('products','select=*&order=sort_order.asc.nullsfirst,name.asc');
+try{prodVar=await sg('product_variants','select=*&order=sort_order.asc.nullsfirst,name.asc');}catch(x){prodVar=[];}
+try{deliveryCharges=await sg('delivery_charges','select=*&order=id');}catch(x){deliveryCharges=[];}
+try{notifs=await sg('admin_notifications','select=*&order=created_at.desc&limit=50');}catch(x){notifs=[];}
+try{var nc=await sg('notification_config','select=*&id=eq.1');notifConfig=nc[0]||null;}catch(x){}
+comps=await sg('competitors','select=*&order=google_reviews_count.desc');
+revs=await sg('competitor_reviews','select=*&order=publish_time.desc&limit=50');
+try{ads=await sg('competitor_ads','select=*&order=detected_at.desc&limit=50');}catch(x){ads=[];}
+document.getElementById('sb-sync').textContent=new Date().toLocaleTimeString();
+var unread=notifs.filter(function(n){return!n.read;}).length;
+var nb=document.getElementById('notif-badge');if(unread>0){nb.textContent=unread;nb.classList.remove('hidden');}else nb.classList.add('hidden');
+}catch(x){console.error(x);}spin(0);rn();}
+
+async function syncNow(){spin(1);try{var r=await fetch('/.netlify/functions/intel-sync?action=sync');var d=await r.json();alert(d.success?'Synced!':'Error');}catch(x){}await ld();}
+
+// ═══ ORDER HELPERS ═══
+function waT(o,s){var n=o.customer_name||'Customer',id=o.id||'';var m={confirmed:'Hi '+n+'! ✅ Order #'+id+' confirmed!',preparing:'Hi '+n+'! 👨‍🍳 Order #'+id+' being prepared!',dispatched:'Hi '+n+'! 🚚 Order #'+id+' dispatched!',delivered:'Hi '+n+'! 🎉 Order #'+id+' delivered!',cancelled:'Hi '+n+', Order #'+id+' cancelled.'};return m[s]||'';}
+function showWaPop(ph,msg){var el=document.getElementById('wa-pop');var u='https://wa.me/'+String(ph).replace(/\+/g,'')+'?text='+encodeURIComponent(msg);el.innerHTML='<div style="position:fixed;bottom:16px;right:16px;background:#25D366;color:#fff;padding:12px 18px;border-radius:10px;z-index:90;box-shadow:0 4px 20px rgba(0,0,0,.2);font-size:.78rem;display:flex;align-items:center;gap:8px">📱 <a href="'+u+'" target="_blank" style="color:#fff;text-decoration:underline">Send WhatsApp →</a> <button class="btn bg2 bs" onclick="this.parentElement.remove()">✕</button></div>';setTimeout(function(){el.innerHTML='';},15000);}
+async function updateStatus(oid,ns){var ok=await su('orders','id=eq.'+oid,{status:ns});if(ok){var o=orders.find(function(x){return x.id===oid;});if(o){o.status=ns;var msg=waT(o,ns);if(o.customer_phone&&msg)showWaPop(o.customer_phone,msg);}rn();}else alert('Failed');}
+async function addWallet(ph){var amt=prompt('Add wallet (₹):');if(!amt||isNaN(amt))return;var n=parseFloat(amt);var u=users.find(function(x){return x.phone===ph;});var nb=(u?parseFloat(u.wallet_balance||0):0)+n;await su('users','phone=eq.'+encodeURIComponent(ph),{wallet_balance:nb});alert('₹'+nb);await ld();}
+function st(r){return '★'.repeat(Math.floor(r||0))+'☆'.repeat(5-Math.floor(r||0));}
+function ai(c){var a=[];if((c.active_ads_count||0)>2)a.push('🔴 Running '+c.active_ads_count+' ads');if((c.google_rating||0)>=4.5)a.push('🟡 High rated: '+c.google_rating);if(!a.length)a.push('🟢 Normal activity');return a;}
+
+// ═══ PRODUCT HELPERS ═══
+function pVars(pid){return prodVar.filter(function(v){return String(v.product_id)===String(pid);});}
+function pPrice(p){var v=pVars(p.id);if(v.length)return Math.min.apply(null,v.map(function(x){return parseFloat(x.price||0);}));return parseFloat(p.price||p.base_price||0);}
+function pImg(p){if(p.images&&p.images.length)return p.images[0];return p.image_url||'';}
+function pSlug(n){return(n||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+function pCats(){var s=new Set();products.forEach(function(p){if(p.category)s.add(p.category);});return Array.from(s).sort();}
+function pFiltered(){var l=products.slice();if(pFilter==='_active')l=l.filter(function(p){return p.is_active!==false;});
+else if(pFilter==='_inactive')l=l.filter(function(p){return p.is_active===false;});
+else if(pFilter==='_featured')l=l.filter(function(p){return p.is_featured;});
+else if(pFilter==='_noimg')l=l.filter(function(p){return!pImg(p);});
+else if(pFilter!=='all')l=l.filter(function(p){return p.category===pFilter;});
+if(pSearch){var q=pSearch.toLowerCase();l=l.filter(function(p){return(p.name||'').toLowerCase().indexOf(q)>=0||(p.category||'').toLowerCase().indexOf(q)>=0;});}
+return l;}
+
+// ═══ NAV ═══
+function go(p){pg=p;selUser=null;pSearch='';rn();}
+// ═══ MAIN RENDER ═══
+function rn(){
+var ct=document.getElementById('ct');
+document.querySelectorAll('.sl').forEach(function(x){x.classList.remove('on');});
+var nid='n-'+pg;var nel=document.getElementById(nid);if(nel)nel.classList.add('on');
+var h='';
+
+// ═══ DASHBOARD ═══
+if(pg==='dash'){
+document.getElementById('pt').textContent='📊 Dashboard';document.getElementById('ps').textContent='Revenue, orders, analytics';
+var rev=orders.reduce(function(s,o){return s+(o.status!=='cancelled'?parseFloat(o.total||0):0);},0);
+var tc=orders.filter(function(o){return o.status!=='cancelled';}).length;
+var del=orders.filter(function(o){return o.status==='delivered';}).length;
+h+='<div class="gd g4" style="margin-bottom:12px">';
+h+='<div class="cd st"><div class="lb">Revenue</div><div class="vl" style="color:#16A34A">₹'+rev.toFixed(0)+'</div><div class="sb">'+tc+' orders</div></div>';
+h+='<div class="cd st"><div class="lb">Orders</div><div class="vl">'+orders.length+'</div><div class="sb">All time</div></div>';
+h+='<div class="cd st"><div class="lb">Delivered</div><div class="vl" style="color:#2563EB">'+del+'</div><div class="sb">'+(tc?Math.round(del/tc*100):0)+'% rate</div></div>';
+h+='<div class="cd st"><div class="lb">Users</div><div class="vl">'+users.length+'</div><div class="sb">Registered</div></div>';
+h+='</div>';
+// Status breakdown
+h+='<div class="cd"><div class="ch"><h3>📊 Status Breakdown</h3></div><div style="padding:14px">';
+STATUSES.forEach(function(s){var c=orders.filter(function(o){return o.status===s;}).length;var pct=orders.length?Math.round(c/orders.length*100):0;
+h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:.68rem;width:80px">'+STAT_E[s]+' '+s+'</span><div style="flex:1;height:28px;background:#F0F1F3;border-radius:4px"><div class="bar" style="width:'+pct+'%"></div></div><span style="font-size:.64rem;color:#6B7280;width:40px;text-align:right">'+c+'</span></div>';});
+h+='</div></div>';
+// Recent orders
+h+='<div class="cd"><div class="ch"><h3>📦 Recent Orders</h3></div><div style="overflow-x:auto"><table class="tbl"><tr><th>ID</th><th>Customer</th><th>Amount</th><th>Status</th><th>Time</th></tr>';
+orders.slice(0,8).forEach(function(o){
+h+='<tr class="clk" onclick="go(\'orders\')"><td style="font-size:.6rem;font-family:\'Space Mono\',monospace">'+e(String(o.id).slice(-8))+'</td><td>'+e(o.customer_name||'-')+'</td><td style="font-weight:600">₹'+(o.total||0)+'</td><td><span class="tg status-'+o.status+'">'+STAT_E[o.status||'confirmed']+' '+e(o.status||'-')+'</span></td><td style="font-size:.6rem;color:#9CA3AF">'+ta(o.created_at)+'</td></tr>';});
+h+='</table></div></div>';
 }
 
-async function loadData(){
-  try{
-    comps=await sbGet('competitors','select=*&order=google_reviews_count.desc');
-    revs=await sbGet('competitor_reviews','select=*&order=publish_time.desc&limit=50');
-    if(comps.length>0){
-      const last=comps[0].last_synced;
-      document.getElementById('sb-sync').textContent=last?timeAgo(new Date(last)):'never';
-    }
-  }catch(e){console.error('Load error:',e);comps=[];revs=[];}
-  render();
+// ═══ ORDERS ═══
+else if(pg==='orders'){
+document.getElementById('pt').textContent='📦 Orders';document.getElementById('ps').textContent=orders.length+' total';
+h+='<div class="cd"><div style="overflow-x:auto"><table class="tbl"><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Status</th><th>Tracking</th><th>Actions</th></tr>';
+orders.forEach(function(o){
+var items='';try{var it=typeof o.items==='string'?JSON.parse(o.items):o.items;if(Array.isArray(it))items=it.map(function(i){return e(i.name||'?');}).join(', ');}catch(x){}
+h+='<tr><td style="font-size:.58rem;font-family:\'Space Mono\',monospace">'+e(String(o.id).slice(-8))+'</td>';
+h+='<td><div style="font-weight:600">'+e(o.customer_name||'-')+'</div><div style="font-size:.54rem;color:#9CA3AF">'+e(o.customer_email||'')+'</div></td>';
+h+='<td style="font-size:.66rem">'+e(o.customer_phone||'-')+'</td>';
+h+='<td style="font-size:.62rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+items+'</td>';
+h+='<td style="font-weight:600">₹'+(o.total||0)+'</td>';
+h+='<td><select class="inp" style="width:120px;font-size:.62rem" onchange="updateStatus(\''+o.id+'\',this.value)">';
+STATUSES.forEach(function(s){h+='<option value="'+s+'"'+(o.status===s?' selected':'')+'>'+STAT_E[s]+' '+s+'</option>';});
+h+='</select></td>';
+h+='<td><input class="inp" style="width:100px;font-size:.6rem" id="trk-'+o.id+'" value="'+e(o.tracking_number||'')+'" placeholder="Track #"><button class="bi" onclick="updateTrk(\''+o.id+'\')" title="Save">💾</button></td>';
+h+='<td>'+ta(o.created_at)+'</td></tr>';});
+h+='</table></div></div>';
 }
 
-function timeAgo(d){const s=Math.floor((Date.now()-d)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
-
-async function syncNow(){
-  const sp=document.getElementById('sync-spinner');
-  sp.classList.remove('hidden');
-  try{
-    const r=await fetch('/.netlify/functions/intel-sync?action=sync');
-    const d=await r.json();
-    if(d.success){alert(`✅ Synced ${d.count} competitors! Data is now live.`);await loadData();}
-    else alert('Sync failed: '+JSON.stringify(d));
-  }catch(e){alert('Sync error: '+e.message+'\n\nMake sure you deployed intel-sync.js to netlify/functions/');}
-  sp.classList.add('hidden');
+// ═══ PRODUCTS (DEEP) ═══
+else if(pg==='products'){
+document.getElementById('pt').textContent='🏷️ Products';document.getElementById('ps').textContent=products.length+' items · Deep management';
+var fp=pFiltered(),cats=pCats();
+var tAct=products.filter(function(p){return p.is_active!==false;}).length;
+var tInact=products.filter(function(p){return p.is_active===false;}).length;
+var tFeat=products.filter(function(p){return p.is_featured;}).length;
+var tNimg=products.filter(function(p){return!pImg(p);}).length;
+// Stats
+h+='<div class="gd g5" style="margin-bottom:12px">';
+h+='<div class="cd st"><div class="lb">Total</div><div class="vl">'+products.length+'</div><div class="sb">'+prodVar.length+' variants</div></div>';
+h+='<div class="cd st"><div class="lb">Active</div><div class="vl" style="color:#16A34A">'+tAct+'</div><div class="sb">On store</div></div>';
+h+='<div class="cd st"><div class="lb">Inactive</div><div class="vl" style="color:#DC2626">'+tInact+'</div><div class="sb">Hidden</div></div>';
+h+='<div class="cd st"><div class="lb">Featured</div><div class="vl" style="color:#CA8A04">'+tFeat+'</div><div class="sb">Highlighted</div></div>';
+h+='<div class="cd st"><div class="lb">No Image</div><div class="vl" style="color:'+(tNimg?'#DC2626':'#16A34A')+'">'+tNimg+'</div><div class="sb">'+(tNimg?'Need fix':'All set')+'</div></div>';
+h+='</div>';
+// Toolbar
+h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+h+='<div style="display:flex;gap:4px;align-items:center"><input class="inp" style="width:180px;font-size:.66rem;padding:5px 8px" placeholder="🔍 Search..." value="'+e(pSearch)+'" oninput="pSearch=this.value;rn()"> ';
+h+='<div style="display:flex;border:1px solid #E5E7EB;border-radius:6px;overflow:hidden"><button class="bs" style="border:none;background:'+(pView==='grid'?'#D4451A;color:#fff':'#fff;color:#6B7280')+';padding:4px 10px;cursor:pointer;font-family:inherit;font-size:.58rem" onclick="pView=\'grid\';rn()">▦ Grid</button><button class="bs" style="border:none;background:'+(pView==='table'?'#D4451A;color:#fff':'#fff;color:#6B7280')+';padding:4px 10px;cursor:pointer;font-family:inherit;font-size:.58rem" onclick="pView=\'table\';rn()">≡ Table</button></div></div>';
+h+='<button class="btn bp" onclick="peOpen(null)">+ Add Product</button>';
+h+='</div>';
+// Pills
+h+='<div class="ppills">';
+h+='<div class="ppill'+(pFilter==='all'?' on':'')+'" onclick="pFilter=\'all\';rn()">All ('+products.length+')</div>';
+h+='<div class="ppill'+(pFilter==='_active'?' on':'')+'" onclick="pFilter=\'_active\';rn()">✅ Active ('+tAct+')</div>';
+h+='<div class="ppill'+(pFilter==='_inactive'?' on':'')+'" onclick="pFilter=\'_inactive\';rn()">❌ Inactive ('+tInact+')</div>';
+if(tFeat)h+='<div class="ppill'+(pFilter==='_featured'?' on':'')+'" onclick="pFilter=\'_featured\';rn()">⭐ Featured</div>';
+if(tNimg)h+='<div class="ppill'+(pFilter==='_noimg'?' on':'')+'" onclick="pFilter=\'_noimg\';rn()">📷 No Image ('+tNimg+')</div>';
+cats.forEach(function(c){var cc=products.filter(function(p){return p.category===c;}).length;h+='<div class="ppill'+(pFilter===c?' on':'')+'" onclick="pFilter=\''+e(c).replace(/'/g,"\\'")+'\';rn()">'+e(c)+' ('+cc+')</div>';});
+h+='</div>';
+// Empty
+if(!fp.length){h+='<div style="text-align:center;padding:40px"><div style="font-size:2.5rem;opacity:.2;margin-bottom:8px">🫙</div><div style="font-size:.8rem;font-weight:600">No products found</div></div>';ct.innerHTML=h;return;}
+// Grid
+if(pView==='grid'){
+h+='<div class="pgrid">';
+fp.forEach(function(p){var img=pImg(p),pr=pPrice(p),v=pVars(p.id),inact=p.is_active===false;
+h+='<div class="pcard" onclick="peOpen(\''+e(String(p.id))+'\')">';
+if(inact)h+='<div class="pinact"><span>INACTIVE</span></div>';
+if(p.is_bestseller)h+='<div class="pbdg"><span class="tg tg-a">🔥 Bestseller</span></div>';
+else if(p.is_new)h+='<div class="pbdg"><span class="tg tg-b">✨ New</span></div>';
+else if(p.is_featured)h+='<div class="pbdg"><span class="tg tg-y">⭐ Featured</span></div>';
+h+='<div class="pimg">';
+if(img)h+='<img src="'+e(img)+'" onerror="this.parentElement.innerHTML=\'<div style=font-size:2rem;opacity:.2>🫙</div>\'" loading="lazy">';
+else h+='<div style="font-size:2rem;opacity:.2">🫙</div>';
+h+='</div><div class="pinfo"><div class="pcat">'+e(p.category||'—')+'</div><div class="pnm">'+e(p.name)+'</div>';
+h+='<div class="pbot"><div class="ppr">'+(pr>0?'₹'+pr:'<span style="color:#DC2626">₹0</span>')+(v.length>1?'+':'')+'</div>';
+h+='<div class="pvr">'+(v.length?v.length+' var':(p.weight||'—'))+'</div></div></div></div>';});
+h+='</div>';
+}else{
+// Table
+h+='<div class="cd"><div style="overflow-x:auto"><table class="tbl"><tr><th>#</th><th>Img</th><th>Name</th><th>Category</th><th>Price</th><th>Variants</th><th>Status</th><th>Flags</th><th>Actions</th></tr>';
+fp.forEach(function(p,i){var img=pImg(p),pr=pPrice(p),v=pVars(p.id);
+h+='<tr class="clk" onclick="peOpen(\''+e(String(p.id))+'\')">';
+h+='<td style="color:#9CA3AF;font-family:\'Space Mono\',monospace;font-size:.56rem">'+(i+1)+'</td>';
+h+='<td>'+(img?'<img src="'+e(img)+'" style="width:32px;height:32px;border-radius:5px;object-fit:cover" onerror="this.outerHTML=\'🫙\'">':'<span style="opacity:.3">🫙</span>')+'</td>';
+h+='<td><div style="font-weight:600">'+e(p.name)+'</div>'+(p.short_description?'<div style="font-size:.52rem;color:#9CA3AF;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e(p.short_description)+'</div>':'')+'</td>';
+h+='<td><span class="tg tg-a">'+e(p.category||'—')+'</span></td>';
+h+='<td style="font-weight:600;color:'+(pr>0?'#16A34A':'#DC2626')+'">₹'+pr+'</td>';
+h+='<td style="font-size:.6rem;color:#6B7280">'+(v.length||'0')+'</td>';
+h+='<td>'+(p.is_active!==false?'<span class="tg tg-g">Active</span>':'<span class="tg tg-r">Off</span>')+'</td>';
+h+='<td style="font-size:.66rem">'+(p.is_bestseller?'🔥':'')+(p.is_featured?'⭐':'')+(p.is_new?'✨':'')+(p.dietary_info==='veg'?'🌿':'')+(p.dietary_info==='non-veg'?'🍗':'')+'</td>';
+h+='<td onclick="event.stopPropagation()"><button class="bi" onclick="peOpen(\''+e(String(p.id))+'\')" title="Edit">✏️</button> <button class="bi" onclick="pdOpen(\''+e(String(p.id))+'\')" title="Delete" style="color:#DC2626">🗑</button></td></tr>';});
+h+='</table></div></div>';
+}
+}
+// ═══ USERS ═══
+else if(pg==='users'&&!selUser){
+document.getElementById('pt').textContent='👥 Users';document.getElementById('ps').textContent=users.length+' registered';
+h+='<div class="cd"><div style="overflow-x:auto"><table class="tbl"><tr><th>Name</th><th>Phone</th><th>Wallet</th><th>Country</th><th>Seen</th><th>Actions</th></tr>';
+users.forEach(function(u){
+h+='<tr class="clk" onclick="selUser=\''+e(u.phone||'')+'\';rn()"><td style="font-weight:600">'+e(u.name||'-')+'</td>';
+h+='<td style="font-size:.66rem;font-family:\'Space Mono\',monospace">'+e(u.phone||'-')+'</td>';
+h+='<td style="font-weight:600;color:#16A34A">₹'+(u.wallet_balance||0)+'</td>';
+h+='<td>'+e(u.country||'-')+'</td><td style="font-size:.6rem;color:#9CA3AF">'+ta(u.last_seen)+'</td>';
+h+='<td onclick="event.stopPropagation()"><button class="btn bg2 bs" onclick="addWallet(\''+e(u.phone||'')+'\')">💰 Add</button></td></tr>';});
+h+='</table></div></div>';
+}else if(pg==='users'&&selUser){
+document.getElementById('pt').textContent='👤 User Detail';document.getElementById('ps').textContent=selUser;
+var u=users.find(function(x){return x.phone===selUser;});
+h+='<button class="btn bg2 bs" onclick="selUser=null;rn()" style="margin-bottom:10px">← Back</button>';
+if(u){
+h+='<div class="gd g3" style="margin-bottom:12px"><div class="cd st"><div class="lb">Name</div><div class="vl" style="font-size:1rem">'+e(u.name||'-')+'</div></div>';
+h+='<div class="cd st"><div class="lb">Phone</div><div class="vl" style="font-size:.9rem">'+e(u.phone||'-')+'</div></div>';
+h+='<div class="cd st"><div class="lb">Wallet</div><div class="vl" style="color:#16A34A">₹'+(u.wallet_balance||0)+'</div><div class="sb"><button class="btn bp bs" onclick="addWallet(\''+e(u.phone||'')+'\')">+ Add</button></div></div></div>';
+var uo=orders.filter(function(o){return o.customer_phone===selUser;});
+h+='<div class="cd"><div class="ch"><h3>📦 Orders ('+uo.length+')</h3></div><div style="overflow-x:auto"><table class="tbl"><tr><th>ID</th><th>Total</th><th>Status</th><th>Time</th></tr>';
+uo.forEach(function(o){h+='<tr><td style="font-size:.58rem;font-family:\'Space Mono\',monospace">'+e(String(o.id).slice(-8))+'</td><td style="font-weight:600">₹'+(o.total||0)+'</td><td><span class="tg status-'+o.status+'">'+e(o.status)+'</span></td><td style="font-size:.6rem;color:#9CA3AF">'+ta(o.created_at)+'</td></tr>';});
+h+='</table></div></div>';
+}
 }
 
-// ═══════════════════════════════════
-// AI ACTIONS GENERATOR
-// ═══════════════════════════════════
-function aiActions(c){
-  const a=[];
-  if(c.active_ads_count>2)a.push({p:'🔴',t:`${c.name} is running ${c.active_ads_count} ads. Launch a counter-campaign within 48h.`});
-  if(c.google_rating>=4.5)a.push({p:'🟡',t:`${c.name} has ${c.google_rating}★ rating. Collect 20+ reviews this month to match.`});
-  if(c.google_reviews_count>2000)a.push({p:'🟠',t:`${c.name} has ${c.google_reviews_count.toLocaleString()} reviews. Offer ₹50 wallet credit per review. Target 50 in 30 days.`});
-  if(c.active_ads_count===0)a.push({p:'🟢',t:`${c.name} has ZERO ads. Their customers are undefended. Run targeted ads NOW.`});
-  if(c.status==='inactive')a.push({p:'🟢',t:`${c.name} appears inactive. Bid on their brand keywords in Google Ads.`});
-  if(c.google_rating>0&&c.google_rating<4.0)a.push({p:'🟢',t:`${c.name} has low ${c.google_rating}★ rating. Highlight your superior quality in ads.`});
-  if(a.length===0)a.push({p:'🔵',t:`Monitor ${c.name}. No immediate action needed.`});
-  return a;
+// ═══ SHIPPING ═══
+else if(pg==='shipping'){
+document.getElementById('pt').textContent='🚚 Shipping';document.getElementById('ps').textContent='Delivery charges by pincode';
+h+='<div class="cd"><div class="ch"><h3>📍 Delivery Charges</h3><button class="btn bg2 bs" onclick="addDelivery()">+ Add</button></div><div style="overflow-x:auto"><table class="tbl"><tr><th>Pincode</th><th>Area</th><th>Charge</th><th>Free Above</th></tr>';
+deliveryCharges.forEach(function(d){h+='<tr><td style="font-family:\'Space Mono\',monospace">'+e(d.pincode||'-')+'</td><td>'+e(d.area||'-')+'</td><td style="font-weight:600">₹'+e(String(d.charge||50))+'</td><td>₹'+e(String(d.free_above||0))+'</td></tr>';});
+h+='</table></div></div>';
 }
 
-const stars=r=>'★'.repeat(Math.floor(r||0))+(((r||0)%1>=.5)?'½':'')+'☆'.repeat(5-Math.floor(r||0)-(((r||0)%1>=.5)?1:0));
-
-// ═══════════════════════════════════
-// CONTENT GENERATOR
-// ═══════════════════════════════════
-function genContent(p,prod){
-  const m={
-    ig_post:`🫙 Craving authentic Andhra ${prod}?\n\nHandmade with cold-pressed groundnut oil, zero preservatives, and recipes passed down through generations.\n\nEvery jar is made fresh in small batches — not in a factory.\n\n🔥 Order now: seasaltpickles.com\n📱 WhatsApp: +91 9963971447\n\n#SeaSaltPickles #AndhrPickles #${prod.replace(/\s/g,'')} #HomemadePickles #Hyderabad #TeluguFood #NoPreservatives #ColdPressedOil`,
-    ig_reel:`🎬 REEL SCRIPT — ${prod}\n\n[0-2s] HOOK: Close-up jar opening\nText: "This isn't factory pickle..."\n\n[2-5s] Fresh ingredients being washed\nText: "Fresh ingredients. No shortcuts."\n\n[5-8s] Hands mixing in traditional jar\nText: "Handmade with cold-pressed oil"\n\n[8-12s] Beauty shot with rice\nText: "Authentic ${prod}"\n\n[12-15s] CTA\nText: "seasaltpickles.com | Link in bio"\n\n🎵 Trending Telugu folk sound`,
-    fb_post:`🫙 Fresh batch alert!\n\nOur ${prod} is ready — made this morning with:\n✅ Cold-pressed groundnut oil\n✅ Hand-ground spices\n✅ Zero preservatives\n✅ Traditional family recipe\n\n🛒 seasaltpickles.com\n📱 wa.me/919963971447\n🚚 Free delivery Hyderabad | Ships all India`,
-    g_post:`🫙 Fresh ${prod} Now Available!\n\nMade with cold-pressed oil, zero preservatives. Authentic Andhra recipe, handmade in Hyderabad.\n\nOrder: seasaltpickles.com\nWhatsApp: +91 9963971447\n🚚 Same-day delivery Hyderabad!`,
-    wa_msg:`🫙 *SeaSalt Pickles — Fresh Batch!*\n\nHi! Our *${prod}* is freshly made!\n\n✨ Cold-pressed groundnut oil\n✨ No preservatives\n✨ Traditional Andhra recipe\n\n💰 From ₹249\n🚚 Free delivery Hyderabad\n\n👉 seasaltpickles.com\n👉 Reply "ORDER"!`,
-    yt_short:`🎬 YOUTUBE SHORT — ${prod}\n\n[0-1s] Mortar grinding sound\nText: "They use machines..."\n\n[1-3s] Your hands grinding spices\nText: "We use tradition."\n\n[3-6s] Time-lapse of making\nText: "Cold-pressed oil. Zero preservatives."\n\n[6-9s] Factory vs kitchen split\nText: "Factory vs Handmade"\n\n[9-12s] Tasting reaction with rice\n\n[12-15s] Logo + CTA\n"seasaltpickles.com"\n\n#shorts #pickle #andhra #homemade`
-  };
-  return m[p]||'Select platform.';
+// ═══ NOTIFICATIONS ═══
+else if(pg==='notifs'){
+document.getElementById('pt').textContent='🔔 Notifications';document.getElementById('ps').textContent=notifs.length+' alerts';
+notifs.forEach(function(n){h+='<div class="cd" style="padding:12px;'+(n.read?'opacity:.6':'')+' "><div style="display:flex;justify-content:space-between"><div><div style="font-weight:600;font-size:.76rem">'+e(n.title||n.type||'Alert')+'</div><div style="font-size:.68rem;color:#6B7280;margin-top:2px">'+e(n.message||'')+'</div></div><div style="font-size:.5rem;color:#9CA3AF">'+ta(n.created_at)+'</div></div></div>';});
+if(!notifs.length)h+='<div class="cd" style="padding:20px;text-align:center;color:#9CA3AF">No notifications</div>';
 }
 
-// ═══════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════
-function go(pg){page=pg;drill=null;document.querySelectorAll('.sl').forEach(e=>e.classList.remove('on'));
-  document.getElementById('n-'+pg)?.classList.add('on');render();}
+// ═══ SETTINGS ═══
+else if(pg==='settings'){
+document.getElementById('pt').textContent='⚙️ Settings';document.getElementById('ps').textContent='Configuration';
+h+='<div class="cd" style="padding:16px"><h3 style="font-size:.8rem;margin-bottom:10px">🔔 WhatsApp Notifications</h3>';
+h+='<div class="gd g2"><div class="fg"><label class="fl">Admin Phone</label><input class="inp" value="919963971447" readonly></div>';
+h+='<div class="fg"><label class="fl">Status</label><div style="padding:8px"><span class="tg tg-g">✅ wa.me links active</span></div></div></div></div>';
+h+='<div class="cd" style="padding:16px"><h3 style="font-size:.8rem;margin-bottom:10px">🔑 API Keys</h3>';
+h+='<div class="gd g2"><div class="fg"><label class="fl">Razorpay</label><input class="inp" value="rzp_live_SG5C0aU9GncpVi" readonly style="font-family:\'Space Mono\',monospace;font-size:.6rem"></div>';
+h+='<div class="fg"><label class="fl">Google Places</label><input class="inp" value="AIzaSyA33g..." readonly style="font-family:\'Space Mono\',monospace;font-size:.6rem"></div></div></div>';
+}
 
-function drillTo(name){drill=comps.find(c=>c.name===name);render();}
-function drillBack(){drill=null;render();}
+// ═══ COMPETITORS ═══
+else if(pg==='intel'){
+document.getElementById('pt').textContent='🏆 Competitors';document.getElementById('ps').textContent=comps.length+' tracked';
+if(!comps.length){h+='<div class="cd" style="padding:20px;text-align:center"><button class="btn bp" onclick="syncNow()">🔍 Run First Scan</button></div>';}
+else{
+h+='<div class="gd g3" style="margin-bottom:12px">';
+comps.forEach(function(c){
+h+='<div class="cd" style="padding:14px"><div style="font-weight:700;font-size:.82rem;margin-bottom:4px">'+e(c.name)+'</div>';
+h+='<div style="color:#CA8A04;font-size:.78rem">'+st(c.google_rating)+' '+(c.google_rating||0)+'</div>';
+h+='<div style="font-size:.6rem;color:#6B7280;margin-top:2px">'+e(c.google_reviews_count||0)+' reviews</div>';
+h+='<div style="margin-top:6px">'+ai(c).map(function(a){return '<div style="font-size:.6rem;margin-top:2px">'+a+'</div>';}).join('')+'</div>';
+h+='</div>';});
+h+='</div>';
+// Reviews
+h+='<div class="cd"><div class="ch"><h3>💬 Recent Reviews</h3></div><div style="overflow-x:auto"><table class="tbl"><tr><th>Competitor</th><th>Rating</th><th>Review</th><th>Time</th></tr>';
+revs.slice(0,15).forEach(function(r){h+='<tr><td style="font-weight:600">'+e(r.competitor_name||'-')+'</td><td style="color:#CA8A04">'+st(r.rating)+'</td><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.66rem">'+e(r.text||'-')+'</td><td style="font-size:.58rem;color:#9CA3AF">'+ta(r.publish_time)+'</td></tr>';});
+h+='</table></div></div>';
+}
+}
 
-// ═══════════════════════════════════
-// RENDER
-// ═══════════════════════════════════
-function render(){
-  const el=document.getElementById('content');
-  const t=document.getElementById('ptitle');
-  const s=document.getElementById('psub');
-  el.className='p-6 fade-in';
+// ═══ SOCIAL SPY ═══
+else if(pg==='spy'){
+document.getElementById('pt').textContent='🕵️ Social Spy';document.getElementById('ps').textContent='YouTube deep profiler';
+h+='<div class="cd" style="padding:16px"><h3 style="font-size:.8rem;margin-bottom:8px">🔍 Scan Competitor YouTube</h3>';
+h+='<div class="gd g2"><div class="fg"><label class="fl">YouTube Video URL</label><input class="inp" id="spy-url" placeholder="https://youtube.com/watch?v=..."></div>';
+h+='<div class="fg"><label class="fl">Max Comments</label><select class="inp" id="spy-max"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select></div></div>';
+h+='<button class="btn bp" onclick="runSpy()">🕵️ Deep Profile</button></div>';
+h+='<div id="spy-results"></div>';
+}
 
-  if(page==='intel'&&!drill){
-    t.textContent='🏆 Competitor Intelligence';
-    s.textContent=`${comps.length} competitors tracked · Live from Supabase + Google Places`;
-    
-    if(comps.length===0){
-      el.innerHTML=`<div class="text-center py-20">
-        <div class="text-5xl mb-4">📡</div>
-        <h2 class="text-xl font-bold mb-2">No Data Yet</h2>
-        <p class="text-gray-500 mb-6">Click "🔄 Sync Live Data" to fetch competitor data from Google Places API and store in Supabase.</p>
-        <button onclick="syncNow()" class="btn bp">🔄 Run First Sync</button>
-        <p class="text-xs text-gray-600 mt-4" style="font-family:monospace">Make sure you've:<br>1. Run the SQL in Supabase (supabase-intel-tables.sql)<br>2. Deployed intel-sync.js to netlify/functions/</p>
-      </div>`;
-      return;
-    }
+// ═══ INSIGHTS ═══
+else if(pg==='insights'){
+document.getElementById('pt').textContent='🧠 Insights';document.getElementById('ps').textContent='AI-powered actions';
+h+='<div class="gd g2">';
+h+='<div class="cd" style="padding:14px"><div style="font-size:1.5rem;margin-bottom:4px">📊</div><div style="font-weight:600;font-size:.8rem">Competitor Gap</div><div style="font-size:.66rem;color:#6B7280;margin-top:4px">';
+if(comps.length){var top=comps[0];h+=e(top.name)+' leads with '+st(top.google_rating)+' ('+top.google_reviews_count+' reviews). Focus on getting more reviews!';}
+else h+='Run a competitor scan first.';
+h+='</div></div>';
+h+='<div class="cd" style="padding:14px"><div style="font-size:1.5rem;margin-bottom:4px">🏷️</div><div style="font-weight:600;font-size:.8rem">Product Health</div><div style="font-size:.66rem;color:#6B7280;margin-top:4px">';
+var noP=products.filter(function(p){return!pPrice(p);}).length;var noI=products.filter(function(p){return!pImg(p);}).length;
+h+=noP+' products with ₹0 price. '+noI+' missing images. <a href="#" onclick="go(\'products\');pFilter=\'_noimg\';return false">Fix now →</a>';
+h+='</div></div>';
+h+='<div class="cd" style="padding:14px"><div style="font-size:1.5rem;margin-bottom:4px">📦</div><div style="font-weight:600;font-size:.8rem">Order Trends</div><div style="font-size:.66rem;color:#6B7280;margin-top:4px">';
+var rec=orders.filter(function(o){return Date.now()-new Date(o.created_at)<7*86400000;}).length;
+h+=rec+' orders in last 7 days. '+(rec>5?'🔥 Good pace!':'📈 Room to grow.');
+h+='</div></div>';
+h+='<div class="cd" style="padding:14px"><div style="font-size:1.5rem;margin-bottom:4px">💰</div><div style="font-weight:600;font-size:.8rem">Wallet Usage</div><div style="font-size:.66rem;color:#6B7280;margin-top:4px">';
+var wUsers=users.filter(function(u){return parseFloat(u.wallet_balance||0)>0;}).length;
+h+=wUsers+' users have wallet balance. SpinWheel conversion active.';
+h+='</div></div></div>';
+}
 
-    const totalReviews=comps.reduce((s,c)=>s+(c.google_reviews_count||0),0);
-    const totalAds=comps.reduce((s,c)=>s+(c.active_ads_count||0),0);
-    const avgRating=(comps.reduce((s,c)=>s+(c.google_rating||0),0)/comps.length).toFixed(1);
+// ═══ CONTENT STUDIO ═══
+else if(pg==='content'){
+document.getElementById('pt').textContent='📱 Content Studio';document.getElementById('ps').textContent='Generate content for 6 platforms';
+h+='<div class="cd" style="padding:14px"><div class="gd g2"><div class="fg"><label class="fl">Product</label><select class="inp" onchange="sPr=this.value">';
+products.forEach(function(p){h+='<option'+(sPr===p.name?' selected':'')+'>'+e(p.name)+'</option>';});
+h+='</select></div><div class="fg"><label class="fl">Platform</label><div style="display:flex;gap:4px;flex-wrap:wrap">';
+[{id:'ig_post',l:'📸 IG'},{id:'ig_reel',l:'🎬 Reel'},{id:'fb_post',l:'📘 FB'},{id:'g_post',l:'📍 Google'},{id:'wa_msg',l:'💬 WA'},{id:'yt_short',l:'▶️ YT'}].forEach(function(p){
+h+='<button class="btn '+(sPl===p.id?'bp':'bg2')+' bs" onclick="sPl=\''+p.id+'\';rn()">'+p.l+'</button>';});
+h+='</div></div></div></div>';
+var content='';
+if(sPl==='ig_post')content='🫙 Craving '+sPr+'?\n\nHandmade with love. Cold-pressed oil. Zero preservatives.\n\n🛒 seasaltpickles.com\n\n#SeaSaltPickles #AndhraPickles #Hyderabad';
+else if(sPl==='ig_reel')content='🎬 REEL SCRIPT: '+sPr+'\n\n[0-2s] Jar opening shot\n[2-5s] Ingredients close-up\n[5-8s] Mixing process\n[8-12s] Final product shot\n[12-15s] CTA + link';
+else if(sPl==='fb_post')content='Fresh batch of '+sPr+' just made! 🫙\n\nCold-pressed oil • Zero preservatives • Authentic Andhra recipe\n\nOrder now: seasaltpickles.com';
+else if(sPl==='wa_msg')content='*SeaSalt Pickles* 🫙\n\n*'+sPr+'* is ready!\nFrom ₹249 • Free delivery above ₹499\n\nReply ORDER to place your order!';
+else content='New '+sPr+' available at seasaltpickles.com! Fresh, authentic, homemade. 🫙';
+h+='<div class="cd" style="padding:14px"><textarea class="inp" rows="8" style="font-size:.76rem;line-height:1.5" id="gen-content">'+e(content)+'</textarea>';
+h+='<div style="margin-top:8px;display:flex;gap:5px"><button class="btn bg2 bs" onclick="navigator.clipboard.writeText(document.getElementById(\'gen-content\').value);this.textContent=\'✅ Copied\'">📋 Copy</button></div></div>';
+}
 
-    el.innerHTML=`
-    <div class="grid grid-cols-4 gap-4 mb-5">
-      <div class="cd p-5"><div class="text-xs text-gray-500 uppercase tracking-wider mb-2" style="font-family:monospace">Competitors</div><div class="text-3xl font-bold">${comps.length}</div><div class="text-xs text-green-400 mt-1">● Live tracking</div></div>
-      <div class="cd p-5"><div class="text-xs text-gray-500 uppercase tracking-wider mb-2" style="font-family:monospace">Total Reviews</div><div class="text-3xl font-bold">${totalReviews.toLocaleString()}</div><div class="text-xs text-gray-500 mt-1">Across all competitors</div></div>
-      <div class="cd p-5"><div class="text-xs text-gray-500 uppercase tracking-wider mb-2" style="font-family:monospace">Active Ads</div><div class="text-3xl font-bold">${totalAds}</div><div class="text-xs text-gray-500 mt-1">Detected via Meta</div></div>
-      <div class="cd p-5"><div class="text-xs text-gray-500 uppercase tracking-wider mb-2" style="font-family:monospace">Avg Rating</div><div class="text-3xl font-bold">${avgRating}★</div><div class="text-xs text-gray-500 mt-1">Market average</div></div>
-    </div>
+else{h+='<div class="cd" style="padding:20px;text-align:center;color:#9CA3AF">Page: '+e(pg)+'</div>';}
 
-    <div class="cd">
-      <div class="ch"><h3>🏆 Live Competitor Data</h3><span class="bg bg-l">FROM GOOGLE PLACES API</span></div>
-      <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Brand</th><th>Google Rating</th><th>Reviews</th><th>Active Ads</th><th>Status</th><th>Last Synced</th></tr></thead><tbody>
-      ${comps.map((c,i)=>`<tr class="clk" onclick="drillTo('${c.name.replace(/'/g,"\\'")}')">
-        <td class="text-gray-600" style="font-family:monospace">${i+1}</td>
-        <td><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white" style="background:${c.color||'#666'}">${c.code||'??'}</div><div><div class="font-semibold">${c.name}</div><div class="text-xs text-gray-600" style="font-family:monospace">${c.url||''}</div></div></div></td>
-        <td><span class="text-yellow-400 text-xs">${stars(c.google_rating)}</span> <span class="font-semibold" style="font-family:monospace">${c.google_rating||'—'}</span></td>
-        <td class="text-gray-400">${(c.google_reviews_count||0).toLocaleString()}</td>
-        <td>${c.active_ads_count?`<span class="bg bg-l">${c.active_ads_count} Active</span>`:'<span class="text-gray-600">0</span>'}</td>
-        <td><span class="bg ${c.status==='active'?'bg-l':'bg-c'}">${c.status||'unknown'}</span></td>
-        <td class="text-xs text-gray-600" style="font-family:monospace">${c.last_synced?timeAgo(new Date(c.last_synced)):'never'}</td>
-      </tr>`).join('')}
-      </tbody></table></div>
-    </div>
-
-    ${revs.length?`<div class="cd mt-5"><div class="ch"><h3>⭐ Latest Competitor Reviews</h3><span class="bg bg-l">LIVE FROM GOOGLE</span></div>
-      <div class="p-5 space-y-3">${revs.slice(0,8).map(r=>`<div class="pb-3 border-b border-gray-800/40 last:border-0">
-        <div class="flex justify-between items-center mb-1"><span class="text-xs font-semibold" style="color:#3B82F6">${r.competitor_name}</span><span class="text-yellow-400 text-xs">${stars(r.rating)}</span></div>
-        <div class="text-sm text-gray-400 italic">"${(r.text||'').substring(0,150)}${(r.text||'').length>150?'...':''}"</div>
-        <div class="text-xs text-gray-600 mt-1" style="font-family:monospace">${r.author_name} · ${r.relative_time||''}</div>
-      </div>`).join('')}</div></div>`:''}`;
+ct.innerHTML=h;
+}
+async function updateTrk(oid){var v=document.getElementById('trk-'+oid);if(v){var ok=await su('orders','id=eq.'+oid,{tracking_number:v.value});if(ok)alert('Saved!');else alert('Failed');}}
+async function addDelivery(){var p=prompt('Pincode:'),a=prompt('Area:'),c=prompt('Charge ₹:');if(p&&c){await si('delivery_charges',{pincode:p,area:a||'',charge:parseFloat(c)});await ld();}}
+async function runSpy(){var url=document.getElementById('spy-url').value,mx=document.getElementById('spy-max').value;if(!url){alert('Enter URL');return;}spin(1);try{var r=await fetch('/.netlify/functions/social-listen?action=deep-profile&videoUrl='+encodeURIComponent(url)+'&maxComments='+mx);var d=await r.json();var el=document.getElementById('spy-results');if(d.success){el.innerHTML='<div class="cd" style="padding:14px"><h3 style="font-size:.8rem;margin-bottom:6px">✅ Found '+d.profiles_found+' profiles</h3><div style="font-size:.66rem;color:#6B7280">Leads saved to Supabase.</div></div>';}else{el.innerHTML='<div class="cd" style="padding:14px;color:#DC2626">Error: '+e(d.error||'Unknown')+'</div>';}}catch(x){document.getElementById('spy-results').innerHTML='<div class="cd" style="padding:14px;color:#DC2626">'+e(x.message)+'</div>';}spin(0);}
+// ═══ PRODUCT EDITOR ═══
+function peOpen(pid){
+  pTab='basic';
+  if(pid){
+    var p=products.find(function(x){return String(x.id)===String(pid);});
+    if(!p)return;pEdit=p;
+    pState={id:p.id,name:p.name||'',slug:p.slug||pSlug(p.name),description:p.description||'',short_description:p.short_description||'',
+    category:p.category||'',subcategory:p.subcategory||'',base_price:p.price||p.base_price||0,compare_price:p.compare_price||0,cost_price:p.cost_price||0,
+    images:p.images||(p.image_url?[p.image_url]:[]),is_active:p.is_active!==false,is_featured:!!p.is_featured,is_bestseller:!!p.is_bestseller,is_new:!!p.is_new,
+    badge_text:p.badge_text||'',ingredients:p.ingredients||[],oil_type:p.oil_type||'',spice_level:p.spice_level||'',shelf_life:p.shelf_life||'',
+    storage_instructions:p.storage_instructions||'',dietary_info:p.dietary_info||'',weight_unit:p.weight_unit||'g',sku_prefix:p.sku_prefix||'',
+    sort_order:p.sort_order||0,seo_title:p.seo_title||'',seo_description:p.seo_description||'',tags:p.tags||[],
+    calories:p.calories||'',protein:p.protein||'',fat:p.fat||'',carbs:p.carbs||'',sodium:p.sodium||'',
+    variants:pVars(p.id).map(function(v){return Object.assign({},v);})};
+    document.getElementById('pe-title').textContent='✏️ Edit: '+p.name;
+    document.getElementById('pe-dup').style.display='inline-flex';
+  }else{
+    pEdit=null;
+    pState={id:null,name:'',slug:'',description:'',short_description:'',category:'',subcategory:'',base_price:0,compare_price:0,cost_price:0,
+    images:[],is_active:true,is_featured:false,is_bestseller:false,is_new:false,badge_text:'',ingredients:[],oil_type:'',spice_level:'',shelf_life:'',
+    storage_instructions:'',dietary_info:'',weight_unit:'g',sku_prefix:'',sort_order:0,seo_title:'',seo_description:'',tags:[],
+    calories:'',protein:'',fat:'',carbs:'',sodium:'',variants:[]};
+    document.getElementById('pe-title').textContent='🏷️ Add New Product';
+    document.getElementById('pe-dup').style.display='none';
   }
+  document.getElementById('pe-saved').style.display='none';
+  peRender();document.getElementById('pe-modal').classList.add('show');
+}
+function peClose(){document.getElementById('pe-modal').classList.remove('show');pEdit=null;}
 
-  else if(page==='intel'&&drill){
-    const c=drill;
-    t.textContent=`🔍 ${c.name}`;
-    s.textContent=`${c.url||''} · Live Competitor Profile`;
-    const cRevs=revs.filter(r=>r.competitor_name===c.name);
-    const actions=aiActions(c);
+function peRender(){
+  var s=pState,cats=pCats(),h='';
+  h+='<div class="etabs">';
+  ['basic','images','variants','details','nutrition','seo'].forEach(function(t){
+    var lb={basic:'📝 Basic',images:'📷 Images',variants:'📦 Variants',details:'🫙 Details',nutrition:'🥗 Nutrition',seo:'🔍 SEO'};
+    h+='<div class="etab'+(pTab===t?' on':'')+'" onclick="pTab=\''+t+'\';peRender()">'+lb[t]+'</div>';});
+  h+='</div>';
 
-    el.innerHTML=`
-    <div class="text-sm text-gray-500 cursor-pointer hover:text-orange-400 mb-4 flex items-center gap-1" onclick="drillBack()">← Back to all</div>
-    <div class="flex items-center gap-4 mb-6">
-      <div class="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold text-white" style="background:${c.color}">${c.code}</div>
-      <div class="flex-1">
-        <h2 class="text-2xl font-bold">${c.name}</h2>
-        <div class="text-sm text-gray-500">${c.google_address||c.url||''}</div>
-        ${c.google_maps_url?`<a href="${c.google_maps_url}" target="_blank" class="text-xs text-blue-400 hover:underline">Open in Google Maps →</a>`:''}
-      </div>
-      <div class="text-right">
-        <div class="text-yellow-400 text-lg">${stars(c.google_rating)} <span class="text-2xl font-bold text-white">${c.google_rating||'—'}</span></div>
-        <div class="text-sm text-gray-500">${(c.google_reviews_count||0).toLocaleString()} Google reviews</div>
-        <div class="text-xs text-gray-600 mt-1">Status: <span class="${c.business_status==='OPERATIONAL'?'text-green-400':'text-orange-400'}">${c.business_status||'UNKNOWN'}</span></div>
-      </div>
-    </div>
+  // BASIC
+  h+='<div class="etp'+(pTab==='basic'?' on':'')+'">';
+  h+='<div class="gd g2"><div class="fg"><label class="fl">Product Name *</label><input class="inp" id="pe-name" value="'+e(s.name)+'" placeholder="Avakaya Mango Pickle" oninput="pState.name=this.value"></div>';
+  h+='<div class="fg"><label class="fl">Slug</label><input class="inp" id="pe-slug" value="'+e(s.slug)+'" placeholder="auto" oninput="pState.slug=this.value" style="font-family:\'Space Mono\',monospace;font-size:.66rem"></div></div>';
+  h+='<div class="gd g3"><div class="fg"><label class="fl">Category *</label><input class="inp" id="pe-cat" list="pe-cl" value="'+e(s.category)+'" oninput="pState.category=this.value"><datalist id="pe-cl">';
+  cats.forEach(function(c){h+='<option value="'+e(c)+'">';});h+='</datalist></div>';
+  h+='<div class="fg"><label class="fl">Subcategory</label><input class="inp" value="'+e(s.subcategory)+'" oninput="pState.subcategory=this.value"></div>';
+  h+='<div class="fg"><label class="fl">Dietary</label><select class="inp" onchange="pState.dietary_info=this.value"><option value="">—</option><option value="veg"'+(s.dietary_info==='veg'?' selected':'')+'>🌿 Veg</option><option value="non-veg"'+(s.dietary_info==='non-veg'?' selected':'')+'>🍗 Non-Veg</option><option value="vegan"'+(s.dietary_info==='vegan'?' selected':'')+'>🥬 Vegan</option></select></div></div>';
+  h+='<div class="fg"><label class="fl">Short Description</label><input class="inp" value="'+e(s.short_description)+'" placeholder="One-line tagline" maxlength="120" oninput="pState.short_description=this.value"></div>';
+  h+='<div class="fg"><label class="fl">Full Description</label><textarea class="inp" rows="3" oninput="pState.description=this.value">'+e(s.description)+'</textarea></div>';
+  h+='<div style="display:flex;gap:16px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #E5E7EB;margin-top:6px">';
+  h+='<label style="display:flex;align-items:center;gap:6px;font-size:.72rem;cursor:pointer"><div class="tog"><input type="checkbox"'+(s.is_active?' checked':'')+' onchange="pState.is_active=this.checked"><div class="ts"></div></div>Active</label>';
+  h+='<label style="display:flex;align-items:center;gap:6px;font-size:.72rem;cursor:pointer"><div class="tog"><input type="checkbox"'+(s.is_featured?' checked':'')+' onchange="pState.is_featured=this.checked"><div class="ts"></div></div>⭐ Featured</label>';
+  h+='<label style="display:flex;align-items:center;gap:6px;font-size:.72rem;cursor:pointer"><div class="tog"><input type="checkbox"'+(s.is_bestseller?' checked':'')+' onchange="pState.is_bestseller=this.checked"><div class="ts"></div></div>🔥 Bestseller</label>';
+  h+='<label style="display:flex;align-items:center;gap:6px;font-size:.72rem;cursor:pointer"><div class="tog"><input type="checkbox"'+(s.is_new?' checked':'')+' onchange="pState.is_new=this.checked"><div class="ts"></div></div>✨ New</label>';
+  h+='</div>';
+  h+='<div class="gd g2" style="margin-top:6px"><div class="fg"><label class="fl">Badge Text</label><input class="inp" value="'+e(s.badge_text)+'" placeholder="Limited Edition" oninput="pState.badge_text=this.value"></div>';
+  h+='<div class="fg"><label class="fl">Sort Order</label><input class="inp" type="number" value="'+(s.sort_order||0)+'" oninput="pState.sort_order=parseInt(this.value)||0"></div></div>';
+  h+='</div>';
 
-    <div class="ai-box mb-6">
-      <h3 class="font-semibold text-sm mb-3">🧠 AI Recommended Actions vs ${c.name}</h3>
-      ${actions.map(a=>`<div class="flex gap-3 text-sm mb-2"><span>${a.p}</span><span class="text-gray-300">${a.t}</span></div>`).join('')}
-    </div>
+  // IMAGES
+  h+='<div class="etp'+(pTab==='images'?' on':'')+'">';
+  h+='<div class="fl" style="margin-bottom:6px">Images <span style="font-weight:400;color:#9CA3AF">(First = primary)</span></div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+  s.images.forEach(function(u,i){h+='<div class="imgslot'+(i===0?' pri':'')+'"><img src="'+e(u)+'" onerror="this.style.display=\'none\'"><button class="rm" onclick="event.stopPropagation();pState.images.splice('+i+',1);peRender()">✕</button></div>';});
+  h+='<div class="imgslot" onclick="peAddImg()"><div style="font-size:1.2rem;color:#9CA3AF">+</div></div></div>';
+  h+='<div class="fg" style="margin-top:12px"><label class="fl">Add Image URL</label><div style="display:flex;gap:5px"><input class="inp" id="pe-imgurl" placeholder="https://..." style="flex:1"><button class="btn bp bs" onclick="peAddImgUrl()">Add</button></div></div>';
+  h+='</div>';
 
-    <div class="grid grid-cols-2 gap-4 mb-5">
-      <div class="cd p-5">
-        <div class="font-semibold text-sm mb-3">📊 Key Metrics</div>
-        <div class="space-y-3">
-          <div class="flex justify-between border-b border-gray-800/40 pb-2"><span class="text-gray-400 text-sm">Google Rating</span><span class="font-semibold">${c.google_rating||'—'}★</span></div>
-          <div class="flex justify-between border-b border-gray-800/40 pb-2"><span class="text-gray-400 text-sm">Total Reviews</span><span class="font-semibold">${(c.google_reviews_count||0).toLocaleString()}</span></div>
-          <div class="flex justify-between border-b border-gray-800/40 pb-2"><span class="text-gray-400 text-sm">Active Ads</span><span class="font-semibold">${c.active_ads_count||0}</span></div>
-          <div class="flex justify-between border-b border-gray-800/40 pb-2"><span class="text-gray-400 text-sm">Business Status</span><span class="font-semibold">${c.business_status||'UNKNOWN'}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400 text-sm">Website</span><span class="font-semibold text-blue-400">${c.website_url||c.url||'—'}</span></div>
-        </div>
-      </div>
-      <div class="cd p-5">
-        <div class="font-semibold text-sm mb-3">⭐ Reviews from Google (${cRevs.length})</div>
-        ${cRevs.length===0?'<div class="text-sm text-gray-600">No reviews synced yet. Click "Sync Live Data" to fetch.</div>':
-          cRevs.slice(0,5).map(r=>`<div class="mb-3 pb-3 border-b border-gray-800/40 last:border-0">
-            <div class="flex justify-between mb-1"><span class="text-yellow-400 text-xs">${stars(r.rating)}</span><span class="text-xs text-gray-600">${r.relative_time||''}</span></div>
-            <div class="text-sm text-gray-400 italic">"${(r.text||'').substring(0,200)}"</div>
-            <div class="text-xs text-gray-600 mt-1" style="font-family:monospace">${r.author_name||'Anon'}</div>
-          </div>`).join('')}
-      </div>
-    </div>`;
-  }
+  // VARIANTS
+  h+='<div class="etp'+(pTab==='variants'?' on':'')+'">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div><div class="fl" style="margin:0">Size / Weight Variants</div><div class="fh">Each has own price, weight, SKU, stock</div></div><button class="btn bp bs" onclick="pState.variants.push({name:\'\',weight:\'\',price:0,compare_price:0,sku:\'\',stock:null,is_active:true,sort_order:pState.variants.length});peRender()">+ Add</button></div>';
+  if(!s.variants.length){
+    h+='<div class="gd g3" style="margin-bottom:12px;padding:10px;background:#FAFBFC;border-radius:6px;border:1px solid #E5E7EB">';
+    h+='<div class="fg"><label class="fl">Base Price ₹</label><input class="inp" type="number" value="'+(s.base_price||'')+'" oninput="pState.base_price=parseFloat(this.value)||0"></div>';
+    h+='<div class="fg"><label class="fl">Compare ₹</label><input class="inp" type="number" value="'+(s.compare_price||'')+'" oninput="pState.compare_price=parseFloat(this.value)||0"></div>';
+    h+='<div class="fg"><label class="fl">Cost ₹</label><input class="inp" type="number" value="'+(s.cost_price||'')+'" oninput="pState.cost_price=parseFloat(this.value)||0"></div></div>';
+    h+='<div style="text-align:center;padding:16px;background:#FAFBFC;border-radius:6px;border:1px dashed #E5E7EB"><div style="font-size:1.2rem;opacity:.2;margin-bottom:4px">📦</div><div style="font-size:.7rem;color:#6B7280">No variants. Add for multiple sizes.</div></div>';
+  }else{
+    h+='<div style="overflow-x:auto"><div style="min-width:600px"><div class="vrow vhd"><div>Name</div><div>Weight</div><div>Price ₹</div><div>Compare ₹</div><div>SKU</div><div>Stock</div><div></div></div>';
+    s.variants.forEach(function(v,i){
+      h+='<div class="vrow"><input class="vi" value="'+e(v.name||'')+'" placeholder="250g Jar" oninput="pState.variants['+i+'].name=this.value">';
+      h+='<input class="vi" value="'+e(v.weight||'')+'" placeholder="250g" oninput="pState.variants['+i+'].weight=this.value">';
+      h+='<input class="vi" type="number" value="'+(v.price||'')+'" placeholder="349" oninput="pState.variants['+i+'].price=parseFloat(this.value)||0">';
+      h+='<input class="vi" type="number" value="'+(v.compare_price||'')+'" placeholder="499" oninput="pState.variants['+i+'].compare_price=parseFloat(this.value)||0">';
+      h+='<input class="vi" value="'+e(v.sku||'')+'" placeholder="SKU" oninput="pState.variants['+i+'].sku=this.value" style="font-family:\'Space Mono\',monospace;font-size:.58rem">';
+      h+='<input class="vi" type="number" value="'+(v.stock!=null?v.stock:'')+'" placeholder="∞" oninput="pState.variants['+i+'].stock=this.value===\'\'?null:parseInt(this.value)">';
+      h+='<button class="bi" onclick="pState.variants.splice('+i+',1);peRender()" style="color:#DC2626">✕</button></div>';});
+    h+='</div></div>';}
+  h+='</div>';
 
-  else if(page==='social'){
-    t.textContent='📱 Social Content Generator';
-    s.textContent='Auto-generate posts for all platforms';
-    el.innerHTML=`
-    <div class="grid grid-cols-12 gap-5">
-      <div class="col-span-4 space-y-4">
-        <div class="cd p-5"><div class="font-semibold text-sm mb-3">Platform</div>
-          ${PLATFORMS.map(p=>`<div class="pf ${sPlat===p.id?'on':'off'}" onclick="sPlat='${p.id}';render()">${p.i} ${p.l}</div>`).join('')}
-        </div>
-        <div class="cd p-5"><div class="font-semibold text-sm mb-3">Product</div>
-          <select onchange="sProd=this.value" class="w-full px-3 py-2.5 rounded-lg bg-gray-900 border border-gray-700 text-sm focus:outline-none focus:border-orange-500">
-            ${PRODUCTS.map(p=>`<option value="${p}" ${sProd===p?'selected':''}>${p}</option>`).join('')}
-          </select>
-        </div>
-        <button onclick="document.getElementById('gen-out').textContent=genContent(sPlat,sProd)" class="btn bp w-full py-3">⚡ Generate</button>
-      </div>
-      <div class="col-span-8"><div class="cd h-full">
-        <div class="ch"><h3>Generated Content</h3><button onclick="navigator.clipboard.writeText(document.getElementById('gen-out').textContent);this.textContent='✓ Copied!';setTimeout(()=>this.textContent='📋 Copy',2000)" class="btn bg2 bs">📋 Copy</button></div>
-        <pre id="gen-out" class="p-5 text-sm leading-relaxed text-gray-300 whitespace-pre-wrap" style="font-family:'DM Sans',sans-serif;min-height:300px">${genContent(sPlat,sProd)}</pre>
-      </div></div>
-    </div>
-    <div class="cd mt-5"><div class="ch"><h3>🔗 Connected Platforms</h3></div>
-      <div class="grid grid-cols-6 gap-3 p-5">
-        ${[{n:'Instagram',i:'📸'},{n:'Facebook',i:'📘'},{n:'Google Biz',i:'📍'},{n:'YouTube',i:'▶️'},{n:'WhatsApp',i:'💬',c:1},{n:'Pinterest',i:'📌'}].map(p=>`
-        <div class="border border-gray-800 rounded-lg p-4 text-center hover:border-gray-600 cursor-pointer">
-          <div class="text-2xl mb-2">${p.i}</div><div class="text-xs font-semibold mb-1">${p.n}</div>
-          <div class="text-xs px-2 py-0.5 rounded inline-block ${p.c?'bg-green-400/10 text-green-400':'bg-gray-800 text-gray-500'}">${p.c?'✓ Connected':'Connect →'}</div>
-        </div>`).join('')}
-      </div>
-    </div>`;
-  }
+  // DETAILS
+  h+='<div class="etp'+(pTab==='details'?' on':'')+'">';
+  h+='<div class="gd g3"><div class="fg"><label class="fl">Oil Type</label><select class="inp" onchange="pState.oil_type=this.value"><option value="">—</option><option value="cold-pressed-groundnut"'+(s.oil_type==='cold-pressed-groundnut'?' selected':'')+'>Cold-Pressed Groundnut</option><option value="sesame"'+(s.oil_type==='sesame'?' selected':'')+'>Sesame</option><option value="gingelly"'+(s.oil_type==='gingelly'?' selected':'')+'>Gingelly</option><option value="none"'+(s.oil_type==='none'?' selected':'')+'>None</option></select></div>';
+  h+='<div class="fg"><label class="fl">Spice Level</label><select class="inp" onchange="pState.spice_level=this.value"><option value="">—</option><option value="mild"'+(s.spice_level==='mild'?' selected':'')+'>🟢 Mild</option><option value="medium"'+(s.spice_level==='medium'?' selected':'')+'>🟡 Medium</option><option value="hot"'+(s.spice_level==='hot'?' selected':'')+'>🔴 Hot</option><option value="extra-hot"'+(s.spice_level==='extra-hot'?' selected':'')+'>🌶️ Extra Hot</option></select></div>';
+  h+='<div class="fg"><label class="fl">Shelf Life</label><input class="inp" value="'+e(s.shelf_life)+'" placeholder="6 months" oninput="pState.shelf_life=this.value"></div></div>';
+  h+='<div class="fg"><label class="fl">Storage</label><input class="inp" value="'+e(s.storage_instructions)+'" placeholder="Refrigerate after opening" oninput="pState.storage_instructions=this.value"></div>';
+  h+='<div class="fg"><label class="fl">Ingredients</label><div style="display:flex;gap:5px;margin-bottom:4px"><input class="inp" id="pe-ing" placeholder="Raw Mango, Chilli..." onkeydown="if(event.key===\'Enter\')peAddIng()"><button class="btn bg2 bs" onclick="peAddIng()">+</button></div>';
+  h+='<div>'+(s.ingredients||[]).map(function(g,i){return '<span class="itag">'+e(g)+' <span class="x" onclick="pState.ingredients.splice('+i+',1);peRender()">✕</span></span>';}).join('')+'</div></div>';
+  h+='<div class="gd g2"><div class="fg"><label class="fl">SKU Prefix</label><input class="inp" value="'+e(s.sku_prefix)+'" oninput="pState.sku_prefix=this.value" style="font-family:\'Space Mono\',monospace"></div>';
+  h+='<div class="fg"><label class="fl">Weight Unit</label><select class="inp" onchange="pState.weight_unit=this.value"><option value="g"'+(s.weight_unit==='g'?' selected':'')+'>Grams</option><option value="kg"'+(s.weight_unit==='kg'?' selected':'')+'>Kg</option><option value="ml"'+(s.weight_unit==='ml'?' selected':'')+'>ml</option><option value="pcs"'+(s.weight_unit==='pcs'?' selected':'')+'>Pieces</option></select></div></div>';
+  h+='</div>';
 
-  else if(page==='insights'){
-    t.textContent='🧠 Market Insights';
-    s.textContent='AI analysis from live competitor data';
-    const topRated=comps.length?[...comps].sort((a,b)=>(b.google_rating||0)-(a.google_rating||0))[0]:null;
-    const mostReviewed=comps.length?[...comps].sort((a,b)=>(b.google_reviews_count||0)-(a.google_reviews_count||0))[0]:null;
-    const mostAds=comps.length?[...comps].sort((a,b)=>(b.active_ads_count||0)-(a.active_ads_count||0))[0]:null;
+  // NUTRITION
+  h+='<div class="etp'+(pTab==='nutrition'?' on':'')+'">';
+  h+='<div class="fl" style="margin-bottom:8px">Per 100g serving</div>';
+  h+='<div class="ngrid"><div class="nitem"><input value="'+e(s.calories)+'" placeholder="—" oninput="pState.calories=this.value"><div class="nl">Calories</div></div>';
+  h+='<div class="nitem"><input value="'+e(s.protein)+'" placeholder="—" oninput="pState.protein=this.value"><div class="nl">Protein</div></div>';
+  h+='<div class="nitem"><input value="'+e(s.fat)+'" placeholder="—" oninput="pState.fat=this.value"><div class="nl">Fat</div></div>';
+  h+='<div class="nitem"><input value="'+e(s.carbs)+'" placeholder="—" oninput="pState.carbs=this.value"><div class="nl">Carbs</div></div></div>';
+  h+='<div class="fg" style="margin-top:10px;max-width:180px"><label class="fl">Sodium (mg)</label><input class="inp" value="'+e(s.sodium)+'" oninput="pState.sodium=this.value"></div>';
+  h+='</div>';
 
-    el.innerHTML=`
-    ${comps.length===0?'<div class="text-center py-20 text-gray-500">No data yet. Sync first.</div>':`
-    <div class="grid grid-cols-3 gap-4 mb-5">
-      <div class="cd p-5"><div class="text-xs text-yellow-400 font-semibold mb-2">⭐ HIGHEST RATED</div><div class="text-lg font-bold">${topRated?.name||'—'}</div><div class="text-2xl font-bold text-yellow-400">${topRated?.google_rating||0}★</div><div class="text-xs text-gray-500 mt-1">${(topRated?.google_reviews_count||0).toLocaleString()} reviews</div></div>
-      <div class="cd p-5"><div class="text-xs text-blue-400 font-semibold mb-2">📊 MOST REVIEWED</div><div class="text-lg font-bold">${mostReviewed?.name||'—'}</div><div class="text-2xl font-bold text-blue-400">${(mostReviewed?.google_reviews_count||0).toLocaleString()}</div><div class="text-xs text-gray-500 mt-1">${mostReviewed?.google_rating||0}★ rating</div></div>
-      <div class="cd p-5"><div class="text-xs text-orange-400 font-semibold mb-2">📢 MOST ADS</div><div class="text-lg font-bold">${mostAds?.name||'—'}</div><div class="text-2xl font-bold text-orange-400">${mostAds?.active_ads_count||0} active</div><div class="text-xs text-gray-500 mt-1">Across FB + IG</div></div>
-    </div>
-    <div class="grid grid-cols-2 gap-5 mb-5">
-      <div class="rounded-xl border border-orange-500/25 p-5" style="background:linear-gradient(135deg,rgba(255,77,45,.06),rgba(255,140,66,.03))">
-        <div class="text-xs text-orange-400 font-semibold mb-2">🔥 TOP OPPORTUNITY</div>
-        <div class="text-lg font-bold mb-2">Launch Summer Mango Campaign</div>
-        <div class="text-sm text-gray-400">Mango pickle demand peaks Feb–April. Multiple competitors already pushing seasonal combos. Move fast with early-bird pricing.</div>
-      </div>
-      <div class="rounded-xl border border-green-500/25 p-5" style="background:linear-gradient(135deg,rgba(34,197,94,.06),rgba(34,197,94,.03))">
-        <div class="text-xs text-green-400 font-semibold mb-2">💎 YOUR EDGE</div>
-        <div class="text-lg font-bold mb-2">"Homemade" Positioning is Open</div>
-        <div class="text-sm text-gray-400">Competitor reviews say "mass-produced" and "factory taste". SeaSalt's handmade + cold-pressed angle is your biggest differentiator.</div>
-      </div>
-    </div>
-    <div class="cd"><div class="ch"><h3>⚡ Quick Actions — All Competitors</h3></div>
-      <div class="p-5 space-y-3">${comps.slice(0,8).map(c=>{const act=aiActions(c)[0];return`
-        <div class="flex items-start gap-3 pb-3 border-b border-gray-800/40">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style="background:${c.color}">${c.code}</div>
-          <div class="flex-1"><div class="text-sm font-semibold">${c.name}</div><div class="text-sm text-gray-400">${act.p} ${act.t}</div></div>
-          <button onclick="drillTo('${c.name.replace(/'/g,"\\'")}');go('intel')" class="btn bg2 bs flex-shrink-0">Details →</button>
-        </div>`;}).join('')}
-      </div>
-    </div>`}`;
-  }
+  // SEO
+  h+='<div class="etp'+(pTab==='seo'?' on':'')+'">';
+  h+='<div class="fg"><label class="fl">SEO Title</label><input class="inp" value="'+e(s.seo_title)+'" placeholder="'+e(s.name||'Product')+' | SeaSalt" maxlength="70" oninput="pState.seo_title=this.value"></div>';
+  h+='<div class="fg"><label class="fl">SEO Description</label><textarea class="inp" rows="2" maxlength="160" oninput="pState.seo_description=this.value">'+e(s.seo_description)+'</textarea></div>';
+  h+='<div class="fg"><label class="fl">Tags</label><div style="display:flex;gap:5px;margin-bottom:4px"><input class="inp" id="pe-tag" placeholder="andhra, summer" onkeydown="if(event.key===\'Enter\')peAddTag()"><button class="btn bg2 bs" onclick="peAddTag()">+</button></div>';
+  h+='<div>'+(s.tags||[]).map(function(t,i){return '<span class="itag" style="background:rgba(37,99,235,.06);border-color:rgba(37,99,235,.12)">'+e(t)+' <span class="x" onclick="pState.tags.splice('+i+',1);peRender()">✕</span></span>';}).join('')+'</div></div>';
+  h+='<div style="margin-top:12px;padding:10px;background:#FAFBFC;border-radius:6px;border:1px solid #E5E7EB"><div class="fl" style="margin-bottom:5px">🔍 Search Preview</div>';
+  h+='<div style="font-size:.82rem;color:#1a0dab;font-weight:500">'+e(s.seo_title||s.name||'Product')+' | SeaSalt</div>';
+  h+='<div style="font-size:.58rem;color:#006621;font-family:\'Space Mono\',monospace">seasaltpickles.com/'+e(s.slug||pSlug(s.name)||'slug')+'</div>';
+  h+='<div style="font-size:.66rem;color:#545454">'+e(s.seo_description||s.short_description||'Description...')+'</div></div>';
+  h+='</div>';
+
+  document.getElementById('pe-body').innerHTML=h;
 }
 
-function exportCSV(){
-  if(!comps.length)return alert('No data to export');
-  const rows=[['Rank','Brand','URL','Rating','Reviews','Ads','Status','Last Synced']];
-  comps.forEach((c,i)=>rows.push([i+1,c.name,c.url,c.google_rating,c.google_reviews_count,c.active_ads_count,c.status,c.last_synced]));
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'}));
-  a.download='seasalt-intel-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+// Editor actions
+function peAddImg(){var u=prompt('Image URL:');if(u&&u.trim()){pState.images.push(u.trim());peRender();}}
+function peAddImgUrl(){var i=document.getElementById('pe-imgurl');if(i&&i.value.trim()){pState.images.push(i.value.trim());i.value='';peRender();}}
+function peAddIng(){var i=document.getElementById('pe-ing');if(i&&i.value.trim()){i.value.split(',').forEach(function(x){var t=x.trim();if(t&&pState.ingredients.indexOf(t)<0)pState.ingredients.push(t);});i.value='';peRender();}}
+function peAddTag(){var i=document.getElementById('pe-tag');if(i&&i.value.trim()){i.value.split(',').forEach(function(x){var t=x.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');if(t&&pState.tags.indexOf(t)<0)pState.tags.push(t);});i.value='';peRender();}}
+
+// Save
+async function peSave(){
+  var s=pState;if(!s.name.trim()){alert('Name required');return;}
+  var btn=document.getElementById('pe-savebtn');btn.disabled=true;btn.textContent='⏳ Saving...';spin(1);
+  var ni=document.getElementById('pe-name');if(ni)s.name=ni.value;
+  var ci=document.getElementById('pe-cat');if(ci)s.category=ci.value;
+  var d={name:s.name.trim(),slug:s.slug||pSlug(s.name),description:s.description,short_description:s.short_description,
+    category:s.category,subcategory:s.subcategory,price:s.base_price||(s.variants.length?s.variants[0].price:0),
+    base_price:s.base_price,compare_price:s.compare_price||null,cost_price:s.cost_price||null,
+    image_url:s.images.length?s.images[0]:null,images:s.images,is_active:s.is_active,is_featured:s.is_featured,
+    is_bestseller:s.is_bestseller,is_new:s.is_new,badge_text:s.badge_text||null,ingredients:s.ingredients,
+    oil_type:s.oil_type||null,spice_level:s.spice_level||null,shelf_life:s.shelf_life||null,
+    storage_instructions:s.storage_instructions||null,dietary_info:s.dietary_info||null,weight_unit:s.weight_unit||'g',
+    weight:s.variants.length?s.variants[0].weight:null,sku_prefix:s.sku_prefix||null,sort_order:s.sort_order||0,
+    seo_title:s.seo_title||null,seo_description:s.seo_description||null,tags:s.tags,
+    calories:s.calories||null,protein:s.protein||null,fat:s.fat||null,carbs:s.carbs||null,sodium:s.sodium||null};
+  var saved;
+  if(s.id)saved=await su('products','id=eq.'+encodeURIComponent(String(s.id)),d);
+  else saved=await si('products',d);
+  if(!saved){alert('Error saving');btn.disabled=false;btn.textContent='💾 Save';spin(0);return;}
+  var pid=Array.isArray(saved)?saved[0].id:saved.id;
+  if(s.variants.length){
+    await sdl('product_variants','product_id=eq.'+encodeURIComponent(String(pid)));
+    for(var i=0;i<s.variants.length;i++){var v=s.variants[i];
+      await si('product_variants',{product_id:String(pid),name:v.name||'Variant '+(i+1),weight:v.weight||'',price:v.price||0,compare_price:v.compare_price||null,sku:v.sku||null,stock:v.stock!=null?v.stock:null,is_active:true,sort_order:i});}
+  }
+  document.getElementById('pe-saved').style.display='inline-flex';
+  setTimeout(function(){document.getElementById('pe-saved').style.display='none';},3000);
+  btn.disabled=false;btn.textContent='💾 Save';spin(0);await ld();
+  if(!s.id){pState.id=pid;document.getElementById('pe-title').textContent='✏️ Edit: '+s.name;document.getElementById('pe-dup').style.display='inline-flex';}
 }
 
-// Init: Load data from Supabase on page load
-loadData();
+// Delete
+function pdOpen(pid){var p=products.find(function(x){return String(x.id)===String(pid);});if(!p)return;pDel=p;document.getElementById('pd-name').textContent=p.name;document.getElementById('pd-modal').classList.add('show');}
+async function pdConfirm(){if(!pDel)return;spin(1);await sdl('product_variants','product_id=eq.'+encodeURIComponent(String(pDel.id)));await sdl('products','id=eq.'+encodeURIComponent(String(pDel.id)));document.getElementById('pd-modal').classList.remove('show');pDel=null;peClose();await ld();spin(0);}
+
+// Duplicate
+function peDuplicate(){if(!pState.id)return;pState.id=null;pState.name+=' (Copy)';pState.slug=pSlug(pState.name);pState.variants=pState.variants.map(function(v){return Object.assign({},v,{id:undefined,product_id:undefined});});pEdit=null;document.getElementById('pe-title').textContent='📋 Duplicate';document.getElementById('pe-dup').style.display='none';peRender();}
+
+// Preview
+function pePreview(){
+  var s=pState,img=s.images.length?s.images[0]:'',pr=s.base_price||(s.variants.length?s.variants[0].price:0);
+  var h='<div style="text-align:center">';
+  h+='<div style="width:100%;height:180px;background:#F5F6FA;border-radius:8px;overflow:hidden;margin-bottom:10px;display:flex;align-items:center;justify-content:center">';
+  if(img)h+='<img src="'+e(img)+'" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=\'<div style=font-size:2.5rem;opacity:.2>🫙</div>\'">';
+  else h+='<div style="font-size:2.5rem;opacity:.2">🫙</div>';
+  h+='</div>';
+  if(s.is_bestseller)h+='<span class="tg tg-a" style="margin:2px">🔥 Bestseller</span>';
+  if(s.is_new)h+='<span class="tg tg-b" style="margin:2px">✨ New</span>';
+  h+='<div style="font-size:.48rem;color:#9CA3AF;font-family:\'Space Mono\',monospace;text-transform:uppercase;margin-top:6px">'+e(s.category||'CATEGORY')+'</div>';
+  h+='<div style="font-size:1rem;font-weight:700;margin:3px 0">'+e(s.name||'Product')+'</div>';
+  if(s.short_description)h+='<div style="font-size:.7rem;color:#6B7280;margin-bottom:6px">'+e(s.short_description)+'</div>';
+  h+='<div style="font-size:1.2rem;font-weight:700;color:#D4451A">₹'+pr+'</div>';
+  if(s.compare_price>pr)h+='<div style="font-size:.68rem;color:#9CA3AF;text-decoration:line-through">₹'+s.compare_price+'</div>';
+  if(s.variants.length){h+='<div style="margin-top:10px;text-align:left"><div class="fl" style="margin-bottom:4px">Select Size</div>';
+    s.variants.forEach(function(v){h+='<div style="display:inline-block;padding:5px 12px;margin:2px;border:1.5px solid #E5E7EB;border-radius:7px;font-size:.66rem;cursor:pointer">'+e(v.name||v.weight)+' — ₹'+(v.price||0)+'</div>';});
+    h+='</div>';}
+  if(s.ingredients&&s.ingredients.length)h+='<div style="margin-top:10px;text-align:left;font-size:.62rem;color:#6B7280"><strong>Ingredients:</strong> '+s.ingredients.map(e).join(', ')+'</div>';
+  h+='</div>';
+  document.getElementById('pv-body').innerHTML=h;document.getElementById('pv-modal').classList.add('show');
+}
+
+// ═══ ESC + OVERLAY CLOSE ═══
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape'){document.querySelectorAll('.mo.show').forEach(function(m){m.classList.remove('show');});}});
+document.querySelectorAll('.mo').forEach(function(m){m.addEventListener('click',function(ev){if(ev.target===m)m.classList.remove('show');});});
+
+// ═══ INIT ═══
+ld();
 </script>
 </body>
 </html>
