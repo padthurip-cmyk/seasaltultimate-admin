@@ -511,7 +511,7 @@
     // DATA LOADING
     async function loadAllData() {
         document.getElementById('lastUpdated').textContent = 'Loading...';
-        try { await Promise.all([loadDashboard(), loadAnalytics(), loadUsers(), loadNotifications(), loadProducts(), loadOrders()]); } catch(err) { console.error('Load error:', err); }
+        try { await Promise.all([loadDashboard(), loadAnalytics(), loadUsers(), loadNotifications(), loadProducts(), loadOrders()]); loadIntelligence(); } catch(err) { console.error('Load error:', err); }
         document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
     }
 
@@ -575,7 +575,13 @@
     // ══════════ USERS ══════════
     async function loadUsers(){var ago=new Date(Date.now()-30*86400000).toISOString();var today=new Date().toISOString().split('T')[0];var{data:usersData}=await db.from('users').select('*').order('last_seen',{ascending:false});usersData=usersData||[];var{data:events}=await db.from('analytics_events').select('*').gte('created_at',ago).order('created_at',{ascending:false});events=events||[];var allSessions=new Set(events.map(function(e){return e.session_id})).size;var loggedInUsers=usersData.length;var guestSessions=new Set(events.filter(function(e){return!e.user_phone}).map(function(e){return e.session_id})).size;var todayEvents=events.filter(function(e){return e.created_at&&e.created_at.startsWith(today)});var activeToday=new Set(todayEvents.map(function(e){return e.user_phone||e.session_id})).size;document.getElementById('usersTotalUsers').textContent=allSessions;document.getElementById('usersLoggedIn').textContent=loggedInUsers;document.getElementById('usersGuests').textContent=guestSessions;document.getElementById('usersActiveToday').textContent=activeToday;var activityMap={};events.forEach(function(e){if(!e.user_phone)return;if(!activityMap[e.user_phone])activityMap[e.user_phone]={pageViews:0,cartAdds:0,purchases:0};if(e.event_type==='page_view')activityMap[e.user_phone].pageViews++;if(e.event_type==='add_to_cart')activityMap[e.user_phone].cartAdds++;if(e.event_type==='purchase')activityMap[e.user_phone].purchases++;});var html='';if(usersData.length===0){html='<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">No registered users yet.</td></tr>';}else{usersData.forEach(function(u){var a=activityMap[u.phone]||{pageViews:0,cartAdds:0,purchases:0};var la=u.last_seen?new Date(u.last_seen).toLocaleString():'-';var wb=u.wallet_balance>0?'<span class="badge badge-green">₹'+u.wallet_balance+'</span>':'₹0';var cf=getCountryFlag(u.selected_country);html+='<tr><td><div><strong>'+( u.name||'Unknown')+'</strong></div><div style="font-size:0.8rem;color:#666;">📱 '+u.phone+'</div></td><td>'+cf+' '+(u.selected_country||'-')+'</td><td>'+(u.total_visits||a.pageViews||0)+'</td><td>'+a.cartAdds+'</td><td>'+(u.total_purchases||0)+'</td><td>'+wb+'</td><td style="font-size:0.8rem;">'+la+'</td><td><button class="btn btn-sm btn-green" onclick="openWalletModal(\''+u.phone+'\','+(u.wallet_balance||0)+',\''+(u.name||'').replace(/'/g,"\\'")+ '\')">💰</button></td></tr>';});}document.getElementById('usersTable').innerHTML=html;}
     function getCountryFlag(c){var f={'India':'🇮🇳','United States':'🇺🇸','United Kingdom':'🇬🇧','United Arab Emirates':'🇦🇪','Singapore':'🇸🇬','Australia':'🇦🇺','Canada':'🇨🇦','Germany':'🇩🇪','France':'🇫🇷','Saudi Arabia':'🇸🇦','Qatar':'🇶🇦','Kuwait':'🇰🇼','Oman':'🇴🇲','Malaysia':'🇲🇾','New Zealand':'🇳🇿'};return f[c]||'🌍';}
-    window.openWalletModal=function(p,b,n){showUserDetail(p);};
+    window.showUserDetail=function(phone){showPage('users');};
+    window.openWalletModal=async function(phone,balance,name){
+        var amt=prompt('Add wallet credit for '+(name||phone)+' (current: ₹'+(balance||0)+'):');
+        if(!amt||isNaN(amt))return;var n=parseFloat(amt);var nb=(parseFloat(balance)||0)+n;
+        await db.from('users').update({wallet_balance:nb}).eq('phone',phone);
+        showToast('💰 ₹'+n+' added! New balance: ₹'+nb,'success');loadUsers();
+    };
 
     // ══════════ PRODUCTS (DEEP MANAGEMENT) ══════════
     let allProducts = [];
@@ -871,9 +877,12 @@
         var plats=[{id:'ig_post',l:'📸 IG Post'},{id:'ig_reel',l:'🎬 Reel'},{id:'fb_post',l:'📘 FB'},{id:'wa_msg',l:'💬 WA'},{id:'yt_short',l:'▶️ YT'}];
         var ph='';plats.forEach(p=>{ph+='<button class="btn btn-sm" style="background:'+(csPlat===p.id?'#e67e22;color:#fff':'#eee;color:#333')+'" onclick="csPlat=\''+p.id+'\';renderContentStudio()">'+p.l+'</button>';});
         document.getElementById('cs-platforms').innerHTML=ph;
-        var sel=document.getElementById('cs-product');sel.innerHTML='';
-        allProducts.forEach(p=>{sel.innerHTML+='<option value="'+p.name+'">'+p.name+'</option>';});
-        var pr=sel.value||'Avakaya Pickle';
+        var sel=document.getElementById('cs-product');
+        var curVal=sel.value;
+        sel.innerHTML='';
+        allProducts.forEach(p=>{sel.innerHTML+='<option value="'+p.name+'"'+(curVal===p.name?' selected':'')+'>'+p.name+'</option>';});
+        if(!sel.onchange)sel.onchange=function(){renderContentStudio();};
+        var pr=sel.value||allProducts[0]?.name||'Avakaya Pickle';
         var txt='';
         if(csPlat==='ig_post')txt='🫙 Craving '+pr+'?\n\nHandmade with love. Cold-pressed oil. Zero preservatives.\n\n🛒 seasaltpickles.com\n\n#SeaSaltPickles #AndhraPickles #Hyderabad';
         else if(csPlat==='ig_reel')txt='🎬 REEL SCRIPT: '+pr+'\n\n[0-2s] Jar opening shot\n[2-5s] Ingredients close-up\n[5-8s] Mixing process\n[8-12s] Final product\n[12-15s] CTA + link';
