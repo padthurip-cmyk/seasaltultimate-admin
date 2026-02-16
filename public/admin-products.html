@@ -547,7 +547,7 @@ function setView(v) {
 // HELPERS
 // ════════════════════════════════════════════════════════════════
 function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
-function getVariants(productId) { return variants.filter(v => v.product_id == productId); }
+function getVariants(productId) { return variants.filter(v => String(v.product_id) == String(productId)); }
 function getBasePrice(p) {
   var pv = getVariants(p.id);
   if (pv.length) return Math.min(...pv.map(v => parseFloat(v.price || 0)));
@@ -612,7 +612,7 @@ function render() {
       var price = getBasePrice(p);
       var pv = getVariants(p.id);
       var inactive = p.is_active === false;
-      h += '<div class="product-card" onclick="openEditor(' + p.id + ')">';
+      h += '<div class="product-card" onclick="openEditor(\'' + esc(String(p.id)) + '\')">';
       if (inactive) h += '<div class="inactive-overlay"><span>INACTIVE</span></div>';
       if (p.is_bestseller) h += '<div class="card-badge"><span class="tag tag-accent">🔥 Bestseller</span></div>';
       else if (p.is_new) h += '<div class="card-badge"><span class="tag tag-blue">✨ New</span></div>';
@@ -639,7 +639,7 @@ function render() {
       var img = getPrimaryImage(p);
       var price = getBasePrice(p);
       var pv = getVariants(p.id);
-      h += '<tr class="clickable" onclick="openEditor(' + p.id + ')">';
+      h += '<tr class="clickable" onclick="openEditor(\'' + esc(String(p.id)) + '\')">';
       h += '<td style="color:var(--text3);font-family:var(--mono);font-size:.6rem">' + (i + 1) + '</td>';
       h += '<td>' + (img ? '<img src="' + esc(img) + '" style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML=\'<div style=width:36px;height:36px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:.7rem>🫙</div>\'">' : '<div style="width:36px;height:36px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:.7rem">🫙</div>') + '</td>';
       h += '<td><div style="font-weight:600;color:var(--text)">' + esc(p.name) + '</div>' + (p.short_description ? '<div style="font-size:.58rem;color:var(--text3);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(p.short_description) + '</div>' : '') + '</td>';
@@ -655,7 +655,7 @@ function render() {
       if (p.dietary_info === 'non-veg') h += '🍗';
       else if (p.dietary_info === 'veg') h += '🌿';
       h += '</td>';
-      h += '<td onclick="event.stopPropagation()"><button class="btn-icon" onclick="openEditor(' + p.id + ')" title="Edit">✏️</button> <button class="btn-icon" onclick="promptDelete(' + p.id + ')" title="Delete" style="color:var(--red)">🗑</button></td>';
+      h += '<td onclick="event.stopPropagation()"><button class="btn-icon" onclick="openEditor(\'' + esc(String(p.id)) + '\')" title="Edit">✏️</button> <button class="btn-icon" onclick="promptDelete(\'' + esc(String(p.id)) + '\')" title="Delete" style="color:var(--red)">🗑</button></td>';
       h += '</tr>';
     });
     h += '</tbody></table></div></div>';
@@ -670,7 +670,7 @@ function render() {
 function openEditor(productId) {
   editorTab = 'basic';
   if (productId) {
-    var p = products.find(x => x.id == productId);
+    var p = products.find(x => String(x.id) === String(productId));
     if (!p) return;
     editingProduct = p;
     editorState = {
@@ -1051,7 +1051,7 @@ async function saveProduct() {
   var savedProduct;
   if (s.id) {
     // Update existing
-    savedProduct = await sbUpdate('products', 'id=eq.' + s.id, productData);
+    savedProduct = await sbUpdate('products', 'id=eq.' + encodeURIComponent(String(s.id)), productData);
   } else {
     // Insert new
     savedProduct = await sbInsert('products', productData);
@@ -1069,13 +1069,13 @@ async function saveProduct() {
 
   // Save variants if product_variants table exists
   if (s.variants.length) {
-    // Delete existing variants for this product
-    await sbDelete('product_variants', 'product_id=eq.' + productId);
+    // Delete existing variants for this product (product_id is TEXT)
+    await sbDelete('product_variants', 'product_id=eq.' + encodeURIComponent(String(productId)));
     // Insert new variants
     for (var i = 0; i < s.variants.length; i++) {
       var v = s.variants[i];
       await sbInsert('product_variants', {
-        product_id: productId,
+        product_id: String(productId),
         name: v.name || ('Variant ' + (i + 1)),
         weight: v.weight || '',
         price: v.price || 0,
@@ -1105,7 +1105,7 @@ async function saveProduct() {
   // If was new product, update editor state with ID
   if (!s.id) {
     editorState.id = productId;
-    editingProduct = products.find(p => p.id == productId);
+    editingProduct = products.find(p => String(p.id) === String(productId));
     document.getElementById('editor-title').textContent = '✏️ Edit: ' + s.name;
     document.getElementById('btn-duplicate').style.display = 'inline-flex';
   }
@@ -1115,7 +1115,7 @@ async function saveProduct() {
 // DELETE
 // ════════════════════════════════════════════════════════════════
 function promptDelete(productId) {
-  var p = products.find(x => x.id == productId);
+  var p = products.find(x => String(x.id) === String(productId));
   if (!p) return;
   deleteTarget = p;
   document.getElementById('delete-name').textContent = p.name;
@@ -1126,9 +1126,9 @@ async function confirmDelete() {
   if (!deleteTarget) return;
   showSpinner(true);
   // Delete variants first
-  await sbDelete('product_variants', 'product_id=eq.' + deleteTarget.id);
+  await sbDelete('product_variants', 'product_id=eq.' + encodeURIComponent(String(deleteTarget.id)));
   // Delete product
-  await sbDelete('products', 'id=eq.' + deleteTarget.id);
+  await sbDelete('products', 'id=eq.' + encodeURIComponent(String(deleteTarget.id)));
   document.getElementById('delete-modal').classList.remove('show');
   deleteTarget = null;
   closeEditor();
