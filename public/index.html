@@ -50,6 +50,7 @@
   <div class="sl on" onclick="go('intel')" id="n-intel">🏆 Competitor Intel</div>
   <div class="sl" onclick="go('social')" id="n-social">📱 Social Hub</div>
   <div class="sl" onclick="go('insights')" id="n-insights">🧠 Insights</div>
+  <div class="sl" onclick="go('listeners')" id="n-listeners">👥 Social Listeners</div>
   <div class="flex-1"></div>
   <div class="px-2 py-3 rounded-lg" style="background:rgba(255,77,45,.06);border:1px solid rgba(255,77,45,.15)">
     <div class="flex items-center gap-2 mb-1"><div class="dot"></div><span class="text-xs text-gray-500" style="font-family:monospace">Live · Supabase Connected</span></div>
@@ -63,7 +64,10 @@
     <div><h1 class="text-lg font-bold" id="ptitle">🏆 Competitor Intelligence</h1><p class="text-xs text-gray-500" style="font-family:monospace" id="psub">Live Data · Supabase + Google Places API</p></div>
     <div class="flex items-center gap-3">
       <div id="sync-spinner" class="hidden"><div class="spinner"></div></div>
-      <button class="btn bg2 bs" onclick="syncNow()">🔄 Sync Live Data</button>
+      <button class="btn bg2 bs" onclick="syncNow()">🔄 Sync All</button>
+        <button class="btn bg2 bs" onclick="scanAds()">📢 Scan Ads</button>
+        <button class="btn bg2 bs" onclick="scanYT()">▶️ Scan YouTube</button>
+        <button class="btn bp bs" onclick="scanSocial()">👥 Scan Commenters</button>
       <button class="btn bp bs" onclick="exportCSV()">↓ Export</button>
     </div>
   </div>
@@ -81,7 +85,7 @@ const SEASALT={avakaya:349,chicken:499,gongura:299,lemon:249,garlic:279};
 const PRODUCTS=["Avakaya Mango Pickle","Gongura Red Chilli Pickle","Chicken Pickle with Bone","Boneless Chicken Pickle","Mutton Pickle","Prawn Pickle","Garlic Pachadi","Tomato Thokku","Lemon Spice Pickle","Mixed Vegetable Pickle","Summer Combo Pack","Family Pack"];
 const PLATFORMS=[{id:"ig_post",l:"Instagram Post",i:"📸"},{id:"ig_reel",l:"Reel Script",i:"🎬"},{id:"fb_post",l:"Facebook Post",i:"📘"},{id:"g_post",l:"Google Business",i:"📍"},{id:"wa_msg",l:"WhatsApp Broadcast",i:"💬"},{id:"yt_short",l:"YouTube Short",i:"▶️"}];
 
-let page='intel',drill=null,comps=[],revs=[],ads=[],sPlat='ig_post',sProd=PRODUCTS[0];
+let page='intel',drill=null,comps=[],revs=[],ads=[],engUsers=[],userProfiles=[],compSocials=[],compContent=[],sPlat='ig_post',sProd=PRODUCTS[0];
 
 // ═══════════════════════════════════
 // SUPABASE HELPERS
@@ -151,9 +155,109 @@ async function syncNow(){
   try{
     const r=await fetch('/.netlify/functions/intel-sync?action=sync');
     const d=await r.json();
-    if(d.success){alert(`✅ Synced ${d.count} competitors! Data is now live.`);await loadData();}
+    if(d.success){alert('✅ Synced '+d.count+' competitors!\nReviews: '+d.review_count+'\nAds detected: '+(d.ad_count||0));await loadData();}
     else alert('Sync failed: '+JSON.stringify(d));
-  }catch(e){alert('Sync error: '+e.message+'\n\nMake sure you deployed intel-sync.js to netlify/functions/');}
+  }catch(e){alert('Sync error: '+e.message);}
+  sp.classList.add('hidden');
+}
+
+async function scanYT(){
+  const sp=document.getElementById('sync-spinner');sp.classList.remove('hidden');
+  try{
+    const r=await fetch('/.netlify/functions/intel-sync?action=scan-youtube');
+    const d=await r.json();
+    if(d.success){
+      const det=d.details||[];
+      const total=det.reduce((s,x)=>s+(x.videos_found||0),0);
+      alert('▶️ YouTube scan complete!\nTotal videos found: '+total+'\n\n'+det.filter(x=>x.videos_found>0).map(x=>x.name+': '+x.videos_found+' videos').join('\n'));
+      await loadData();
+    }else alert('Failed: '+JSON.stringify(d));
+  }catch(e){alert('Error: '+e.message);}
+  sp.classList.add('hidden');
+}
+
+async function scanSocial(){
+  const sp=document.getElementById('sync-spinner');sp.classList.remove('hidden');
+  try{
+    const r=await fetch('/.netlify/functions/social-listen?action=scan');
+    const d=await r.json();
+    if(d.success){
+      alert('🕵️ Deep scan complete!\nVideos: '+d.total_videos+'\nUsers: '+d.total_users+'\nDeep profiled: '+d.total_profiled+'\n\n'+d.details.filter(x=>x.users>0).map(x=>x.name+': '+x.users+' users ('+x.withSocials+' with socials)').join('\n'));
+      await loadSocialData();
+      if(page==='listeners') render();
+    }else alert('Failed: '+JSON.stringify(d));
+  }catch(e){alert('Error: '+e.message);}
+  sp.classList.add('hidden');
+}
+
+async function loadSocialData(){
+  try{
+    const r=await fetch('/.netlify/functions/social-listen?action=get-users');
+    const d=await r.json();
+    engUsers=d.users||[];userProfiles=d.profiles||[];compSocials=d.socials||[];compContent=d.content||[];
+  }catch(e){engUsers=[];userProfiles=[];compSocials=[];compContent=[];}
+}
+
+function formatSubs(s){if(!s||s==='0')return'—';const n=parseInt(s);if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';return String(n);}
+
+// Manual user logging for IG/FB/LinkedIn
+async function logUser(){
+  const u=document.getElementById('lu-username').value.trim();
+  const p=document.getElementById('lu-platform').value;
+  const c=document.getElementById('lu-competitor').value;
+  const t=document.getElementById('lu-type').value;
+  const txt=document.getElementById('lu-comment').value.trim();
+  if(!u){alert('Enter username');return;}
+  let url='';
+  if(p==='Instagram')url='https://instagram.com/'+u.replace('@','');
+  else if(p==='Facebook')url='https://facebook.com/'+u.replace('@','');
+  else if(p==='LinkedIn')url='https://linkedin.com/in/'+u.replace('@','');
+  else if(p==='Twitter/X')url='https://x.com/'+u.replace('@','');
+  else url=u;
+  const ok=await sbInsert('engaged_users',{
+    username:u.replace('@',''),display_name:u.replace('@',''),
+    profile_url:url,platform:p,competitor_name:c,
+    engagement_type:t,content_text:txt||'Manually logged',
+    content_url:'',video_title:'Manual entry',
+    detected_at:new Date().toISOString()
+  });
+  if(ok){
+    document.getElementById('lu-username').value='';
+    document.getElementById('lu-comment').value='';
+    await loadSocialData();render();
+    alert('✅ User logged: @'+u.replace('@',''));
+  }else alert('Failed to save');
+}
+
+// Competitor social quick-links for manual browsing
+const COMP_SOCIALS={
+  'Vellanki Foods':{ig:'vellankifoods',fb:'VellankiFoods'},
+  'Priya Pickles':{ig:'priyafoodsofficial',fb:'PriyaFoodsOfficial'},
+  'Nirupama Pickles':{ig:'nirupamapickles',fb:'nirupamapickles'},
+  'Tulasi Pickles':{fb:'tulasipickleshyderabad'},
+  'Aavarampoo Pickles':{ig:'aavarampoo_pickles'},
+  'Sitara Pickles':{ig:'sitarafoods'},
+  'Ruchulu Pickles':{ig:'ruchulupickles'},
+  'Ammas Homemade Pickles':{},
+  'Andhra Pickles':{},
+  'Hyderabad Pickles':{}
+};
+function igUrl(h){return h?'https://instagram.com/'+h:null;}
+function fbUrl(h){return h?'https://facebook.com/'+h:null;}
+
+async function scanAds(){
+  const sp=document.getElementById('sync-spinner');
+  sp.classList.remove('hidden');
+  try{
+    const r=await fetch('/.netlify/functions/intel-sync?action=scan-ads');
+    const d=await r.json();
+    if(d.success){
+      const details=d.details||[];
+      const found=details.filter(x=>x.ads_detected>0);
+      alert('📢 Ad scan complete!\nTotal ads detected: '+d.total_ads+'\nCompetitors with ads: '+found.length+'/'+details.length+'\n\n'+(found.length>0?found.map(x=>x.name+': '+x.ads_detected+' ads').join('\n'):'No active ads detected. Meta may be blocking server requests — use manual logging for now.'));
+      await loadData();
+    } else alert('Scan failed: '+JSON.stringify(d));
+  }catch(e){alert('Scan error: '+e.message);}
   sp.classList.add('hidden');
 }
 
@@ -250,7 +354,7 @@ function render(){
     </div>
 
     ${ads.filter(a=>a.ad_status==='active').length?`<div class="cd mt-5"><div class="ch"><h3>📢 Active Competitor Ads</h3><span class="bg bg-l">TRACKED</span></div>
-      <div class="p-5 space-y-3">${ads.filter(a=>a.ad_status==='active').slice(0,6).map(a=>'<div class="pb-3 border-b border-gray-800/40 flex gap-3"><div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style="background:#1A1F2B">📢</div><div class="flex-1"><div class="text-xs font-semibold" style="color:#FF4D2D">'+a.competitor_name+'</div><div class="text-sm mb-1">'+a.ad_text+'</div><div class="text-xs text-gray-500" style="font-family:monospace">'+a.platform+' · '+(a.started_date||'')+' · '+(a.region||'')+'</div></div></div>').join('')}</div></div>`:''}
+      <div class="p-5 space-y-3">${ads.filter(a=>a.ad_status==='active').slice(0,6).map(a=>'<div class="pb-3 border-b border-gray-800/40 flex gap-3"><div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style="background:#1A1F2B">📢</div><div class="flex-1"><div class="text-xs font-semibold" style="color:#FF4D2D">'+a.competitor_name+'</div><div class="text-sm mb-1">'+a.ad_text+'</div><div class="text-xs text-gray-500" style="font-family:monospace">'+(a.platform==='YouTube'?'▶️ ':a.platform==='Facebook/Instagram'?'📘 ':'📢 ')+a.platform+' · '+(a.started_date||'')+' · '+(a.region||'')+'</div></div></div>').join('')}</div></div>`:''}
 
     ${revs.length?`<div class="cd mt-5"><div class="ch"><h3>⭐ Latest Competitor Reviews</h3><span class="bg bg-l">LIVE FROM GOOGLE</span></div>
       <div class="p-5 space-y-3">${revs.slice(0,8).map(r=>`<div class="pb-3 border-b border-gray-800/40 last:border-0">
@@ -316,7 +420,7 @@ function render(){
       <div class="cd">
         <div class="ch"><h3>📢 Tracked Ad Campaigns</h3><a href="${metaAdUrl(c.name)}" target="_blank" class="bg bg-l" style="text-decoration:none;cursor:pointer">Check Meta Ad Library →</a></div>
         <div class="p-5">
-          ${(()=>{const compAds=ads.filter(a=>a.competitor_name===c.name);return compAds.length===0?'<div class="text-sm text-gray-600">No ads tracked yet. Check Meta Ad Library or log ads manually below.</div>':compAds.map(a=>'<div class="pb-3 mb-3 border-b border-gray-800/40"><div class="text-sm mb-1">'+a.ad_text+'</div><div class="flex justify-between items-center"><div class="text-xs text-gray-500" style="font-family:monospace">'+a.platform+' · '+(a.started_date||'')+' · '+(a.region||'India')+'</div>'+(a.ad_status==='active'?'<button onclick="removeAd('+a.id+')" class="text-xs text-gray-600 hover:text-orange-400 cursor-pointer" style="background:none;border:none">Mark ended</button>':'<span class="text-xs text-gray-600">Ended</span>')+'</div></div>').join('');})()}
+          ${(()=>{const compAds=ads.filter(a=>a.competitor_name===c.name);return compAds.length===0?'<div class="text-sm text-gray-600">No ads tracked yet. Check Meta Ad Library or log ads manually below.</div>':compAds.map(a=>'<div class="pb-3 mb-3 border-b border-gray-800/40"><div class="text-sm mb-1">'+a.ad_text+'</div><div class="flex justify-between items-center"><div class="text-xs text-gray-500" style="font-family:monospace">'+(a.platform==='YouTube'?'▶️ ':a.platform==='Facebook/Instagram'?'📘 ':'📢 ')+a.platform+' · '+(a.started_date||'')+' · '+(a.region||'India')+'</div>'+(a.ad_status==='active'?'<button onclick="removeAd('+a.id+')" class="text-xs text-gray-600 hover:text-orange-400 cursor-pointer" style="background:none;border:none">Mark ended</button>':'<span class="text-xs text-gray-600">Ended</span>')+'</div></div>').join('');})()}
         </div>
       </div>
       <div class="cd">
@@ -362,6 +466,108 @@ function render(){
           <div class="text-xs px-2 py-0.5 rounded inline-block ${p.c?'bg-green-400/10 text-green-400':'bg-gray-800 text-gray-500'}">${p.c?'✓ Connected':'Connect →'}</div>
         </div>`).join('')}
       </div>
+    </div>`;
+  }
+
+  else if(page==='listeners'){
+    t.textContent='🕵️ Social Spy — Deep User Profiles';
+    s.textContent='Auto-extracted from YouTube commenters on competitor videos';
+
+    if(engUsers.length===0){
+      el.innerHTML='<div class="text-center py-20"><div class="text-5xl mb-4">🕵️</div><h2 class="text-xl font-bold mb-2">No Profiles Yet</h2><p class="text-gray-500 mb-6">Click "👥 Scan Commenters" to find people engaging with competitor content.<br>The system deep-profiles each user, extracting their Instagram, Facebook, Email from YouTube channels.</p><button onclick="scanSocial()" class="btn bp">🕵️ Run Deep Scan</button><p class="text-xs text-gray-600 mt-4" style="font-family:monospace">Deploy social-listen.mjs to netlify/functions/<br>Run supabase-social-tables.sql in Supabase SQL Editor</p></div>';
+      return;
+    }
+
+    // Build profile map
+    const profileMap={};
+    (userProfiles||[]).forEach(p=>{profileMap[p.channel_id]=p;});
+
+    // Count stats
+    const uniqueU=[...new Set(engUsers.map(u=>u.username))].length;
+    const withIG=(userProfiles||[]).filter(p=>p.instagram_url).length;
+    const withEmail=(userProfiles||[]).filter(p=>p.email).length;
+    const withFB=(userProfiles||[]).filter(p=>p.facebook_url).length;
+    const withWeb=(userProfiles||[]).filter(p=>p.website_url).length;
+    const withAnySocial=(userProfiles||[]).filter(p=>p.instagram_url||p.facebook_url||p.twitter_url||p.email||p.website_url||p.whatsapp).length;
+
+    el.innerHTML=\`
+    <div class="grid grid-cols-5 gap-3 mb-5">
+      <div class="cd p-4"><div class="text-xs text-gray-500 uppercase mb-1" style="font-family:monospace">Users Found</div><div class="text-2xl font-bold">\${uniqueU}</div><div class="text-xs text-green-400">Unique profiles</div></div>
+      <div class="cd p-4"><div class="text-xs text-gray-500 uppercase mb-1" style="font-family:monospace">With Instagram</div><div class="text-2xl font-bold" style="color:#E1306C">\${withIG}</div><div class="text-xs text-gray-500">📸 Extracted</div></div>
+      <div class="cd p-4"><div class="text-xs text-gray-500 uppercase mb-1" style="font-family:monospace">With Email</div><div class="text-2xl font-bold" style="color:#4FC3F7">\${withEmail}</div><div class="text-xs text-gray-500">📧 Contact ready</div></div>
+      <div class="cd p-4"><div class="text-xs text-gray-500 uppercase mb-1" style="font-family:monospace">With Facebook</div><div class="text-2xl font-bold" style="color:#1877F2">\${withFB}</div><div class="text-xs text-gray-500">📘 Extracted</div></div>
+      <div class="cd p-4"><div class="text-xs text-gray-500 uppercase mb-1" style="font-family:monospace">Has Any Social</div><div class="text-2xl font-bold" style="color:#FF4D2D">\${withAnySocial}</div><div class="text-xs text-gray-500">🔗 Cross-platform</div></div>
+    </div>
+
+    \${(userProfiles||[]).filter(p=>p.instagram_url||p.facebook_url||p.email||p.website_url||p.twitter_url||p.whatsapp).length?\`
+    <div class="cd mb-5">
+      <div class="ch"><h3>🎯 High-Value Leads — Users with Social Links</h3><span class="bg" style="background:rgba(255,77,45,.15);color:#FF4D2D">ACTIONABLE</span></div>
+      <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>User</th><th>Subs</th><th>Country</th><th>📸 IG</th><th>📘 FB</th><th>🐦 X</th><th>📧 Email</th><th>🌐 Web</th><th>📱 WA</th><th>Score</th></tr></thead><tbody>
+      \${(userProfiles||[]).filter(p=>p.instagram_url||p.facebook_url||p.email||p.website_url||p.twitter_url||p.whatsapp).sort((a,b)=>(b.influence_score||0)-(a.influence_score||0)).map(p=>\`<tr>
+        <td><div class="flex items-center gap-2">\${p.thumbnail?\`<img src="\${p.thumbnail}" style="width:28px;height:28px;border-radius:50%">\`:''}
+          <div><div class="font-semibold text-sm">\${p.username||'—'}</div>
+          <a href="\${p.channel_url||''}" target="_blank" class="text-xs text-blue-400 hover:underline">YT Channel →</a></div></div></td>
+        <td class="text-xs" style="font-family:monospace">\${formatSubs(p.subscribers)}</td>
+        <td class="text-xs">\${p.country||'—'}</td>
+        <td>\${p.instagram_url?\`<a href="\${p.instagram_url}" target="_blank" class="text-pink-400 text-xs hover:underline">Open</a>\`:''}</td>
+        <td>\${p.facebook_url?\`<a href="\${p.facebook_url}" target="_blank" class="text-blue-400 text-xs hover:underline">Open</a>\`:''}</td>
+        <td>\${p.twitter_url?\`<a href="\${p.twitter_url}" target="_blank" class="text-sky-400 text-xs hover:underline">Open</a>\`:''}</td>
+        <td>\${p.email?\`<a href="mailto:\${p.email}" class="text-cyan-400 text-xs hover:underline">\${p.email}</a>\`:''}</td>
+        <td>\${p.website_url?\`<a href="\${p.website_url}" target="_blank" class="text-green-400 text-xs hover:underline">Visit</a>\`:''}</td>
+        <td>\${p.whatsapp?\`<a href="https://wa.me/\${p.whatsapp}" target="_blank" class="text-green-500 text-xs hover:underline">\${p.whatsapp}</a>\`:''}</td>
+        <td><span class="px-2 py-1 rounded text-xs font-bold" style="background:\${p.influence_score>60?'rgba(34,197,94,.2);color:#22C55E':p.influence_score>30?'rgba(234,179,8,.2);color:#EAB308':'rgba(107,114,128,.2);color:#9CA3AF'}">\${p.influence_score||0}</span></td>
+      </tr>\`).join('')}
+      </tbody></table></div>
+    </div>\`:''}
+
+    <!-- Quick-Browse Competitor Socials -->
+    <div class="cd mb-5">
+      <div class="ch"><h3>🔍 Quick-Browse Competitor Pages</h3><span class="bg bg-c">CLICK → FIND COMMENTERS → LOG BELOW</span></div>
+      <div class="p-5">
+        <p class="text-xs text-gray-500 mb-3">Open a competitor's Instagram/Facebook → Scroll their latest posts → See who's commenting → Log their username below</p>
+        <div class="grid grid-cols-2 gap-3">
+          ${Object.entries(COMP_SOCIALS).filter(([k])=>!k.startsWith('_')).map(([name,s])=>`
+            <div class="flex items-center gap-2 p-3 rounded-lg bg-gray-900/50 border border-gray-800">
+              <span class="font-semibold text-sm flex-1">${name}</span>
+              ${s.ig?`<a href="https://instagram.com/${s.ig}" target="_blank" class="btn bg2 bs" style="text-decoration:none">📸 IG</a>`:''}
+              ${s.fb?`<a href="https://facebook.com/${s.fb}" target="_blank" class="btn bg2 bs" style="text-decoration:none">📘 FB</a>`:''}
+              <a href="https://www.google.com/search?q=${encodeURIComponent(name+' LinkedIn')}" target="_blank" class="btn bg2 bs" style="text-decoration:none">💼 LI</a>
+              <a href="https://www.google.com/search?q=${encodeURIComponent(name+' Twitter')}" target="_blank" class="btn bg2 bs" style="text-decoration:none">🐦 X</a>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual User Logger -->
+    <div class="cd mb-5">
+      <div class="ch"><h3>➕ Log User from Any Platform</h3><span class="bg" style="background:rgba(255,77,45,.15);color:#FF4D2D">MANUAL SPY</span></div>
+      <div class="p-5">
+        <div class="grid grid-cols-5 gap-3 mb-3">
+          <div><label class="text-xs text-gray-500 block mb-1">Username / Handle</label><input id="lu-username" class="w-full px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 text-sm focus:outline-none focus:border-orange-500" placeholder="@username"></div>
+          <div><label class="text-xs text-gray-500 block mb-1">Platform</label><select id="lu-platform" class="w-full px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 text-sm"><option>Instagram</option><option>Facebook</option><option>LinkedIn</option><option>Twitter/X</option><option>YouTube</option></select></div>
+          <div><label class="text-xs text-gray-500 block mb-1">Found on (Competitor)</label><select id="lu-competitor" class="w-full px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 text-sm">${comps.map(c=>`<option>${c.name}</option>`).join('')}<option>_General</option></select></div>
+          <div><label class="text-xs text-gray-500 block mb-1">Reaction Type</label><select id="lu-type" class="w-full px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 text-sm"><option>comment</option><option>like</option><option>share</option><option>follow</option><option>mention</option></select></div>
+          <div><label class="text-xs text-gray-500 block mb-1">Comment Text</label><input id="lu-comment" class="w-full px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 text-sm focus:outline-none focus:border-orange-500" placeholder="What they said..."></div>
+        </div>
+        <button onclick="logUser()" class="btn bp">➕ Log This User</button>
+      </div>
+    </div>
+
+    <!-- All Users Table - ALL PLATFORMS -->
+    <div class="cd">
+      <div class="ch"><h3>👥 All Tracked Users — Every Platform</h3><span class="bg bg-l">${engUsers.length} RECORDS</span></div>
+      <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>User</th><th>Platform</th><th>Profile</th><th>Competitor</th><th>Type</th><th>Comment/Action</th><th>Date</th></tr></thead><tbody>
+      ${engUsers.slice(0,100).map(u=>`<tr>
+        <td class="font-semibold text-sm">${u.display_name||u.username}</td>
+        <td><span class="px-2 py-1 rounded text-xs font-semibold" style="background:${u.platform==='Instagram'?'rgba(225,48,108,.15);color:#E1306C':u.platform==='Facebook'?'rgba(24,119,242,.15);color:#1877F2':u.platform==='YouTube'?'rgba(255,0,0,.15);color:#FF0000':u.platform==='LinkedIn'?'rgba(10,102,194,.15);color:#0A66C2':u.platform==='Twitter/X'?'rgba(29,155,240,.15);color:#1DA1F0':'rgba(107,114,128,.15);color:#9CA3AF'}">${u.platform==='Instagram'?'📸':u.platform==='Facebook'?'📘':u.platform==='YouTube'?'▶️':u.platform==='LinkedIn'?'💼':u.platform==='Twitter/X'?'🐦':'🔗'} ${u.platform}</span></td>
+        <td>${u.profile_url?`<a href="${u.profile_url}" target="_blank" class="text-blue-400 text-xs hover:underline">Open Profile →</a>`:''}</td>
+        <td class="text-xs" style="color:#FF4D2D">${u.competitor_name}</td>
+        <td class="text-xs text-gray-500">${u.engagement_type||'comment'}</td>
+        <td class="text-xs text-gray-400" style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(u.content_text||'').replace(/<[^>]*>/g,'').substring(0,100)}</td>
+        <td class="text-xs text-gray-600" style="font-family:monospace">${u.detected_at?timeAgo(new Date(u.detected_at)):''}</td>
+      </tr>`).join('')}
+      </tbody></table></div>
     </div>`;
   }
 
@@ -414,6 +620,7 @@ function exportCSV(){
 
 // Init: Load data from Supabase on page load
 loadData();
+loadSocialData();
 </script>
 </body>
 </html>
