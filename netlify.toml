@@ -7,8 +7,5 @@
   to = "/admin-intel.html"
   status = 200
 
-# Schedule social listening scan every 10 minutes
-# Note: Netlify free plan allows scheduled functions but limits to 1 per hour minimum
-# For 10-minute intervals, you'll need Netlify Pro ($19/mo) or use the manual scan button
 [functions."social-listen"]
   schedule = "@hourly"
