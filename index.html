@@ -166,11 +166,7 @@
         <a href="#" class="sidebar-link" data-page="shipping">🚚 Shipping</a>
         <a href="#" class="sidebar-link" data-page="notifications" style="position:relative;">🔔 Notifications <span class="notification-badge" id="notifBadge" style="display:none;">0</span></a>
         <a href="#" class="sidebar-link" data-page="settings">⚙️ Settings</a>
-        <div style="padding:10px 20px 6px;font-size:0.65rem;color:#555;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-top:6px;border-top:1px solid rgba(255,255,255,0.06);">Intelligence</div>
-        <a href="#" class="sidebar-link" data-page="competitors">🏆 Competitors</a>
-        <a href="#" class="sidebar-link" data-page="spy">🕵️ Social Spy</a>
-        <a href="#" class="sidebar-link" data-page="insights">🧠 Insights</a>
-        <a href="#" class="sidebar-link" data-page="content">📱 Content Studio</a>
+        <a href="#" class="sidebar-link" data-page="spinwheel">🎡 SpinWheel</a>
     </nav>
     <div style="position:absolute;bottom:20px;left:20px;right:20px;">
         <a href="https://seasaltultimate.netlify.app" target="_blank" class="btn btn-primary" style="display:block;text-align:center;width:100%;">View Store →</a>
@@ -357,46 +353,68 @@
         </div>
     </div>
 
-    <!-- ═══════ COMPETITORS PAGE ═══════ -->
-    <div class="page" id="page-competitors">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px;" id="compCards"></div>
-        <div class="card"><h3 style="font-weight:600;margin-bottom:12px;">💬 Recent Reviews</h3>
-            <table><thead><tr><th>Competitor</th><th>Rating</th><th>Review</th><th>Time</th></tr></thead><tbody id="compReviews"></tbody></table>
-        </div>
-    </div>
 
-    <!-- ═══════ SOCIAL SPY PAGE ═══════ -->
-    <div class="page" id="page-spy">
-        <div class="card" style="margin-bottom:24px;">
-            <h3 style="font-weight:600;margin-bottom:12px;">🔍 YouTube Deep Profiler</h3>
-            <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;align-items:end;">
-                <div><label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">YouTube Video URL</label><input type="text" id="spy-url" placeholder="https://youtube.com/watch?v=..." style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;"></div>
-                <button class="btn btn-primary" onclick="runSpy()" style="height:44px;">🕵️ Deep Profile</button>
+    <!-- ═══════ SPINWHEEL CONTROL PAGE ═══════ -->
+    <div class="page" id="page-spinwheel">
+        <div class="card" style="margin-bottom:20px;">
+            <h3 style="font-weight:700;margin-bottom:16px;">🎡 SpinWheel Configuration</h3>
+            <p style="font-size:0.85rem;color:#666;margin-bottom:16px;">Control the SpinWheel prizes, odds, expiry and behavior from here. Changes are saved to Supabase <code>spinwheel_config</code> table and read by the customer site's <code>spinwheel.js</code>.</p>
+            <div id="swConfigStatus" style="margin-bottom:16px;padding:10px;border-radius:8px;background:#FEF3C7;color:#92400E;font-size:0.8rem;">⏳ Loading config...</div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px;">
+            <h3 style="font-weight:600;font-size:0.95rem;margin-bottom:16px;">🎯 Prize Segments & Odds</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>Prize (₹)</th><th>Probability (%)</th><th>Color</th><th>Label</th></tr></thead>
+                    <tbody id="swPrizeTable"></tbody>
+                </table>
             </div>
+            <button class="btn btn-sm" style="margin-top:12px;background:#e67e22;color:#fff;" onclick="addSwPrize()">+ Add Prize Segment</button>
+            <div style="margin-top:8px;font-size:0.75rem;color:#999;" id="swOddsTotal">Total: 0%</div>
         </div>
-        <div id="spy-results"></div>
-    </div>
 
-    <!-- ═══════ INSIGHTS PAGE ═══════ -->
-    <div class="page" id="page-insights">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="insightsGrid"></div>
-    </div>
-
-    <!-- ═══════ CONTENT STUDIO PAGE ═══════ -->
-    <div class="page" id="page-content">
-        <div class="card" style="margin-bottom:16px;">
+        <div class="card" style="margin-bottom:20px;">
+            <h3 style="font-weight:600;font-size:0.95rem;margin-bottom:16px;">⚙️ SpinWheel Settings</h3>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                <div><label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Product</label><select id="cs-product" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;"></select></div>
-                <div><label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Platform</label>
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;" id="cs-platforms"></div>
+                <div>
+                    <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Wallet Expiry (hours)</label>
+                    <input type="number" id="swExpiry" value="48" min="1" max="720" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;">
+                </div>
+                <div>
+                    <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Cooldown (days)</label>
+                    <input type="number" id="swCooldown" value="30" min="1" max="365" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;">
+                </div>
+                <div>
+                    <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Auto-popup Delay (seconds)</label>
+                    <input type="number" id="swPopupDelay" value="1" min="0" max="60" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;">
+                </div>
+                <div>
+                    <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">SpinWheel Active</label>
+                    <select id="swActive" style="width:100%;padding:10px;border:2px solid #eee;border-radius:8px;">
+                        <option value="true">✅ Active</option>
+                        <option value="false">❌ Disabled</option>
+                    </select>
                 </div>
             </div>
         </div>
-        <div class="card"><textarea id="cs-output" rows="8" style="width:100%;padding:12px;border:2px solid #eee;border-radius:8px;font-size:0.9rem;line-height:1.6;resize:vertical;"></textarea>
-            <div style="margin-top:8px;"><button class="btn btn-primary btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('cs-output').value);this.textContent='✅ Copied';setTimeout(()=>this.textContent='📋 Copy',2000)">📋 Copy</button></div>
+
+        <div class="card" style="margin-bottom:20px;">
+            <h3 style="font-weight:600;font-size:0.95rem;margin-bottom:16px;">📊 SpinWheel Stats</h3>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;" id="swStats">
+                <div class="stat-card"><div class="stat-label">Total Spins</div><div class="stat-value" id="swTotalSpins">—</div></div>
+                <div class="stat-card"><div class="stat-label">Total Given (₹)</div><div class="stat-value" id="swTotalGiven">—</div></div>
+                <div class="stat-card"><div class="stat-label">Total Redeemed (₹)</div><div class="stat-value" id="swTotalRedeemed">—</div></div>
+                <div class="stat-card"><div class="stat-label">Active Wallets</div><div class="stat-value" id="swActiveWallets">—</div></div>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:12px;">
+            <button class="btn btn-primary" onclick="saveSwConfig()" id="swSaveBtn">💾 Save SpinWheel Config</button>
+            <button class="btn btn-sm" style="background:#eee;color:#333;" onclick="loadSwConfig()">🔄 Refresh</button>
         </div>
     </div>
-</div>
+
 
 <!-- DELIVERY CHARGE MODAL -->
 <div class="modal-overlay" id="deliveryModal">
@@ -498,6 +516,7 @@
     });
     function showPage(page) {
         pages.forEach(function(p) { var el = document.getElementById('page-'+p); if(el) el.classList.toggle('active', p===page); });
+        if(page==='spinwheel'){loadSwConfig();}
         document.querySelectorAll('.sidebar-link').forEach(function(l) { l.classList.toggle('active', l.getAttribute('data-page')===page); });
         document.getElementById('pageTitle').textContent = pageNames[page] || page;
     }
@@ -510,7 +529,7 @@
     // DATA LOADING
     async function loadAllData() {
         document.getElementById('lastUpdated').textContent = 'Loading...';
-        try { await Promise.all([loadDashboard(), loadAnalytics(), loadUsers(), loadNotifications(), loadProducts(), loadOrders()]); loadIntelligence(); } catch(err) { console.error('Load error:', err); }
+        try { await Promise.all([loadDashboard(), loadAnalytics(), loadUsers(), loadNotifications(), loadProducts(), loadOrders()]); } catch(err) { console.error('Load error:', err); }
         document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
     }
 
@@ -840,67 +859,7 @@
         document.getElementById('previewBody').innerHTML=h;document.getElementById('previewModal').classList.add('show');
     }
 
-    // ══════════ INTELLIGENCE — COMPETITORS ══════════
-    async function loadCompetitors(){
-        try{
-            var{data:comps}=await db.from('competitors').select('*').order('google_reviews_count',{ascending:false});comps=comps||[];
-            var{data:revs}=await db.from('competitor_reviews').select('*').order('publish_time',{ascending:false}).limit(20);revs=revs||[];
-            var ch='';comps.forEach(c=>{var stars='★'.repeat(Math.floor(c.google_rating||0))+'☆'.repeat(5-Math.floor(c.google_rating||0));
-                ch+='<div class="card" style="padding:16px"><div style="font-weight:700;font-size:1rem;margin-bottom:4px">'+c.name+'</div>';
-                ch+='<div style="color:#f59e0b;font-size:0.9rem">'+stars+' '+(c.google_rating||0)+'</div>';
-                ch+='<div style="font-size:0.8rem;color:#666;margin-top:4px">'+(c.google_reviews_count||0)+' reviews</div>';
-                if(c.active_ads_count>0)ch+='<div style="margin-top:6px"><span class="badge badge-red">🔴 '+c.active_ads_count+' ads running</span></div>';
-                ch+='</div>';});
-            document.getElementById('compCards').innerHTML=ch||'<div class="card" style="padding:20px;text-align:center;grid-column:1/-1"><button class="btn btn-primary" onclick="document.getElementById(\'refreshBtn\').click()">🔍 Run First Scan</button></div>';
-            var rh='';revs.forEach(r=>{rh+='<tr><td style="font-weight:600">'+r.competitor_name+'</td><td style="color:#f59e0b">'+('★'.repeat(Math.floor(r.rating||0)))+'</td><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.8rem">'+(r.text||'-')+'</td><td style="font-size:0.8rem;color:#999">'+(r.publish_time?new Date(r.publish_time).toLocaleDateString():'—')+'</td></tr>';});
-            document.getElementById('compReviews').innerHTML=rh||'<tr><td colspan="4" style="text-align:center;color:#999;padding:20px;">No reviews yet</td></tr>';
-        }catch(e){console.log('Competitors not loaded:',e);}
-    }
 
-    // ══════════ INTELLIGENCE — INSIGHTS ══════════
-    function renderInsights(){
-        var h='';
-        var noP=allProducts.filter(p=>!getPrice(p)||getPrice(p)===0).length;
-        var noI=allProducts.filter(p=>!getImg(p)).length;
-        h+='<div class="card" style="padding:16px"><div style="font-size:1.5rem;margin-bottom:6px">🏷️</div><div style="font-weight:700;font-size:1rem">Product Health</div><div style="font-size:0.85rem;color:#666;margin-top:6px;line-height:1.6">'+noP+' products with ₹0 price.<br>'+noI+' missing images.<br><a href="#" onclick="showPage(\'products\');prodFilter=\'_noimg\';renderProducts();return false" style="color:#e67e22">Fix now →</a></div></div>';
-        var rec=allOrders.filter(o=>Date.now()-new Date(o.created_at)<7*86400000).length;
-        h+='<div class="card" style="padding:16px"><div style="font-size:1.5rem;margin-bottom:6px">📦</div><div style="font-weight:700;font-size:1rem">Order Trends</div><div style="font-size:0.85rem;color:#666;margin-top:6px;line-height:1.6">'+rec+' orders in last 7 days. '+(rec>5?'🔥 Good pace!':'📈 Room to grow.')+'</div></div>';
-        h+='<div class="card" style="padding:16px"><div style="font-size:1.5rem;margin-bottom:6px">👥</div><div style="font-weight:700;font-size:1rem">User Engagement</div><div style="font-size:0.85rem;color:#666;margin-top:6px;line-height:1.6">Registered users active. SpinWheel & wallet features engaged.</div></div>';
-        h+='<div class="card" style="padding:16px"><div style="font-size:1.5rem;margin-bottom:6px">💡</div><div style="font-weight:700;font-size:1rem">Quick Actions</div><div style="font-size:0.85rem;color:#666;margin-top:6px;line-height:1.6"><a href="#" onclick="showPage(\'content\');return false" style="color:#e67e22">Generate content →</a><br><a href="#" onclick="showPage(\'competitors\');return false" style="color:#e67e22">Check competitors →</a></div></div>';
-        document.getElementById('insightsGrid').innerHTML=h;
-    }
-
-    // ══════════ INTELLIGENCE — CONTENT STUDIO ══════════
-    let csPlat='ig_post';
-    function renderContentStudio(){
-        var plats=[{id:'ig_post',l:'📸 IG Post'},{id:'ig_reel',l:'🎬 Reel'},{id:'fb_post',l:'📘 FB'},{id:'wa_msg',l:'💬 WA'},{id:'yt_short',l:'▶️ YT'}];
-        var ph='';plats.forEach(p=>{ph+='<button class="btn btn-sm" style="background:'+(csPlat===p.id?'#e67e22;color:#fff':'#eee;color:#333')+'" onclick="csPlat=\''+p.id+'\';renderContentStudio()">'+p.l+'</button>';});
-        document.getElementById('cs-platforms').innerHTML=ph;
-        var sel=document.getElementById('cs-product');
-        var curVal=sel.value;
-        sel.innerHTML='';
-        allProducts.forEach(p=>{sel.innerHTML+='<option value="'+p.name+'"'+(curVal===p.name?' selected':'')+'>'+p.name+'</option>';});
-        if(!sel.onchange)sel.onchange=function(){renderContentStudio();};
-        var pr=sel.value||allProducts[0]?.name||'Avakaya Pickle';
-        var txt='';
-        if(csPlat==='ig_post')txt='🫙 Craving '+pr+'?\n\nHandmade with love. Cold-pressed oil. Zero preservatives.\n\n🛒 seasaltpickles.com\n\n#SeaSaltPickles #AndhraPickles #Hyderabad';
-        else if(csPlat==='ig_reel')txt='🎬 REEL SCRIPT: '+pr+'\n\n[0-2s] Jar opening shot\n[2-5s] Ingredients close-up\n[5-8s] Mixing process\n[8-12s] Final product\n[12-15s] CTA + link';
-        else if(csPlat==='fb_post')txt='Fresh batch of '+pr+' just made! 🫙\n\nCold-pressed oil • Zero preservatives • Authentic Andhra recipe\n\nOrder now: seasaltpickles.com';
-        else if(csPlat==='wa_msg')txt='*SeaSalt Pickles* 🫙\n\n*'+pr+'* is ready!\nFrom ₹249 • Free delivery above ₹499\n\nReply ORDER to place!';
-        else txt='New '+pr+' available at seasaltpickles.com! Fresh, authentic, homemade. 🫙';
-        document.getElementById('cs-output').value=txt;
-    }
-
-    async function runSpy(){var url=document.getElementById('spy-url').value;if(!url){alert('Enter a YouTube URL');return;}
-        document.getElementById('spy-results').innerHTML='<div class="card" style="padding:20px;text-align:center"><div class="spinner" style="display:inline-block;width:24px;height:24px;border:3px solid #eee;border-top-color:#e67e22;border-radius:50%;animation:spin 0.6s linear infinite"></div><p style="margin-top:8px;color:#999">Scanning...</p></div>';
-        try{var r=await fetch('/.netlify/functions/social-listen?action=deep-profile&videoUrl='+encodeURIComponent(url)+'&maxComments=50');var d=await r.json();
-            if(d.success){document.getElementById('spy-results').innerHTML='<div class="card" style="padding:16px"><h3 style="font-weight:600;margin-bottom:8px;color:#10b981">✅ Found '+d.profiles_found+' profiles</h3><p style="font-size:0.85rem;color:#666">Leads saved to Supabase.</p></div>';}
-            else{document.getElementById('spy-results').innerHTML='<div class="card" style="padding:16px;color:#e74c3c">Error: '+(d.error||'Unknown')+'</div>';}
-        }catch(e){document.getElementById('spy-results').innerHTML='<div class="card" style="padding:16px;color:#e74c3c">'+e.message+'</div>';}}
-
-    // ── Load intelligence data ──
-    async function loadIntelligence(){loadCompetitors();renderInsights();renderContentStudio();}
-    setTimeout(loadIntelligence,1500);
 
     // ══════════ NOTIFICATIONS ══════════
     async function loadNotifications(){var{data:notifs}=await db.from('admin_notifications').select('*').order('created_at',{ascending:false}).limit(50);notifs=notifs||[];var unread=notifs.filter(function(n){return!n.is_read}).length;var badge=document.getElementById('notifBadge');if(unread>0){badge.textContent=unread;badge.style.display='block'}else{badge.style.display='none'}var html='';if(notifs.length===0){html='<p style="color:#999;text-align:center;padding:40px;">No notifications yet.</p>';}else{notifs.forEach(function(n){var time=new Date(n.created_at).toLocaleString();var bgColor=n.is_read?'#fff':'#fef3c7';var icon=n.type==='high_activity'?'🔥':n.type==='repeat_visitor'?'🔄':'🔔';html+='<div style="padding:12px;margin-bottom:8px;border-radius:8px;background:'+bgColor+';border:1px solid #eee;"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;"><div style="flex:1;"><span style="font-size:1.2rem;margin-right:8px;">'+icon+'</span><strong style="color:#333;">'+n.message+'</strong><div style="font-size:0.8rem;color:#999;margin-top:4px;">'+time+'</div></div></div>';if(n.user_phone){html+='<div style="margin-top:10px;display:flex;gap:8px;"><button class="btn btn-sm btn-primary" onclick="showUserDetail(\''+n.user_phone+'\')">👤 View</button><button class="btn btn-sm btn-green" onclick="openWalletModal(\''+n.user_phone+'\',0)">💰 Credit</button>';if(!n.is_read)html+='<button class="btn btn-sm" style="background:#eee;" onclick="markNotifRead('+n.id+')">✓ Read</button>';html+='</div>';}html+='</div>';});}document.getElementById('notificationsList').innerHTML=html;}
@@ -1294,7 +1253,8 @@
         if (error) { showToast('❌ Failed: ' + error.message, 'error'); return; }
 
         showToast('✅ ' + orderId.substring(0,8) + ' → ' + newStatus, 'success');
-        await sendNotifications(customerPhone, orderId, newStatus, tracking, customerName);
+        // Show manual WhatsApp link instead of auto-sending
+        showWaPopup(customerPhone, orderId, newStatus, tracking, customerName);
     }
 
     // ── Save Tracking Only ──
@@ -1305,11 +1265,43 @@
 
         var { data } = await db.from('orders').select('status,customer_phone,customer_name').eq('id', orderId).single();
         if (data && (data.status === 'shipped' || data.status === 'dispatched')) {
-            await sendNotifications(data.customer_phone || customerPhone, orderId, data.status, tracking, data.customer_name || customerName);
+            showWaPopup(data.customer_phone || customerPhone, orderId, data.status, tracking, data.customer_name || customerName);
         }
     }
 
     // ── Toast ──
+
+    // ── Manual WhatsApp Popup (wa.me link, no auto-send) ──
+    function showWaPopup(phone, orderId, status, tracking, customerName) {
+        if (!phone) return;
+        var shortId = String(orderId).substring(0,8);
+        var msgs = {
+            confirmed: 'Hi ' + (customerName||'') + '! ✅ Order #' + shortId + ' confirmed! We\'re getting it ready for you.',
+            preparing: 'Hi ' + (customerName||'') + '! 👨‍🍳 Order #' + shortId + ' is being prepared with love!',
+            processing: 'Hi ' + (customerName||'') + '! 👨‍🍳 Order #' + shortId + ' is being prepared with love!',
+            shipped: 'Hi ' + (customerName||'') + '! 🚚 Order #' + shortId + ' dispatched!' + (tracking ? ' Track: ' + tracking : ''),
+            dispatched: 'Hi ' + (customerName||'') + '! 🚚 Order #' + shortId + ' dispatched!' + (tracking ? ' Track: ' + tracking : ''),
+            delivered: 'Hi ' + (customerName||'') + '! 🎉 Order #' + shortId + ' delivered! Enjoy your SeaSalt Pickles!',
+            cancelled: 'Hi ' + (customerName||'') + ', Order #' + shortId + ' has been cancelled.'
+        };
+        var msg = msgs[status] || 'Hi ' + (customerName||'') + ', Update on order #' + shortId + ': ' + status;
+        var cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+        var waUrl = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent(msg);
+        
+        // Show popup
+        var pop = document.createElement('div');
+        pop.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#25D366;color:#fff;padding:16px 20px;border-radius:12px;z-index:9999;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.3);font-size:0.85rem;';
+        pop.innerHTML = '<div style="font-weight:700;margin-bottom:8px;">📱 Send WhatsApp to ' + (customerName||phone) + '</div>' +
+            '<div style="font-size:0.75rem;margin-bottom:10px;opacity:0.9;">' + msg.substring(0,100) + '...</div>' +
+            '<div style="display:flex;gap:8px;">' +
+            '<a href="' + waUrl + '" target="_blank" style="background:#fff;color:#25D366;padding:8px 16px;border-radius:6px;text-decoration:none;font-weight:700;font-size:0.8rem;">📤 Send via WhatsApp</a>' +
+            '<button onclick="this.parentElement.parentElement.remove()" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:0.8rem;">Dismiss</button>' +
+            '</div>';
+        document.body.appendChild(pop);
+        setTimeout(function(){ if(pop.parentElement) pop.remove(); }, 20000);
+    }
+
     function showToast(msg, type) {
         var toast = document.createElement('div');
         var bg = type === 'success' ? '#059669' : type === 'error' ? '#DC2626' : '#3B82F6';
@@ -1320,7 +1312,7 @@
     }
 
     // ══════════ SHIPPING ══════════
-    function renderShippingTable(orders){var html='';orders.forEach(function(o){html+='<tr><td>'+(o.id||'').toString().substring(0,8)+'</td><td>'+(o.customer_name||'-')+'</td><td style="font-size:0.8rem;">'+(o.customer_address||o.address||'-')+'</td><td><select class="ship-partner" data-oid="'+o.id+'" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;"><option value="">Select</option><option>India Post</option><option>Delhivery</option><option>DTDC</option><option>DHL</option><option>Other</option></select></td><td><input type="text" class="ship-tracking" data-oid="'+o.id+'" placeholder="Tracking #" value="'+(o.tracking_number||'')+'" style="padding:4px;border:1px solid #ddd;border-radius:4px;width:120px;font-size:0.8rem;"></td><td><button class="btn btn-sm btn-primary ship-btn" data-oid="'+o.id+'">Ship</button></td></tr>';});document.getElementById('shippingTable').innerHTML=html||'<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No pending shipments</td></tr>';document.querySelectorAll('.ship-btn').forEach(function(btn){btn.addEventListener('click',async function(){var oid=this.getAttribute('data-oid');var partner=document.querySelector('.ship-partner[data-oid="'+oid+'"]').value;var tracking=document.querySelector('.ship-tracking[data-oid="'+oid+'"]').value;if(!partner){alert('Select a shipping partner');return;}await db.from('orders').update({status:'shipped',shipping_partner:partner,tracking_number:tracking,updated_at:new Date().toISOString()}).eq('id',oid);showToast('🚚 Order shipped!','success');var order=allOrders.find(function(o){return o.id===oid});if(order)sendNotifications(order.customer_phone,oid,'shipped',tracking,order.customer_name);loadOrders();});});}
+    function renderShippingTable(orders){var html='';orders.forEach(function(o){html+='<tr><td>'+(o.id||'').toString().substring(0,8)+'</td><td>'+(o.customer_name||'-')+'</td><td style="font-size:0.8rem;">'+(o.customer_address||o.address||'-')+'</td><td><select class="ship-partner" data-oid="'+o.id+'" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;"><option value="">Select</option><option>India Post</option><option>Delhivery</option><option>DTDC</option><option>DHL</option><option>Other</option></select></td><td><input type="text" class="ship-tracking" data-oid="'+o.id+'" placeholder="Tracking #" value="'+(o.tracking_number||'')+'" style="padding:4px;border:1px solid #ddd;border-radius:4px;width:120px;font-size:0.8rem;"></td><td><button class="btn btn-sm btn-primary ship-btn" data-oid="'+o.id+'">Ship</button></td></tr>';});document.getElementById('shippingTable').innerHTML=html||'<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No pending shipments</td></tr>';document.querySelectorAll('.ship-btn').forEach(function(btn){btn.addEventListener('click',async function(){var oid=this.getAttribute('data-oid');var partner=document.querySelector('.ship-partner[data-oid="'+oid+'"]').value;var tracking=document.querySelector('.ship-tracking[data-oid="'+oid+'"]').value;if(!partner){alert('Select a shipping partner');return;}await db.from('orders').update({status:'shipped',shipping_partner:partner,tracking_number:tracking,updated_at:new Date().toISOString()}).eq('id',oid);showToast('🚚 Order shipped!','success');var order=allOrders.find(function(o){return o.id===oid});if(order)showWaPopup(order.customer_phone,oid,'shipped',tracking,order.customer_name);loadOrders();});});}
 
     // ══════════ SETTINGS ══════════
     document.getElementById('saveSettingsBtn').addEventListener('click',function(){alert('Settings saved!')});
@@ -1347,6 +1339,148 @@
     document.getElementById('saveDeliveryChargeBtn').addEventListener('click',async function(){var id=document.getElementById('dc-id').value;var data={country:document.getElementById('dc-country').value,region:document.getElementById('dc-region').value||null,min_order_free:parseFloat(document.getElementById('dc-minFree').value)||0,flat_charge:parseFloat(document.getElementById('dc-flatFee').value)||0,notes:document.getElementById('dc-notes').value||null};if(!data.country){alert('Please select a country');return;}if(id){await db.from('delivery_charges').update(data).eq('id',id)}else{await db.from('delivery_charges').insert(data)}document.getElementById('deliveryModal').classList.remove('show');loadDeliveryCharges();});
     document.getElementById('deliveryModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show')});
     setTimeout(loadDeliveryCharges,1000);
+
+    // ══════════ WINDOW BINDINGS — Fix onclick scope ══════════
+
+    // ═══════════ SPINWHEEL CONTROL ═══════════
+    var swPrizes = [
+        { amount: 99, probability: 20, color: '#FF6B6B', label: '₹99' },
+        { amount: 199, probability: 50, color: '#4ECDC4', label: '₹199' },
+        { amount: 399, probability: 20, color: '#45B7D1', label: '₹399' },
+        { amount: 599, probability: 10, color: '#96CEB4', label: '₹599' }
+    ];
+
+    async function loadSwConfig() {
+        try {
+            var { data } = await db.from('spinwheel_config').select('*').eq('id', 1).single();
+            if (data) {
+                if (data.prizes && Array.isArray(data.prizes)) swPrizes = data.prizes;
+                document.getElementById('swExpiry').value = data.wallet_expiry_hours || 48;
+                document.getElementById('swCooldown').value = data.cooldown_days || 30;
+                document.getElementById('swPopupDelay').value = data.popup_delay_seconds || 1;
+                document.getElementById('swActive').value = data.is_active !== false ? 'true' : 'false';
+                document.getElementById('swConfigStatus').style.background = '#D1FAE5';
+                document.getElementById('swConfigStatus').style.color = '#065F46';
+                document.getElementById('swConfigStatus').innerHTML = '✅ Config loaded from Supabase';
+            } else {
+                document.getElementById('swConfigStatus').innerHTML = '⚠️ No config found. Using defaults. Click Save to create.';
+            }
+        } catch(e) {
+            document.getElementById('swConfigStatus').innerHTML = '⚠️ Table may not exist yet. Save will create it. Using defaults.';
+        }
+        renderSwPrizes();
+        loadSwStats();
+    }
+
+    function renderSwPrizes() {
+        var tb = document.getElementById('swPrizeTable');
+        if (!tb) return;
+        var h = '';
+        var total = 0;
+        swPrizes.forEach(function(p, i) {
+            total += p.probability;
+            h += '<tr>';
+            h += '<td><input type="number" value="' + p.amount + '" min="0" style="width:80px;padding:6px;border:1px solid #ddd;border-radius:6px;" onchange="swPrizes[' + i + '].amount=parseInt(this.value)||0;swPrizes[' + i + '].label=\'₹\'+this.value;renderSwPrizes()"></td>';
+            h += '<td><input type="number" value="' + p.probability + '" min="0" max="100" style="width:80px;padding:6px;border:1px solid #ddd;border-radius:6px;" onchange="swPrizes[' + i + '].probability=parseInt(this.value)||0;renderSwPrizes()"></td>';
+            h += '<td><input type="color" value="' + p.color + '" style="width:40px;height:30px;border:none;cursor:pointer;" onchange="swPrizes[' + i + '].color=this.value"></td>';
+            h += '<td style="font-weight:600;">' + p.label + '</td>';
+            h += '<td><button style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:1.1rem;" onclick="swPrizes.splice(' + i + ',1);renderSwPrizes()">✕</button></td>';
+            h += '</tr>';
+        });
+        tb.innerHTML = h;
+        var totalEl = document.getElementById('swOddsTotal');
+        if (totalEl) {
+            totalEl.textContent = 'Total: ' + total + '%';
+            totalEl.style.color = total === 100 ? '#16A34A' : '#DC2626';
+        }
+    }
+
+    function addSwPrize() {
+        swPrizes.push({ amount: 100, probability: 10, color: '#FECA57', label: '₹100' });
+        renderSwPrizes();
+    }
+
+    async function saveSwConfig() {
+        var btn = document.getElementById('swSaveBtn');
+        btn.disabled = true; btn.textContent = '⏳ Saving...';
+        var total = swPrizes.reduce(function(s,p){ return s + p.probability; }, 0);
+        if (total !== 100) {
+            alert('Prize probabilities must total 100%. Currently: ' + total + '%');
+            btn.disabled = false; btn.textContent = '💾 Save SpinWheel Config';
+            return;
+        }
+        var config = {
+            id: 1,
+            prizes: swPrizes,
+            wallet_expiry_hours: parseInt(document.getElementById('swExpiry').value) || 48,
+            cooldown_days: parseInt(document.getElementById('swCooldown').value) || 30,
+            popup_delay_seconds: parseInt(document.getElementById('swPopupDelay').value) || 1,
+            is_active: document.getElementById('swActive').value === 'true',
+            updated_at: new Date().toISOString()
+        };
+        try {
+            var { error } = await db.from('spinwheel_config').upsert(config);
+            if (error) throw error;
+            showToast('✅ SpinWheel config saved!', 'success');
+            document.getElementById('swConfigStatus').style.background = '#D1FAE5';
+            document.getElementById('swConfigStatus').style.color = '#065F46';
+            document.getElementById('swConfigStatus').innerHTML = '✅ Saved at ' + new Date().toLocaleTimeString();
+        } catch(e) {
+            showToast('❌ Save failed: ' + e.message, 'error');
+            if (e.message && e.message.includes('does not exist')) {
+                document.getElementById('swConfigStatus').innerHTML = '⚠️ Run this SQL in Supabase:\n<pre style="font-size:0.7rem;margin-top:6px;background:#f5f5f5;padding:8px;border-radius:4px;overflow-x:auto;">CREATE TABLE spinwheel_config (\n  id INT PRIMARY KEY DEFAULT 1,\n  prizes JSONB DEFAULT \'[]\',\n  wallet_expiry_hours INT DEFAULT 48,\n  cooldown_days INT DEFAULT 30,\n  popup_delay_seconds INT DEFAULT 1,\n  is_active BOOLEAN DEFAULT true,\n  updated_at TIMESTAMPTZ DEFAULT now()\n);\nINSERT INTO spinwheel_config (id) VALUES (1);\nALTER TABLE spinwheel_config ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "public_read" ON spinwheel_config FOR SELECT USING (true);\nCREATE POLICY "public_write" ON spinwheel_config FOR ALL USING (true);</pre>';
+            }
+        }
+        btn.disabled = false; btn.textContent = '💾 Save SpinWheel Config';
+    }
+
+    async function loadSwStats() {
+        try {
+            // Total spins = count wallet_transactions with type='spin_reward'
+            var { count: spins } = await db.from('wallet_transactions').select('*', { count: 'exact', head: true }).eq('type', 'spin_reward');
+            document.getElementById('swTotalSpins').textContent = spins || 0;
+
+            // Total given = sum of spin rewards
+            var { data: rewards } = await db.from('wallet_transactions').select('amount').eq('type', 'spin_reward');
+            var totalGiven = (rewards || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+            document.getElementById('swTotalGiven').textContent = '₹' + totalGiven;
+
+            // Total redeemed = sum of wallet_used from orders
+            var { data: orderWallets } = await db.from('orders').select('wallet_used');
+            var totalRedeemed = (orderWallets || []).reduce(function(s, o) { return s + (parseFloat(o.wallet_used) || 0); }, 0);
+            document.getElementById('swTotalRedeemed').textContent = '₹' + totalRedeemed;
+
+            // Active wallets = users with wallet_balance > 0
+            var { count: activeW } = await db.from('users').select('*', { count: 'exact', head: true }).gt('wallet_balance', 0);
+            document.getElementById('swActiveWallets').textContent = activeW || 0;
+        } catch(e) { console.log('SwStats error:', e); }
+    }
+
+
+    window.peOpen = peOpen;
+    window.pePreview = pePreview;
+    window.peDuplicate = peDuplicate;
+    window.peDelete = peDelete;
+    window.peAddImg = peAddImg;
+    window.peAddImgUrl = peAddImgUrl;
+    window.peAddIng = peAddIng;
+    window.peAddTag = peAddTag;
+    window.peRender = peRender;
+    window.renderProducts = renderProducts;
+    window.showPage = showPage;
+    window.swPrizes = swPrizes;
+    window.renderSwPrizes = renderSwPrizes;
+    window.addSwPrize = addSwPrize;
+    window.saveSwConfig = saveSwConfig;
+    window.loadSwConfig = loadSwConfig;
+    window.loadSwStats = loadSwStats;
+    window.showToast = showToast;
+    window.showWaPopup = showWaPopup;
+    Object.defineProperty(window, 'prodFilter', { get(){ return prodFilter; }, set(v){ prodFilter = v; } });
+    Object.defineProperty(window, 'prodSearch', { get(){ return prodSearch; }, set(v){ prodSearch = v; } });
+    Object.defineProperty(window, 'prodViewMode', { get(){ return prodViewMode; }, set(v){ prodViewMode = v; } });
+    Object.defineProperty(window, 'peTab', { get(){ return peTab; }, set(v){ peTab = v; } });
+    Object.defineProperty(window, 'peState', { get(){ return peState; }, set(v){ peState = v; } });
 
     // ══════════ INIT ══════════
     checkAuth();
