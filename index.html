@@ -508,8 +508,8 @@
     document.getElementById('loginPass').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
 
     // NAVIGATION
-    const pages = ['dashboard','analytics','users','notifications','products','orders','shipping','settings','competitors','spy','insights','content'];
-    const pageNames = {dashboard:'Dashboard',analytics:'Analytics',users:'Users',notifications:'Notifications',products:'Products',orders:'Orders',shipping:'Shipping',settings:'Settings',competitors:'Competitors',spy:'Social Spy',insights:'Insights',content:'Content Studio'};
+    const pages = ['dashboard','analytics','users','notifications','products','orders','shipping','settings','spinwheel'];
+    const pageNames = {dashboard:'Dashboard',analytics:'Analytics',users:'Users',notifications:'Notifications',products:'Products',orders:'Orders',shipping:'Shipping',settings:'Settings',spinwheel:'SpinWheel'};
 
     document.querySelectorAll('.sidebar-link').forEach(function(link) {
         link.addEventListener('click', function(e) { e.preventDefault(); showPage(this.getAttribute('data-page')); });
