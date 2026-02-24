@@ -496,7 +496,31 @@
                 var ap = document.querySelector('.page.active');
                 if (ap) { var pid = ap.id; if (pid==='page-dashboard') loadDashboard(); else if (pid==='page-analytics') loadAnalytics(); else if (pid==='page-users') loadUsers(); }
             })
-            .subscribe(function(status) { console.log('[RT] Analytics:', status); });
+            .subscribe(function(status) {
+                console.log('[RT] Analytics:', status);
+                if (status === 'CHANNEL_ERROR') {
+                    // Don't retry endlessly — wait 30s before reconnecting
+                    setTimeout(function() { try { db.removeChannel(realtimeChannel); } catch(e){} realtimeChannel = null; }, 30000);
+                }
+            });
+        
+        // Realtime for users table — wallet balance updates
+        var usersChannel = db.channel('admin-users-rt')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, function(payload) {
+                console.log('[RT] Users updated:', payload.eventType);
+                var ap = document.querySelector('.page.active');
+                if (ap && (ap.id === 'page-users' || ap.id === 'page-dashboard')) loadUsers();
+            })
+            .subscribe(function(status) { console.log('[RT] Users:', status); });
+
+        // Realtime for orders table
+        var ordersChannel = db.channel('admin-orders-rt')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, function(payload) {
+                console.log('[RT] Orders updated:', payload.eventType);
+                var ap = document.querySelector('.page.active');
+                if (ap && (ap.id === 'page-orders' || ap.id === 'page-dashboard')) loadOrders();
+            })
+            .subscribe(function(status) { console.log('[RT] Orders:', status); });
     }
 
     // AUTH
@@ -601,10 +625,50 @@
     function renderTopList(cid,data){var sorted=Object.entries(data).sort(function(a,b){return b[1]-a[1]}).slice(0,10);if(!sorted.length){document.getElementById(cid).innerHTML='<p style="color:#999;">No data yet</p>';return;}var mx=sorted[0][1];var html='';sorted.forEach(function(item,i){var pct=Math.round((item[1]/mx)*100);html+='<div style="padding:6px 0;"><div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:3px;"><span>'+(i+1)+'. '+item[0]+'</span><span style="font-weight:600;">'+item[1]+'</span></div><div style="height:6px;background:#f0f0f0;border-radius:3px;"><div style="height:100%;width:'+pct+'%;background:#e67e22;border-radius:3px;"></div></div></div>';});document.getElementById(cid).innerHTML=html;}
 
     // ══════════ USERS — [FIX-2] uses shared cache ══════════
-    async function loadUsers(){var today=new Date().toISOString().split('T')[0];var{data:usersData}=await db.from('users').select('*').order('last_seen',{ascending:false});usersData=usersData||[];var events=await fetchEventsShared('month');var allSessions=new Set(events.map(function(e){return e.session_id})).size;var loggedInUsers=usersData.length;var guestSessions=new Set(events.filter(function(e){return!e.user_id}).map(function(e){return e.session_id})).size;var todayEvents=events.filter(function(e){return e.created_at&&e.created_at.startsWith(today)});var activeToday=new Set(todayEvents.map(function(e){return e.user_id||e.session_id})).size;document.getElementById('usersTotalUsers').textContent=allSessions;document.getElementById('usersLoggedIn').textContent=loggedInUsers;document.getElementById('usersGuests').textContent=guestSessions;document.getElementById('usersActiveToday').textContent=activeToday;var activityMap={};events.forEach(function(e){if(!e.user_id)return;if(!activityMap[e.user_id])activityMap[e.user_id]={pageViews:0,cartAdds:0,purchases:0};if(e.event_type==='page_view')activityMap[e.user_id].pageViews++;if(e.event_type==='add_to_cart')activityMap[e.user_id].cartAdds++;if(e.event_type==='purchase')activityMap[e.user_id].purchases++;});var html='';if(usersData.length===0){html='<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">No registered users yet.</td></tr>';}else{usersData.forEach(function(u){var a=activityMap[u.phone]||{pageViews:0,cartAdds:0,purchases:0};var la=u.last_seen?new Date(u.last_seen).toLocaleString():'-';var wb=u.wallet_balance>0?'<span class="badge badge-green">₹'+u.wallet_balance+'</span>':'₹0';var cf=getCountryFlag(u.selected_country);html+='<tr><td><div><strong>'+( u.name||'Unknown')+'</strong></div><div style="font-size:0.8rem;color:#666;">📱 '+u.phone+'</div></td><td>'+cf+' '+(u.selected_country||'-')+'</td><td>'+(u.total_visits||a.pageViews||0)+'</td><td>'+a.cartAdds+'</td><td>'+(u.total_purchases||0)+'</td><td>'+wb+'</td><td style="font-size:0.8rem;">'+la+'</td><td><button class="btn btn-sm btn-green" onclick="openWalletModal(\''+u.phone+'\','+(u.wallet_balance||0)+',\''+(u.name||'').replace(/'/g,"\\'")+ '\')">💰</button></td></tr>';});}document.getElementById('usersTable').innerHTML=html;}
+    async function loadUsers(){var today=new Date().toISOString().split('T')[0];var{data:usersData}=await db.from('users').select('*').order('last_seen',{ascending:false});usersData=usersData||[];var events=await fetchEventsShared('month');var allSessions=new Set(events.map(function(e){return e.session_id})).size;var loggedInUsers=usersData.length;var guestSessions=new Set(events.filter(function(e){return!e.user_id}).map(function(e){return e.session_id})).size;var todayEvents=events.filter(function(e){return e.created_at&&e.created_at.startsWith(today)});var activeToday=new Set(todayEvents.map(function(e){return e.user_id||e.session_id})).size;document.getElementById('usersTotalUsers').textContent=allSessions;document.getElementById('usersLoggedIn').textContent=loggedInUsers;document.getElementById('usersGuests').textContent=guestSessions;document.getElementById('usersActiveToday').textContent=activeToday;var activityMap={};events.forEach(function(e){if(!e.user_id)return;if(!activityMap[e.user_id])activityMap[e.user_id]={pageViews:0,cartAdds:0,purchases:0};if(e.event_type==='page_view')activityMap[e.user_id].pageViews++;if(e.event_type==='add_to_cart')activityMap[e.user_id].cartAdds++;if(e.event_type==='purchase')activityMap[e.user_id].purchases++;});var html='';if(usersData.length===0){html='<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">No registered users yet.</td></tr>';}else{usersData.forEach(function(u){var a=activityMap[u.phone]||{pageViews:0,cartAdds:0,purchases:0};var la=u.last_seen?new Date(u.last_seen).toLocaleString():'-';var wb='₹0';if(u.wallet_balance>0){var expiryInfo='';if(u.wallet_expires_at){var exp=new Date(u.wallet_expires_at);var now=new Date();if(exp>now){var hrs=Math.floor((exp-now)/3600000);var mins=Math.floor(((exp-now)%3600000)/60000);expiryInfo='<div style="font-size:0.7rem;color:#b45309;">⏱ '+hrs+'h '+mins+'m left</div>';}else{expiryInfo='<div style="font-size:0.7rem;color:#dc2626;">Expired</div>';}}wb='<span class="badge badge-green">₹'+u.wallet_balance+'</span>'+expiryInfo;}var cf=getCountryFlag(u.selected_country);html+='<tr><td><div><strong>'+( u.name||'Unknown')+'</strong></div><div style="font-size:0.8rem;color:#666;">📱 '+u.phone+'</div></td><td>'+cf+' '+(u.selected_country||'-')+'</td><td>'+(u.total_visits||a.pageViews||0)+'</td><td>'+a.cartAdds+'</td><td>'+(u.total_purchases||0)+'</td><td>'+wb+'</td><td style="font-size:0.8rem;">'+la+'</td><td><button class="btn btn-sm btn-green" onclick="openWalletModal(\''+u.phone+'\','+(u.wallet_balance||0)+',\''+(u.name||'').replace(/'/g,"\\'")+ '\')">💰</button></td></tr>';});}document.getElementById('usersTable').innerHTML=html;}
     function getCountryFlag(c){var f={'India':'🇮🇳','United States':'🇺🇸','United Kingdom':'🇬🇧','United Arab Emirates':'🇦🇪','Singapore':'🇸🇬','Australia':'🇦🇺','Canada':'🇨🇦','Germany':'🇩🇪','France':'🇫🇷','Saudi Arabia':'🇸🇦','Qatar':'🇶🇦','Kuwait':'🇰🇼','Oman':'🇴🇲','Malaysia':'🇲🇾','New Zealand':'🇳🇿'};return f[c]||'🌍';}
     window.showUserDetail=function(phone){showPage('users');};
-    window.openWalletModal=async function(phone,balance,name){var amt=prompt('Add wallet credit for '+(name||phone)+' (current: ₹'+(balance||0)+'):');if(!amt||isNaN(amt))return;var n=parseFloat(amt);if(n<=0){showToast('Amount must be positive','error');return;}var nb=(parseFloat(balance)||0)+n;var{error}=await db.from('users').update({wallet_balance:nb}).eq('phone',phone);if(error){showToast('❌ Failed: '+error.message,'error');return;}try{var expiresAt=new Date(Date.now()+48*60*60*1000).toISOString();await db.from('users').update({wallet_expires_at:expiresAt}).eq('phone',phone);}catch(e){}try{await db.from('wallet_transactions').insert({phone:phone,amount:n,type:'admin_credit',note:'Admin credited ₹'+n,created_at:new Date().toISOString()});}catch(e){}showToast('💰 ₹'+n+' added to '+(name||phone)+'! Balance: ₹'+nb,'success');loadUsers();};
+    window.openWalletModal=function(phone,balance,name){
+        var existing=document.getElementById('walletModalOverlay');
+        if(existing)existing.remove();
+        var overlay=document.createElement('div');
+        overlay.id='walletModalOverlay';
+        overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        overlay.innerHTML='<div style="background:white;border-radius:16px;padding:24px;width:380px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.3);">'+
+            '<h3 style="margin:0 0 4px;font-size:1.1rem;font-weight:700;">💰 Wallet: '+(name||'User')+'</h3>'+
+            '<p style="color:#666;font-size:0.85rem;margin:0 0 16px;">'+phone+'</p>'+
+            '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;text-align:center;margin-bottom:16px;">'+
+            '<div style="font-size:0.8rem;color:#666;">Current Balance</div>'+
+            '<div style="font-size:2rem;font-weight:800;color:#16a34a;">₹'+(balance||0)+'</div></div>'+
+            '<div style="display:flex;flex-direction:column;gap:8px;">'+
+            '<div style="display:flex;gap:8px;"><input type="number" id="wm-amount" placeholder="Amount (₹)" min="1" style="flex:1;padding:10px 12px;border:2px solid #e5e7eb;border-radius:10px;font-size:1rem;">'+
+            '<button id="wm-add-btn" style="padding:10px 16px;background:#16a34a;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button></div>'+
+            '<button id="wm-reset-btn" style="padding:10px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:10px;font-weight:600;cursor:pointer;">🗑️ Reset Wallet to ₹0</button>'+
+            '<button id="wm-cancel-btn" style="padding:10px;background:#f3f4f6;color:#666;border:none;border-radius:10px;cursor:pointer;">Cancel</button>'+
+            '</div></div>';
+        document.body.appendChild(overlay);
+        overlay.onclick=function(e){if(e.target===overlay){overlay.remove();}};
+        document.getElementById('wm-cancel-btn').onclick=function(){overlay.remove();};
+        document.getElementById('wm-add-btn').onclick=async function(){
+            var amt=parseFloat(document.getElementById('wm-amount').value);
+            if(!amt||amt<=0){showToast('Enter a positive amount','error');return;}
+            var nb=(parseFloat(balance)||0)+amt;
+            var{error}=await db.from('users').update({wallet_balance:nb,wallet_expires_at:new Date(Date.now()+48*60*60*1000).toISOString()}).eq('phone',phone);
+            if(error){showToast('❌ Failed: '+error.message,'error');return;}
+            try{await db.from('wallet_transactions').insert({user_phone:phone,amount:amt,type:'admin_credit',description:'Admin credited ₹'+amt,balance_after:nb,created_at:new Date().toISOString()});}catch(e){}
+            showToast('💰 ₹'+amt+' added! Balance: ₹'+nb,'success');
+            overlay.remove();loadUsers();
+        };
+        document.getElementById('wm-reset-btn').onclick=async function(){
+            if(!confirm('Reset wallet for '+(name||phone)+' to ₹0? This cannot be undone.'))return;
+            var{error}=await db.from('users').update({wallet_balance:0,wallet_expires_at:null}).eq('phone',phone);
+            if(error){showToast('❌ Failed: '+error.message,'error');return;}
+            try{await db.from('wallet_transactions').insert({user_phone:phone,amount:-(parseFloat(balance)||0),type:'admin_reset',description:'Admin reset wallet to ₹0',balance_after:0,created_at:new Date().toISOString()});}catch(e){}
+            showToast('🗑️ Wallet reset to ₹0 for '+(name||phone),'success');
+            overlay.remove();loadUsers();
+        };
+        setTimeout(function(){document.getElementById('wm-amount').focus();},100);
+    };
 
     // ══════════ PRODUCTS (DEEP MANAGEMENT) ══════════
     let allProducts = [];let prodViewMode = 'grid';let prodFilter = 'all';let prodSearch = '';let peTab = 'basic';let peState = {};let peIsEdit = false;
