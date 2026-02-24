@@ -279,22 +279,44 @@
 
     <!-- ORDERS PAGE -->
     <div class="page" id="page-orders">
+        <!-- Order Summary Stats -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;">
+            <div class="card stat-card" style="padding:14px;"><div class="stat-value" style="font-size:1.5rem;color:#e67e22;" id="ordStatTotal">0</div><div class="stat-label">Total Orders</div></div>
+            <div class="card stat-card" style="padding:14px;"><div class="stat-value" style="font-size:1.5rem;color:#3b82f6;" id="ordStatRevenue">₹0</div><div class="stat-label">Revenue (Paid)</div></div>
+            <div class="card stat-card" style="padding:14px;"><div class="stat-value" style="font-size:1.5rem;color:#10b981;" id="ordStatWorth">₹0</div><div class="stat-label">Order Worth</div></div>
+            <div class="card stat-card" style="padding:14px;"><div class="stat-value" style="font-size:1.5rem;color:#f59e0b;" id="ordStatWallet">₹0</div><div class="stat-label">Wallet Used</div></div>
+        </div>
+        <!-- Filters + Notification Status -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn btn-sm" style="background:#eee;" data-order-filter="all">All</button>
-                <button class="btn btn-sm" style="background:#fff3cd;" data-order-filter="pending">Pending</button>
-                <button class="btn btn-sm" style="background:#cce5ff;" data-order-filter="confirmed">Confirmed</button>
-                <button class="btn btn-sm" style="background:#d4edda;" data-order-filter="shipped">Shipped</button>
-                <button class="btn btn-sm" style="background:#d4edda;" data-order-filter="delivered">Delivered</button>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;" id="orderFilterBtns">
+                <button class="btn btn-sm" style="background:#e67e22;color:#fff;" data-order-filter="all">All</button>
+                <button class="btn btn-sm" style="background:#fff3cd;color:#856404;" data-order-filter="pending">Pending</button>
+                <button class="btn btn-sm" style="background:#cce5ff;color:#004085;" data-order-filter="confirmed">Confirmed</button>
+                <button class="btn btn-sm" style="background:#dbeafe;color:#1e40af;" data-order-filter="processing">Processing</button>
+                <button class="btn btn-sm" style="background:#d4edda;color:#155724;" data-order-filter="shipped">Shipped</button>
+                <button class="btn btn-sm" style="background:#c6f6d5;color:#276749;" data-order-filter="delivered">Delivered</button>
             </div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                 <div id="smsStatusIndicator" style="display:flex;align-items:center;gap:4px;font-size:0.75rem;padding:4px 10px;border-radius:8px;background:#f0f0f0;color:#999;">⏳ SMS...</div>
                 <div id="waStatusIndicator" style="display:flex;align-items:center;gap:4px;font-size:0.75rem;padding:4px 10px;border-radius:8px;background:#f0f0f0;color:#999;">⏳ WA...</div>
             </div>
         </div>
-        <div class="card">
-            <table>
-                <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Tracking</th><th>Notified</th><th>Actions</th></tr></thead>
+        <!-- Orders Table -->
+        <div class="card" style="overflow-x:auto;">
+            <table style="min-width:900px;">
+                <thead><tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th style="text-align:right;">Worth</th>
+                    <th style="text-align:right;">Wallet</th>
+                    <th style="text-align:right;">Paid</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Tracking</th>
+                    <th style="text-align:center;">Notified</th>
+                    <th>Actions</th>
+                </tr></thead>
                 <tbody id="ordersTable"></tbody>
             </table>
         </div>
@@ -713,19 +735,196 @@
         document.querySelectorAll('[data-order-filter]').forEach(function(btn) { var newBtn = btn.cloneNode(true);btn.parentNode.replaceChild(newBtn, btn);newBtn.addEventListener('click', function() { var filter = this.getAttribute('data-order-filter'); renderOrdersTable(filter === 'all' ? allOrders : allOrders.filter(function(o) { return o.status === filter; })); }); });
     }
     function renderOrdersTable(orders) {
-        var html = '';if (!orders.length) { html = '<tr><td colspan="9" style="text-align:center;color:#999;padding:40px;">No orders yet</td></tr>'; document.getElementById('ordersTable').innerHTML = html; return; }
-        orders.forEach(function(o) { var items = [];try { items = typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []); } catch(e) {} var itemsStr = items.map(function(i) { return i.name; }).join(', ').substring(0, 40) || '-'; var statusClass = { pending:'badge-yellow', confirmed:'badge-blue', processing:'badge-blue', shipped:'badge-green', dispatched:'badge-green', delivered:'badge-green', cancelled:'badge-red' }; var date = o.created_at ? new Date(o.created_at).toLocaleDateString() : '-'; var fullId = o.id || '';var displayId = fullId.substring(0, 8);
-            html += '<tr><td><strong title="' + fullId + '" style="cursor:help;">' + displayId + '</strong></td><td>' + (o.customer_name || o.phone || '-') + '</td><td style="font-size:0.8rem;">' + itemsStr + '</td><td>₹' + (o.total || 0) + '</td><td><span class="badge ' + (statusClass[o.status] || 'badge-gray') + '">' + (o.status || 'unknown') + '</span></td><td style="font-size:0.8rem;">' + date + '</td>';
+        // Update summary stats
+        var totalOrders = orders.length;
+        var totalWorth = 0, totalWallet = 0, totalPaid = 0;
+        orders.forEach(function(o) {
+            var sub = parseFloat(o.subtotal) || 0;
+            var del = parseFloat(o.delivery_charge) || 0;
+            var wal = parseFloat(o.wallet_used) || 0;
+            var tot = parseFloat(o.total) || 0;
+            var worth = sub + del;
+            if (worth === 0 && tot > 0) worth = tot + wal; // fallback
+            if (worth === 0 && wal > 0) worth = wal;
+            totalWorth += worth;
+            totalWallet += wal;
+            totalPaid += tot;
+        });
+        document.getElementById('ordStatTotal').textContent = totalOrders;
+        document.getElementById('ordStatRevenue').textContent = '₹' + totalPaid.toLocaleString();
+        document.getElementById('ordStatWorth').textContent = '₹' + totalWorth.toLocaleString();
+        document.getElementById('ordStatWallet').textContent = '₹' + totalWallet.toLocaleString();
+
+        // Highlight active filter
+        document.querySelectorAll('[data-order-filter]').forEach(function(btn) {
+            btn.style.opacity = '0.7'; btn.style.fontWeight = '500';
+        });
+
+        var html = '';
+        if (!orders.length) {
+            html = '<tr><td colspan="11" style="text-align:center;color:#999;padding:40px;">No orders found</td></tr>';
+            document.getElementById('ordersTable').innerHTML = html;
+            return;
+        }
+
+        orders.forEach(function(o) {
+            var items = []; try { items = typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []); } catch(e) {}
+            var itemNames = items.map(function(i) { return i.name || i.product_name || '-'; });
+            var itemsShort = itemNames.join(', ');
+            if (itemsShort.length > 35) itemsShort = itemsShort.substring(0, 35) + '…';
+
+            // Amounts
+            var subtotal = parseFloat(o.subtotal) || 0;
+            var delivery = parseFloat(o.delivery_charge) || 0;
+            var walletUsed = parseFloat(o.wallet_used) || 0;
+            var paid = parseFloat(o.total) || 0;
+            var orderWorth = subtotal + delivery;
+            if (orderWorth === 0 && paid > 0) orderWorth = paid + walletUsed;
+            if (orderWorth === 0 && walletUsed > 0) orderWorth = walletUsed;
+
+            var statusClass = { pending:'badge-yellow', confirmed:'badge-blue', processing:'badge-blue', shipped:'badge-green', dispatched:'badge-green', delivered:'badge-green', cancelled:'badge-red' };
+            var date = o.created_at ? new Date(o.created_at).toLocaleDateString() : '-';
+            var time = o.created_at ? new Date(o.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+            var fullId = o.id || '';
+            var displayId = fullId.substring(0, 8);
+
+            // Worth column
+            var worthHtml = '<div style="text-align:right;"><div style="font-weight:700;font-size:0.95rem;">₹' + orderWorth + '</div>';
+            if (subtotal > 0 && delivery > 0) {
+                worthHtml += '<div style="font-size:0.7rem;color:#888;">Items ₹' + subtotal + ' + Del ₹' + delivery + '</div>';
+            }
+            worthHtml += '</div>';
+
+            // Wallet column
+            var walletHtml = '<div style="text-align:right;">';
+            if (walletUsed > 0) {
+                walletHtml += '<span style="color:#f59e0b;font-weight:700;font-size:0.9rem;">-₹' + walletUsed + '</span>';
+                walletHtml += '<div style="font-size:0.65rem;color:#b45309;">🎰 spin credit</div>';
+            } else {
+                walletHtml += '<span style="color:#ccc;font-size:0.8rem;">—</span>';
+            }
+            walletHtml += '</div>';
+
+            // Paid column
+            var paidHtml = '<div style="text-align:right;">';
+            if (paid > 0) {
+                paidHtml += '<span style="font-weight:700;color:#10b981;font-size:0.95rem;">₹' + paid + '</span>';
+                if (o.payment_method) {
+                    var pmLabel = o.payment_method === 'cod' ? 'COD' : o.payment_method === 'online' ? 'Online' : o.payment_method;
+                    paidHtml += '<div style="font-size:0.65rem;color:#888;">' + pmLabel + '</div>';
+                }
+            } else if (walletUsed > 0) {
+                paidHtml += '<span class="badge badge-green" style="font-size:0.7rem;">FREE</span>';
+                paidHtml += '<div style="font-size:0.65rem;color:#10b981;">Fully covered</div>';
+            } else {
+                paidHtml += '<span style="color:#ccc;font-size:0.8rem;">₹0</span>';
+            }
+            paidHtml += '</div>';
+
+            // Customer with phone tooltip
+            var customerHtml = '<div><strong style="font-size:0.88rem;">' + (o.customer_name || '-') + '</strong></div>';
+            if (o.customer_phone) customerHtml += '<div style="font-size:0.72rem;color:#888;">📱 ' + o.customer_phone + '</div>';
+
+            // Items with count
+            var itemCountLabel = items.length === 1 ? '1 item' : items.length + ' items';
+            var itemsHtml = '<div style="font-size:0.82rem;" title="' + itemNames.join(', ').replace(/"/g,'') + '">' + itemsShort + '</div>' +
+                '<div style="font-size:0.68rem;color:#aaa;">' + itemCountLabel + '</div>';
+
+            // Date with time
+            var dateHtml = '<div style="font-size:0.82rem;">' + date + '</div><div style="font-size:0.68rem;color:#aaa;">' + time + '</div>';
+
+            // Tracking
+            html += '<tr>';
+            html += '<td><strong title="' + fullId + '" style="cursor:pointer;color:#4F46E5;font-size:0.85rem;" onclick="toggleOrderDetail(this,\'' + fullId + '\')">' + displayId + ' ▾</strong></td>';
+            html += '<td>' + customerHtml + '</td>';
+            html += '<td>' + itemsHtml + '</td>';
+            html += '<td>' + worthHtml + '</td>';
+            html += '<td>' + walletHtml + '</td>';
+            html += '<td>' + paidHtml + '</td>';
+            html += '<td><span class="badge ' + (statusClass[o.status] || 'badge-gray') + '">' + (o.status || 'unknown') + '</span></td>';
+            html += '<td>' + dateHtml + '</td>';
             html += '<td><input type="text" class="order-tracking-input" data-oid="' + fullId + '" placeholder="Tracking #" value="' + (o.tracking_number || '') + '" style="width:110px;padding:4px 6px;font-size:0.75rem;border:1px solid ' + (o.tracking_number ? '#4F46E5' : '#ddd') + ';border-radius:5px;' + (o.tracking_number ? 'font-weight:600;' : '') + '"></td>';
-            var smsIcon = o.sms_sent ? '<span title="SMS sent" style="font-size:0.9rem;">📨</span>' : ''; var waIcon = o.whatsapp_sent ? '<span title="WhatsApp sent" style="font-size:0.9rem;">💬</span>' : ''; var noneIcon = (!o.sms_sent && !o.whatsapp_sent) ? '<span style="opacity:0.3;font-size:0.8rem;">—</span>' : '';
+
+            var smsIcon = o.sms_sent ? '<span title="SMS sent" style="font-size:0.9rem;">📨</span>' : '';
+            var waIcon = o.whatsapp_sent ? '<span title="WhatsApp sent" style="font-size:0.9rem;">💬</span>' : '';
+            var noneIcon = (!o.sms_sent && !o.whatsapp_sent) ? '<span style="opacity:0.3;font-size:0.8rem;">—</span>' : '';
             html += '<td style="text-align:center;">' + smsIcon + waIcon + noneIcon + '</td>';
+
             html += '<td><select class="order-status-select" data-oid="' + fullId + '" data-customer="' + (o.customer_name || '').replace(/"/g, '') + '" data-phone="' + (o.customer_phone || '') + '" style="padding:4px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;">';
             ['pending','confirmed','processing','shipped','delivered','cancelled'].forEach(function(s) { html += '<option value="' + s + '"' + (o.status === s ? ' selected' : '') + '>' + s + '</option>'; });
             html += '</select><button class="btn btn-sm" style="background:#4F46E5;color:#fff;margin-left:4px;font-size:0.7rem;padding:3px 8px;" data-save-oid="' + fullId + '">💾</button></td></tr>';
+
+            // Hidden expandable detail row
+            var detailHtml = '<tr class="order-detail-row" id="detail-' + fullId + '" style="display:none;"><td colspan="11" style="background:#fafbfc;padding:16px 20px;border-bottom:2px solid #e67e22;">';
+            detailHtml += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:0.82rem;">';
+            // Left: Items detail
+            detailHtml += '<div><div style="font-weight:700;margin-bottom:8px;color:#333;">📦 Order Items</div>';
+            items.forEach(function(it) {
+                var qty = it.quantity || it.qty || 1;
+                var price = it.price || it.unit_price || 0;
+                var variant = it.variant || it.size || '';
+                detailHtml += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;">';
+                detailHtml += '<span>' + (it.name || '-') + (variant ? ' <small style="color:#888;">(' + variant + ')</small>' : '') + ' × ' + qty + '</span>';
+                detailHtml += '<span style="font-weight:600;">₹' + (price * qty) + '</span>';
+                detailHtml += '</div>';
+            });
+            detailHtml += '<div style="margin-top:8px;padding-top:8px;border-top:2px solid #eee;">';
+            detailHtml += '<div style="display:flex;justify-content:space-between;"><span>Subtotal</span><span>₹' + subtotal + '</span></div>';
+            if (delivery > 0) detailHtml += '<div style="display:flex;justify-content:space-between;color:#888;"><span>Delivery</span><span>₹' + delivery + '</span></div>';
+            if (walletUsed > 0) detailHtml += '<div style="display:flex;justify-content:space-between;color:#f59e0b;"><span>🎰 Wallet Credit</span><span>-₹' + walletUsed + '</span></div>';
+            detailHtml += '<div style="display:flex;justify-content:space-between;font-weight:700;font-size:0.95rem;margin-top:4px;padding-top:4px;border-top:1px solid #ddd;"><span>Amount Paid</span><span style="color:#10b981;">₹' + paid + '</span></div>';
+            detailHtml += '</div></div>';
+            // Right: Delivery details
+            detailHtml += '<div><div style="font-weight:700;margin-bottom:8px;color:#333;">🚚 Delivery Info</div>';
+            detailHtml += '<div style="color:#555;line-height:1.6;">';
+            detailHtml += '<div><strong>Name:</strong> ' + (o.customer_name || '-') + '</div>';
+            detailHtml += '<div><strong>Phone:</strong> ' + (o.customer_phone || '-') + '</div>';
+            detailHtml += '<div><strong>Address:</strong> ' + (o.customer_address || o.shipping_address || '-') + '</div>';
+            if (o.customer_pincode) detailHtml += '<div><strong>Pincode:</strong> ' + o.customer_pincode + '</div>';
+            if (o.payment_method) detailHtml += '<div style="margin-top:8px;"><strong>Payment:</strong> ' + (o.payment_method === 'cod' ? '💵 Cash on Delivery' : o.payment_method === 'online' ? '💳 Online' : o.payment_method) + '</div>';
+            if (o.payment_id) detailHtml += '<div style="font-size:0.72rem;color:#999;">ID: ' + o.payment_id + '</div>';
+            if (o.tracking_number) detailHtml += '<div style="margin-top:8px;"><strong>Tracking:</strong> <span style="color:#4F46E5;font-weight:600;">' + o.tracking_number + '</span></div>';
+            detailHtml += '</div></div>';
+            detailHtml += '</div></td></tr>';
+            html += detailHtml;
         });
+
         document.getElementById('ordersTable').innerHTML = html;
-        document.querySelectorAll('.order-status-select').forEach(function(sel) { sel.addEventListener('change', function() { var oid=this.getAttribute('data-oid'),customer=this.getAttribute('data-customer'),phone=this.getAttribute('data-phone'),newStatus=this.value; var trackingInput=document.querySelector('.order-tracking-input[data-oid="'+oid+'"]'); var tracking=trackingInput?trackingInput.value.trim():''; handleStatusChange(oid,newStatus,tracking,customer,phone); }); });
-        document.querySelectorAll('[data-save-oid]').forEach(function(btn) { btn.addEventListener('click', function() { var oid=this.getAttribute('data-save-oid'); var trackingInput=document.querySelector('.order-tracking-input[data-oid="'+oid+'"]'); var tracking=trackingInput?trackingInput.value.trim():''; if(!tracking){showToast('Enter a tracking number first','error');return;} var row=this.closest('tr');var sel=row.querySelector('.order-status-select');var customer=sel?sel.getAttribute('data-customer'):'';var phone=sel?sel.getAttribute('data-phone'):''; saveTrackingOnly(oid,tracking,customer,phone); }); });
+
+        // Re-bind events
+        document.querySelectorAll('.order-status-select').forEach(function(sel) {
+            sel.addEventListener('change', function() {
+                var oid = this.getAttribute('data-oid'), customer = this.getAttribute('data-customer'), phone = this.getAttribute('data-phone'), newStatus = this.value;
+                var trackingInput = document.querySelector('.order-tracking-input[data-oid="' + oid + '"]');
+                var tracking = trackingInput ? trackingInput.value.trim() : '';
+                handleStatusChange(oid, newStatus, tracking, customer, phone);
+            });
+        });
+        document.querySelectorAll('[data-save-oid]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var oid = this.getAttribute('data-save-oid');
+                var trackingInput = document.querySelector('.order-tracking-input[data-oid="' + oid + '"]');
+                var tracking = trackingInput ? trackingInput.value.trim() : '';
+                if (!tracking) { showToast('Enter a tracking number first', 'error'); return; }
+                var row = this.closest('tr'); var sel = row.querySelector('.order-status-select');
+                var customer = sel ? sel.getAttribute('data-customer') : '';
+                var phone = sel ? sel.getAttribute('data-phone') : '';
+                saveTrackingOnly(oid, tracking, customer, phone);
+            });
+        });
+    }
+
+    // Toggle order detail expand/collapse
+    window.toggleOrderDetail = function(el, oid) {
+        var detailRow = document.getElementById('detail-' + oid);
+        if (!detailRow) return;
+        var isVisible = detailRow.style.display !== 'none';
+        // Collapse all first
+        document.querySelectorAll('.order-detail-row').forEach(function(r) { r.style.display = 'none'; });
+        if (!isVisible) {
+            detailRow.style.display = 'table-row';
+            detailRow.querySelector('td').style.animation = 'slideUp 0.25s ease-out';
+        }
     }
 
     // ══════════ DUAL NOTIFICATION SYSTEM — SMS + WhatsApp ══════════
